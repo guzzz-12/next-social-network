@@ -7,6 +7,9 @@ import {ToastContainer, toast} from "react-toastify";
 import PostComment from "./PostComment";
 import CommentInput from "./CommentInput";
 import LikesList from "./LikesList";
+import ImageModal from "./ImageModal";
+import NoImageModal from "./NoImageModal";
+import classes from "./cardPost.module.css";
 
 // Manejar errores de requests
 const errorsHandler = (error, setError, setLoading) => {
@@ -32,6 +35,8 @@ const CardPost = ({user, post, setPosts}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(null);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   /*----------------------------------------------------------*/
   // Verificar si el post ya fue likeado por el usuario actual
@@ -103,6 +108,34 @@ const CardPost = ({user, post, setPosts}) => {
 
   return (
     <>
+      {isModalOpen ?
+        <Modal
+          className={classes["post-card__modal"]}
+          closeIcon
+          open={isModalOpen}
+          closeOnDimmerClick
+          onClose={() => setIsModalOpen(false)}
+        >
+          <Modal.Content>
+            {post.picUrl ?
+              <ImageModal
+                post={post}
+                user={user}
+                comments={comments}
+                setComments={setComments}
+                likes={likes}
+                isLiked={isLiked}
+                likesHandler={likesHandler}
+                loading={loading}
+              />
+              :
+              <NoImageModal />
+            }
+          </Modal.Content>
+        </Modal>
+        :
+        null
+      }
       <ToastContainer
         position="bottom-center"
         autoClose={3000}
@@ -121,6 +154,7 @@ const CardPost = ({user, post, setPosts}) => {
               floated="left"
               ui={false}
               alt="Post image"
+              onClick={() => setIsModalOpen(true)}
             />
           }
 
@@ -244,6 +278,7 @@ const CardPost = ({user, post, setPosts}) => {
                   color="teal"
                   basic
                   circular
+                  onClick={() => setIsModalOpen(true)}
                 />
               </div>
             }
