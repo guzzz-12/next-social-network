@@ -1,4 +1,10 @@
-.post-card__modal {
+.post-card__image-modal {
   width: 95% !important;
+  margin: 0 auto !important
+}
+
+.post-card__noimage-modal {
+  width: 95% !important;
+  max-width: 600px;
   margin: 0 auto !important
 }

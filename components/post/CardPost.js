@@ -111,7 +111,7 @@ const CardPost = ({user, post, setPosts}) => {
     <>
       {isModalOpen ?
         <Modal
-          className={classes["post-card__modal"]}
+          className={classes[post.picUrl ? "post-card__image-modal" : "post-card__noimage-modal"]}
           closeIcon
           open={isModalOpen}
           closeOnDimmerClick
@@ -132,7 +132,18 @@ const CardPost = ({user, post, setPosts}) => {
                 deletePostHandler={deletePostHandler}
               />
               :
-              <NoImageModal />
+              <NoImageModal
+                post={post}
+                user={user}
+                comments={comments}
+                setComments={setComments}
+                likes={likes}
+                isLiked={isLiked}
+                likesHandler={likesHandler}
+                loading={loading}
+                deleting={deleting}
+                deletePostHandler={deletePostHandler}
+              />
             }
           </Modal.Content>
         </Modal>
@@ -207,7 +218,12 @@ const CardPost = ({user, post, setPosts}) => {
               </Link>
             </Card.Header>
             <Card.Meta>
-              {moment(post.createdAt).calendar()}
+              <div
+                style={{cursor: "pointer"}}
+                onClick={() => setIsModalOpen(true)}
+              >
+                {moment(post.createdAt).calendar()}
+              </div>
             </Card.Meta>
 
             {/* Location del post (si se especifica) */}
@@ -277,7 +293,7 @@ const CardPost = ({user, post, setPosts}) => {
             {comments.length > 6 &&
               <div style={{marginTop: "10px"}}>
                 <Button
-                  content="View more"
+                  content="Read more"
                   color="teal"
                   basic
                   circular

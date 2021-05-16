@@ -4,19 +4,19 @@ import moment from "moment";
 import PostComment from "./PostComment";
 import CommentInput from "./CommentInput";
 import LikesList from "./LikesList";
-import classes from "./imageModal.module.css";
+import classes from "./modal.module.css";
 
 const ImageModal = ({post, user, likes, comments, setComments, likesHandler, deleting, deletePostHandler, isLiked, loading}) => {
   return (
     <Grid
       stackable
       relaxed
-      className={classes["image-modal__grid"]}
+      className={classes["modal__grid"]}
       style={{opacity: loading && deleting ? 0.5 : 1}}
     >
-      <Grid.Row className={classes["image-modal__row"]}>
+      <Grid.Row className={classes["modal__row"]}>
         <Grid.Column
-          className={classes["image-modal__img-column"]}
+          className={classes["modal__img-column"]}
           width={10}
           verticalAlign="middle"
         >
@@ -28,10 +28,10 @@ const ImageModal = ({post, user, likes, comments, setComments, likesHandler, del
           />
         </Grid.Column>
         
-        <Grid.Column width={6} className={classes["image-modal__text-column"]}>
-          <Card fluid className={classes["image-modal__text"]}>
+        <Grid.Column width={6} className={classes["modal__text-column"]}>
+          <Card fluid className={classes["modal__text"]}>
             {/* Información del post (Flex item 1) */}
-            <Card.Content className={classes["image-modal__user"]}>
+            <Card.Content className={classes["modal__user"]}>
               {/* Botón para borrar el post */}
               {user.role === "admin" || (user._id.toString() === post.user._id.toString()) ?
                 <div style={{position: "relative"}}>
@@ -93,13 +93,13 @@ const ImageModal = ({post, user, likes, comments, setComments, likesHandler, del
                 null
               }
               {/* Contenido de texto del post */}
-              <Card.Description className={classes["image-modal__description"]}>
+              <Card.Description className={classes["modal__description"]}>
                 {post.content}
               </Card.Description>
             </Card.Content>
 
             {/* Sección de likes y comentarios (Flex item 2) */}
-            <Card.Content extra className={classes["image-modal__likes-comments"]}>
+            <Card.Content extra className={classes["modal__likes-comments"]}>
               <div style={{display: "flex", }}>
                 {/* Contador de likes */}
                 <div>
@@ -136,7 +136,7 @@ const ImageModal = ({post, user, likes, comments, setComments, likesHandler, del
               <Divider />
 
               {/* Lista de comentarios */}
-              <div className={classes["image-modal__comments-list"]}>
+              <div className={classes["modal__comments-list"]}>
                 {comments.length > 0 &&
                   comments.map(comment => {
                     return (
@@ -153,7 +153,7 @@ const ImageModal = ({post, user, likes, comments, setComments, likesHandler, del
               </div>
 
               {/* Input para agregar comentarios */}
-              <div className={classes["image-modal__comment-input"]}>
+              <div className={classes["modal__comment-input"]}>
                 <CommentInput
                   user={user}
                   postId={post._id.toString()}

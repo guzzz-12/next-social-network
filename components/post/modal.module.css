@@ -1,13 +1,13 @@
 /*-----------------------------*/
 /* Columna derecha del modal */
 /*-----------------------------*/
-.image-modal__text-column {
+.modal__text-column {
   height: 100% !important;
   padding-left: 0 !important;
 }
 
 /* Contenedor del contenido de la columna derecha */
-.image-modal__text {
+.modal__text {
   display: flex;
   flex-direction: column;
   justify-content: flex-start !important;
@@ -19,35 +19,36 @@
   Flex item 1 de la columna derecha:
   Contenedor del user, texto del post y location
 */
-.image-modal__user {
+.modal__user {
   flex-grow: 0 !important;
 }
 
-.image-modal__description {
+.modal__description {
   height: auto;
   max-height: 200px !important;
   font-size: 17px;
   word-spacing: 0.35px;
+  overflow: auto;
 }
 
 /*
   Flex item 2 de la columna derecha: 
   Sección de likes y comentarios (íconos, contadores y lista de comentarios)
 */
-.image-modal__likes-comments {
+.modal__likes-comments {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   flex-grow: 1 !important;
 }
 
-.image-modal__comments-list {
+.modal__comments-list {
   height: 100%;
   margin-bottom: 10px;
   overflow: auto
 }
 
-.image-modal__comment-input {
+.modal__comment-input {
   margin-top: auto !important;
   width: 100%;
 }
