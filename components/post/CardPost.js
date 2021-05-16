@@ -77,6 +77,7 @@ const CardPost = ({user, post, setPosts}) => {
 
       setLoading(false);
       setDeleting(null);
+      setIsModalOpen(false);
       toast("Post deleted successfully")
       
     } catch (error) {
@@ -127,6 +128,8 @@ const CardPost = ({user, post, setPosts}) => {
                 isLiked={isLiked}
                 likesHandler={likesHandler}
                 loading={loading}
+                deleting={deleting}
+                deletePostHandler={deletePostHandler}
               />
               :
               <NoImageModal />
