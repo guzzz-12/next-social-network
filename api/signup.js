@@ -12,13 +12,6 @@ const Follower = require("../models/FollowerModel");
 
 const regexUserName = /^(?!.*\.\.)(?!.*\.$)[^\W][\w.]{0,29}$/;
 
-// // Inicializar Cloudinary
-// cloudinary.config({
-//   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-//   api_key: process.env.CLOUDINARY_API_KEY,
-//   api_secret: process.env.CLOUDINARY_API_SECRET
-// });
-
 
 /*--------------------------------------------------*/
 // Ruta para verificar si el username está disponible
@@ -135,6 +128,9 @@ router.post("/", [
 
     // Guardar el perfil en la base de datos
     await newUserProfile.save();
+
+    // Crear la colección de seguidores y seguidos
+    await Follower.create({user: req.userId});
 
     // Generar el token de autenticación y setear el cookie
     const token = jwt.sign({userId: newUser._id, userRole: newUser.role}, process.env.JWT_SECRET, {

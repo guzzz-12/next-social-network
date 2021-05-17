@@ -1,4 +1,4 @@
-import {useEffect, useState, useContext} from "react";
+import {useEffect, useState, useContext, useRef} from "react";
 import Head from "next/head";
 import {Segment, Visibility, Loader, Dimmer} from "semantic-ui-react";
 import jwt from "jsonwebtoken";
@@ -11,12 +11,12 @@ import CreatePost from "../components/post/CreatePost";
 import CardPost from "../components/post/CardPost";
 import {PlaceHolderPosts} from "../components/Layout/PlaceHolderGroup";
 
-// Generar token de cancelación de requests de axios
+// Token de cancelación de requests de axios
 const CancelToken = axios.CancelToken;
-let cancel = null;
 
 const HomePage = ({posts}) => {
   const userContext = useContext(UserContext);
+  const cancellerRef = useRef();
 
   const [title, setTitle] = useState("");
   const [postsData, setPostsData] = useState(JSON.parse(posts));
@@ -43,25 +43,26 @@ const HomePage = ({posts}) => {
       setLoadingMore(true);
 
       // Cancelar el request anterior en caso de repetirlo
-      cancel && cancel();
+      cancellerRef.current && cancellerRef.current();
 
       axios({
         method: "GET",
         url: `/api/posts?page=${currentPage}`,
         cancelToken: new CancelToken((canceller) => {
-          cancel = canceller
+          cancellerRef.current = canceller
         })
       })
       .then(res => {
         if(res.data.data.length > 0) {
           setPostsData(prev => [...prev, ...res.data.data])
           setCurrentPage(prev => prev + 1);
+          setBottomVisible(false);
+          setLoadingMore(false);
         } else {
-          setPostsData(prev => prev);
           setIsLastPage(true);
+          setBottomVisible(false);
+          setLoadingMore(false);
         }
-        setBottomVisible(false);
-        setLoadingMore(false);
       })
       .catch(err => {
         let message = err.message;
@@ -116,7 +117,7 @@ const HomePage = ({posts}) => {
 
           {/* Loader para indicar la carga de los siguientes posts */}
           {loadingMore ?
-            <div style={{width: "100%", minHeight: "50px"}}>
+            <div style={{width: "100%", minHeight: "50px", marginBottom: "1rem"}}>
               <Loader active inline="centered">Loading...</Loader>
             </div>
             :

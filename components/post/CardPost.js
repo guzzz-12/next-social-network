@@ -238,7 +238,13 @@ const CardPost = ({user, post, setPosts}) => {
             }
 
             {/* Contenido de texto del post */}
-            <Card.Description style={{fontSize: "17px", wordSpacing: "0.35px"}}>
+            <Card.Description
+              style={{
+                fontSize: "17px",
+                wordSpacing: "0.35px",
+                whiteSpace: "pre-line"
+              }}
+            >
               {post.content}
             </Card.Description>
           </Card.Content>
