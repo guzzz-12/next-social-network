@@ -150,8 +150,13 @@ router.patch("/:postId", authMiddleware, async (req, res) => {
 // Consultar todos los posts
 /*--------------------------*/
 router.get("/", authMiddleware, async (req, res) => {
+  const page = +req.query.page;
+  const amount = 2;
+
   try {
     const posts = await Post.find()
+    .limit(amount)
+    .skip(amount * (page - 1))
     .sort({createdAt: "desc"})
     .populate("user", "_id avatar name username role email")
     .populate({
