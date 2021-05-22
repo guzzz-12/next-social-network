@@ -9,12 +9,12 @@ const authMiddleware = require("../middleware/authMiddleware");
 /*---------------------------------------*/
 // Consultar el perfil del usuario actual
 /*---------------------------------------*/
-router.get("/:username", authMiddleware, async (req, res) => {
+router.get("/me", authMiddleware, async (req, res) => {
   try {
-    const {username} = req.params;
+    const userId = req.userId;
 
     // Chequear si el usuario existe en la base de datos
-    const user = await User.exists({username})
+    const user = await User.findById(userId);
     if(!user) {
       return res.status(404).json({
         status: "failed",
@@ -23,7 +23,52 @@ router.get("/:username", authMiddleware, async (req, res) => {
     }
     
     // Consultar el perfil del usuario
-    const profile = await Profile.findOne({user: req.userId}).populate({
+    const profile = await Profile.findOne({user: user._id})
+    .populate({
+      path: "user",
+      select: "_id name username avatar role"
+    });
+
+    // Chequear los followers y following
+    const followersAndFollowing = await Follower.findOne({user: req.userId});
+
+    return res.json({
+      status: "success",
+      data: {
+        profile,
+        followers: followersAndFollowing.followers.length,
+        following: followersAndFollowing.following.length
+      }
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Internal server error: ${error.message}`
+    })
+  }
+});
+
+
+/*-----------------------------------*/
+// Consultar el perfil del un usuario
+/*-----------------------------------*/
+router.get("/user/:username", authMiddleware, async (req, res) => {
+  try {
+    const {username} = req.params;
+
+    // Chequear si el usuario existe en la base de datos
+    const user = await User.findOne({username});
+    if(!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found or deleted"
+      });
+    }
+    
+    // Consultar el perfil del usuario
+    const profile = await Profile.findOne({user: user._id})
+    .populate({
       path: "user",
       select: "_id name username avatar role"
     });

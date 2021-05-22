@@ -219,7 +219,7 @@ const CardPost = ({user, post, setPosts}) => {
             </Card.Header>
             <Card.Meta>
               <div
-                style={{cursor: "pointer"}}
+                className={classes["post-card__link"]}
                 onClick={() => setIsModalOpen(true)}
               >
                 {moment(post.createdAt).calendar()}

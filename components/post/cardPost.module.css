@@ -8,3 +8,12 @@
   max-width: 600px;
   margin: 0 auto !important
 }
+
+.post-card__link {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.post-card__link:hover {
+  text-decoration: underline;
+}

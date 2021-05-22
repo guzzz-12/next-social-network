@@ -57,6 +57,8 @@ const NoImageModal = ({post, user, likes, comments, setComments, likesHandler, d
             <a>{post.user.name}</a>
           </Link>
         </Card.Header>
+
+        {/* Fecha de creación del post */}
         <Card.Meta>
           {moment(post.createdAt).calendar()}
         </Card.Meta>
