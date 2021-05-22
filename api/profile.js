@@ -133,7 +133,85 @@ router.get("/:username/posts", authMiddleware, async (req, res) => {
       message: `Internal server error: ${error.message}`
     })
   }
-})
+});
+
+
+/*---------------------------------------*/
+// Consultar los seguidores de un usuario
+/*---------------------------------------*/
+router.get("/followers/:username", authMiddleware, async (req, res) => {
+  try {
+    const {username} = req.params;
+
+    // Chequear si el usuario existe
+    const user = await User.findOne({username});
+    if(!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found or deleted"
+      })
+    }
+
+    // Extraer la data de los followers y following del usuario
+    const userFollowers = await Follower.findOne({user: user._id})
+    .populate({
+      path: "followers.user",
+      select: "_id name username avatar role"
+    });
+
+    userFollowers.following = undefined;
+
+    res.json({
+      status: "success",
+      data: userFollowers
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Internal server error: ${error.message}`
+    })
+  }
+});
+
+
+/*-------------------------------------*/
+// Consultar los seguidos de un usuario
+/*-------------------------------------*/
+router.get("/following/:username", authMiddleware, async (req, res) => {
+  try {
+    const {username} = req.params;
+
+    // Chequear si el usuario existe
+    const user = await User.findOne({username});
+    if(!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found or deleted"
+      })
+    }
+
+    // Extraer la data de los followers y following del usuario
+    const userFollowing = await Follower.findOne({user: user._id})
+    .populate({
+      path: "following.user",
+      select: "_id name username avatar role"
+    });
+
+    userFollowing.followers = undefined;
+
+    res.json({
+      status: "success",
+      data: userFollowing
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Internal server error: ${error.message}`
+    })
+  }
+});
 
 
 module.exports = router;
