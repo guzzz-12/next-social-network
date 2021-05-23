@@ -214,4 +214,100 @@ router.get("/following/:username", authMiddleware, async (req, res) => {
 });
 
 
+/*------------------------------------*/
+// Seguir/dejar de seguir a un usuario
+/*------------------------------------*/
+router.get("/follow/:username", authMiddleware, async (req, res) => {
+  try {
+    // Usuario al que se le va a dar follow/unfollow
+    const {username} = req.params;
+
+    // Usuario que da el follow/unfollow
+    const currentUser = req.userId;
+
+    // Usuario seguido
+    const user = await User.findOne({username});
+    if(!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "Followed user not found or deleted"
+      })
+    }
+
+    // Prevenir que el usuario se siga a sí mismo
+    if(user._id.toString() === currentUser.toString()) {
+      return res.status(400).json({
+        status: "failed",
+        "message": "Users cannot follow themselves"
+      })
+    }
+
+    const followedUser = await Follower.findOne({user: user._id.toString()});
+    const followerUser = await Follower.findOne({user: currentUser});
+
+    if(!followerUser) {
+      return res.status(404).json({
+        status: "failed",
+        message: "Current user not found or deleted"
+      })
+    }
+
+    // SI NO LO SIGUE, HACER FOLLOW:
+    // Agregar la id del usuario seguidor al documento seguidores del usuario seguido
+    // Agregar la id del usuario seguido al documento siguiendo del usuario seguidor
+    /*-------------------------------------------------------------------------------*/
+    /*-------------------------------------------------------------------------------*/
+    // SI YA LO SIGUE, HACER UNFOLLOW:
+    // Remover la id del usuario seguidor del documento seguidores del usuario seguido
+    // Remover la id del usuario seguido del documento siguiendo del usuario seguidor
+
+    // Chequear si es follower
+    const followedUserFollowers = [...followedUser.followers];
+    const followerIndex = followedUserFollowers.findIndex(el => el.user.toString() === currentUser.toString());
+
+    // Si es seguidor, dar unfollow
+    if(followerIndex !== -1) {
+      // Actualizar los seguidores del usuario seguido
+      followedUserFollowers.splice(followerIndex, 1);
+      followedUser.followers = followedUserFollowers;
+
+      // Actualizar los seguidos del usuario seguidor
+      const followerUserFollowing = followerUser.following.filter(el => el.user.toString() !== user._id.toString());
+      followerUser.following = followerUserFollowing;
+
+      // Actualizar ambos docs en la base de datos
+      await followedUser.save();
+      await followerUser.save();
+
+      // Si no es seguidor, dar follow
+    } else {
+      // Actualizar los seguidores del usuario seguido
+      followedUserFollowers.push({user: currentUser});
+      followedUser.followers = followedUserFollowers;
+
+      // Actualizar los seguidos del usuario seguidor
+      const followerUserFollowing = [...followerUser.following, {user: user._id}];
+      followerUser.following = followerUserFollowing;
+
+      // Actualizar ambos docs en la base de datos
+      await followedUser.save();
+      await followerUser.save();
+    }
+
+    followerUser.followers = undefined;
+
+    res.json({
+      status: "success",
+      data: followerUser
+    })
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Internal server error: ${error.message}`
+    })
+  }
+});
+
+
 module.exports = router;
