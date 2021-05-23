@@ -1,5 +1,8 @@
 const express = require("express");
 const router = express.Router();
+const {validationResult, check} = require("express-validator");
+const formidable = require("formidable");
+const cloudinary = require("cloudinary").v2;
 const User = require("../models/UserModel");
 const Profile = require("../models/ProfileModel");
 const Post = require("../models/PostModel");
@@ -48,6 +51,145 @@ router.get("/me", authMiddleware, async (req, res) => {
     })
   }
 });
+
+
+//*------------------------------------*/
+// Actualizar perfil del usuario actual
+/*-------------------------------------*/
+router.patch("/me", authMiddleware, [
+  check("bio", "The bio is required").exists(),
+  check("bio", "The bio must be at least 10 characters and max 300 characters").isLength({min: 10, max: 300})
+], async (req, res) => {
+  /*--------------------------------*/
+  // Chequear errores de validación
+  /*--------------------------------*/
+  const errors = validationResult(req);
+  if(!errors.isEmpty()) {
+    const errorsArray = errors.array();
+    const errorsArrayStrings = errorsArray.map(error => {
+      return error.msg;
+    });
+
+    return res.status(400).json({
+      status: "failed",
+      message: errorsArrayStrings.join(". ")
+    });
+  }
+
+  try {
+    const {bio, facebook, twitter, instagram, youtube} = req.body;
+
+    // Buscar el pefil a actualizar y chequear si existe
+    const userProfile = await Profile.findOne({user: req.userId});
+    
+    if(!userProfile) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User profile not found or deleted"
+      })
+    }
+
+    // Actualizar el perfil del nuevo usuario
+    const profileSocialLinks = {};
+    if(facebook) profileSocialLinks.facebook = facebook;
+    if(twitter) profileSocialLinks.twitter = twitter;
+    if(instagram) profileSocialLinks.instagram = instagram;
+    if(youtube) profileSocialLinks.youtube = youtube;
+
+    userProfile.bio = bio;
+    userProfile.social = profileSocialLinks;
+    await userProfile.save();
+
+    res.json({
+      status: "success",
+      data: userProfile
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Internal server error: ${error.message}`
+    })
+  }
+});
+
+
+/*--------------------------------------------*/
+// Actualizar la imagen del perfil del usuario
+/*--------------------------------------------*/
+router.patch("/me/avatar", authMiddleware, (req, res) => {
+  const form = new formidable.IncomingForm();
+  form.keepExtensions = true;
+
+  form.parse(req, async (err, fields, files) => {
+    try {
+      if(err) {
+        return res.status(400).json({
+          status: "failed",
+          message: `Error processing the request: ${err.message}`
+        })
+      }
+
+      // Requerir la imagen
+      if(!files.avatar) {
+        return res.status(400).json({
+          status: "failed",
+          message: "The image is required."
+        })
+      }
+
+      // Validar el formato de la imagen
+      if(!files.avatar.type.includes("jpg") && !files.avatar.type.includes("jpeg") && !files.avatar.type.includes("png")) {
+        return res.status(400).json({
+          status: "failed",
+          message: "The image must be either .jpg, .jpeg or .png."
+        })
+      }
+
+      // Validar el tamaño de la imagen
+      if(files.avatar.size > 4000000) {
+        return res.status(400).json({
+          status: "failed",
+          message: "The image size cannot be larger than 4mb"
+        })
+      }
+
+      // Buscar el usuario correspondiente
+      const user = await User.findById(req.userId);
+      if(!user) {
+        return res.status(404).json({
+          status: "failed",
+          message: "User not found or deleted"
+        })
+      }
+
+      // Borrar la imagen actual del usuario de cloudinary (si la tiene)
+      const avatarId = user.avatarId;
+      avatarId && await cloudinary.uploader.destroy(avatarId, {invalidate: true});
+
+      // Subir la nueva imagen del perfil a cloudinary
+      const uploadResponse = await cloudinary.uploader.upload(files.avatar.path, {folder: `chat-app/user-avatar/${user.username}`});
+      
+      // Actualizar el avatar del usuario en la base de datos
+      user.avatar = uploadResponse.url;
+      user.avatarId = uploadResponse.public_id;
+      const updatedUser = await user.save();
+
+      res.json({
+        status: "success",
+        data: {
+          newAvatar: updatedUser.avatar
+        }
+      })
+      
+    } catch (error) {
+      res.status(500).json({
+      status: "failed",
+      message: `Internal server error: ${error.message}`
+    })
+    }
+  })
+})
 
 
 /*-----------------------------------*/
