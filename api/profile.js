@@ -3,6 +3,7 @@ const router = express.Router();
 const {validationResult, check} = require("express-validator");
 const formidable = require("formidable");
 const cloudinary = require("cloudinary").v2;
+const bcrypt = require("bcryptjs");
 const User = require("../models/UserModel");
 const Profile = require("../models/ProfileModel");
 const Post = require("../models/PostModel");
@@ -184,11 +185,81 @@ router.patch("/me/avatar", authMiddleware, (req, res) => {
       
     } catch (error) {
       res.status(500).json({
+        status: "failed",
+        message: `Internal server error: ${error.message}`
+      })
+    }
+  })
+});
+
+
+/*---------------------------------------*/
+// Actualizar la contraseña de un usuario
+/*---------------------------------------*/
+router.patch("/me/update-password", authMiddleware, [
+  check("currentPassword", "The current password is required").exists(),
+  check("newPassword", "The new password is required and must contain between 6 and 30 characters").isLength({min: 6, max: 30})
+], async (req, res) => {
+
+  /*--------------------------------*/
+  // Chequear errores de validación
+  /*--------------------------------*/
+  const errors = validationResult(req);
+  if(!errors.isEmpty()) {
+    const errorsArray = errors.array();
+    const errorsArrayStrings = errorsArray.map(error => {
+      return error.msg;
+    });
+
+    return res.status(400).json({
+      status: "failed",
+      message: errorsArrayStrings.join(". ")
+    });
+  }
+
+  try {
+    const {currentPassword, newPassword} = req.body;
+
+    // Buscar el usuario y chequear si existe
+    const user = await User.findById(req.userId);
+    if(!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found or deleted"
+      })
+    }
+
+    // Chequear si la contraseña actual es correcta
+    const isCorrectPassword = await bcrypt.compare(currentPassword, user.password);
+    if(!isCorrectPassword) {
+      return res.status(401).json({
+        status: "failed",
+        message: "Wrong password"
+      })
+    }
+
+    // Encriptar la nueva contraseña
+    const salt = await bcrypt.genSalt(12);
+    const updatedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Actualizar la contraseña en la base de datos
+    user.password = updatedPassword;
+    await user.save();
+
+    // Destruir el cookie de la sesión actual y redirigir a login
+    res.cookie("token", null, {maxAge: 0});
+
+    res.json({
+      status: "success",
+      data: "Password updated successfully, login again with your new password"
+    });
+
+  } catch (error) {
+    res.status(500).json({
       status: "failed",
       message: `Internal server error: ${error.message}`
     })
-    }
-  })
+  }
 })
 
 
@@ -450,6 +521,41 @@ router.get("/follow/:username", authMiddleware, async (req, res) => {
     })
   }
 });
+
+
+/*-------------------------------------------------*/
+// Habilitar/deshabilitar el popup de nuevo mensaje
+/*-------------------------------------------------*/
+router.patch("/settings/message-popup", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    
+    if(!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found or deleted"
+      });
+    }
+
+    // Actualizar el campo newMessagePopup
+    let currentSetting = user.newMessagePopup || false;
+    user.newMessagePopup = !currentSetting;
+    await user.save();
+
+    user.password = undefined;
+
+    res.json({
+      status: "success",
+      data: user
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Internal server error: ${error.message}`
+    })
+  }
+})
 
 
 module.exports = router;
