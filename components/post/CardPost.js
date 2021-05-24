@@ -78,7 +78,7 @@ const CardPost = ({user, post, setPosts}) => {
       setLoading(false);
       setDeleting(null);
       setIsModalOpen(false);
-      toast("Post deleted successfully")
+      toast.dark("Post deleted successfully")
       
     } catch (error) {
       errorsHandler(error, setError, setLoading);
@@ -213,7 +213,7 @@ const CardPost = ({user, post, setPosts}) => {
 
             {/* Nombre completo del usuario */}
             <Card.Header>
-              <Link href={`/${post.user.username}`}>
+              <Link href={`/user/${post.user.username}`}>
                 <a>{post.user.name}</a>
               </Link>
             </Card.Header>

@@ -1,10 +1,11 @@
-import {useState, useEffect} from "react";
+import {useState, useEffect, useContext} from "react";
 import Link from "next/link";
 import {useRouter} from "next/router";
 import {List, Icon} from "semantic-ui-react";
-import { logoutUser } from "../../utils/logoutUser";
+import {UserContext} from "../../context/UserContext";
 
 const SideMenu = ({user: {unreadNotification, unreadMessage, username, email}}) => {
+  const userContext = useContext(UserContext);
   const router = useRouter();
 
   const [activeRoute, setActiveRoute] = useState(null);
@@ -72,16 +73,16 @@ const SideMenu = ({user: {unreadNotification, unreadMessage, username, email}}) 
           </List.Item>
         </Link>
 
-        <Link href={`/${username}`}>
+        <Link href={`/profile`}>
           <List.Item
             style={{padding: "10px", marginBottom: "10px"}}
-            active={activeRoute === `/${username}`}
-            onClick={() => setActiveRoute(`/${username}`)}
+            active={activeRoute === `/profile`}
+            onClick={() => setActiveRoute(`/profile`)}
           >
             <Icon
               name="user"
               size="large"
-              color={activeRoute === `/${username}` ? "teal" : "grey"}
+              color={activeRoute === `/profile` ? "teal" : "grey"}
             />
             <List.Content>
               <List.Header content="Account" />
@@ -91,7 +92,7 @@ const SideMenu = ({user: {unreadNotification, unreadMessage, username, email}}) 
 
         <List.Item
           style={{padding: "10px"}}
-          onClick={() => logoutUser()}
+          onClick={() => userContext.logOut()}
         >
           <Icon name="log out" size="large" />
           <List.Content>

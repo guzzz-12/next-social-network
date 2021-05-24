@@ -89,7 +89,7 @@ const SearchComponent = () => {
       resultRenderer={(props) => <ResultsRenderer {...props} />}
       results={results}
       minCharacters={3}
-      onResultSelect={(e, data) => Router.push(`/${data.result.username}`)}
+      onResultSelect={(e, data) => Router.push(`/user/${data.result.username}`)}
     />
   )
 }

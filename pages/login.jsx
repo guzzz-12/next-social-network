@@ -65,7 +65,7 @@ const Login = () => {
 
       const {profile} = res.data.data;
       userContext.setCurrentUser(profile.user);
-      userContext.setCurrentProfile({profile, user: undefined});
+      userContext.setCurrentProfile(profile);
 
       const remainingSeconds = sessionRemainingSecs(jsCookie.get("token"));
       timerContext.initializeTimer(remainingSeconds);

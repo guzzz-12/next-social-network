@@ -36,7 +36,7 @@ const Layout = (props) => {
       const user = JSON.parse(localStorage.getItem("user"))
       userContext.setCurrentUser(user);
     } else {
-      userContext.clearCurrentUser();
+      userContext.logOut();
     }
   }, []);
   
@@ -46,7 +46,7 @@ const Layout = (props) => {
   useEffect(() => {
     if(timerContext.sessionExpired === true) {
       timerContext.setSessionExpired(null);
-      userContext.clearCurrentUser();
+      userContext.logOut();
       
       router.push("/login");
     }

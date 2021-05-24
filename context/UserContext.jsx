@@ -1,12 +1,14 @@
 import {createContext, useState} from "react";
+import Router from "next/router";
+import jsCookie from "js-cookie";
 
 export const UserContext = createContext({
   isAuth: false,
   currentUser: null,
   currentProfile: null,
   setCurrentUser: () => {},
-  clearCurrentUser: () => {},
-  setCurrentProfile: () => {}
+  setCurrentProfile: () => {},
+  logOut: () => {}
 });
 
 const UserContextProvider = ({children}) => {
@@ -27,13 +29,16 @@ const UserContextProvider = ({children}) => {
     localStorage.setItem("profile", JSON.stringify(profile));
   }
 
-  const clearCurrentUser = () => {
+  const logOut = () => {
     setUser(null);
     setProfile(null);
     setIsAuth(false);
+    jsCookie.remove("token");
 
     localStorage.removeItem("user");
     localStorage.removeItem("profile");
+
+    Router.push("/login");
   }
 
   return (
@@ -44,7 +49,7 @@ const UserContextProvider = ({children}) => {
         currentProfile: profile,
         setCurrentUser,
         setCurrentProfile,
-        clearCurrentUser
+        logOut
       }}
     >
       {children}
