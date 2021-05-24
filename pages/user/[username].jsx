@@ -11,12 +11,10 @@ import {NoProfile, NoProfilePosts} from "../../components/Layout/NoData";
 import {UserContext} from "../../context/UserContext";
 
 const ProfilePage = (props) => {
+  const {profile, error} = props;
+  const userContext = useContext(UserContext);
   const router = useRouter();
   const {username} = router.query;
-
-  const userContext = useContext(UserContext);
-
-  const {profile, error} = props;
 
   const [posts, setPosts] = useState([]);
   const [results, setResults] = useState(null);
@@ -91,18 +89,12 @@ const ProfilePage = (props) => {
   }, [profile, username]);
 
 
-  const setUserFollow = async () => {
-    return;
-  }
-
-
   /*----------------------------------------*/
   // Mostrar mensaje si el perfil no existe
   /*----------------------------------------*/
   if(!profile) {
     return <NoProfile />
   }
-
 
   return (
     <>
@@ -128,7 +120,7 @@ const ProfilePage = (props) => {
                   isAccountOwner={isAccountOwner}
                   followers={followers}
                   following={following}
-                  setUserFollow={setUserFollow}
+                  setFollowers={setFollowers}
                 />
                 {/* Mostrar skeletons mientras los posts cargan */}
                 {loadingPosts ? <PlaceHolderPosts /> : null}
@@ -160,8 +152,10 @@ const ProfilePage = (props) => {
 
 // Desde getInitialProps se debe usar axios para los requests
 // a diferencia de getServerSideProps donde se debe usar código de backend
-ProfilePage.getInitialProps = async (context) => {
+// ProfilePage.getInitialProps = async (context) => {
+export async function getServerSideProps(context) {
   const {token} = parseCookies(context);
+  const {req} = context;
   const {username} = context.query;
 
   axios.defaults.headers.get.Cookie = `token=${token}`
@@ -169,14 +163,16 @@ ProfilePage.getInitialProps = async (context) => {
   try {
     const res = await axios({
       method: "GET",
-      url: `/api/profile/user/${username}`
+      url: `${req.protocol}://${req.get("host")}/api/profile/user/${username}`
     });
   
     return {
-      profile: res.data.data.profile,
-      following: res.data.data.following,
-      followers: res.data.data.followers,
-      error: null
+      props: {
+        profile: res.data.data.profile,
+        following: res.data.data.following,
+        followers: res.data.data.followers,
+        error: null
+      }
     }
     
   } catch (error) {
@@ -187,8 +183,10 @@ ProfilePage.getInitialProps = async (context) => {
     }
 
     return {
-      profile: null,
-      error: message || error.message
+      props: {
+        profile: null,
+        error: message || error.message
+      }
     }
   }
 }

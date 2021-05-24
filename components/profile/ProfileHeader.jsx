@@ -1,19 +1,32 @@
-import {useState, useEffect} from "react";
+import {useState, useEffect, useContext} from "react";
 import {Segment, Grid, Image, Header, Divider, Button, List} from "semantic-ui-react";
+import axios from "axios";
+import {UserContext} from "../../context/UserContext";
 
-const ProfileHeader = ({profile, isAccountOwner, followers, following, setUserFollow}) => {
+const ProfileHeader = ({profile, isAccountOwner, followers, following, setFollowers}) => {
+  const userContext = useContext(UserContext);
+
   const [socialLinks, setSocialLinks] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+
+  /*-----------------------------------------------------------------------------*/
   // Chequear si el usuario actual sigue al usuario del perfil que está visitando
+  /*-----------------------------------------------------------------------------*/
   useEffect(() => {
-    const isFollowing = following.some(el => el.user.toString() === profile.user._id.toString());
-    setIsFollowing(isFollowing);
-  }, []);
+    if(userContext.currentUser) {
+      const isFollowing = followers.some(el => el.user.toString() === userContext.currentUser._id.toString());
+      setIsFollowing(isFollowing);
+    }
+  }, [userContext.currentUser, followers]);
 
+
+  /*------------------------------------------------------------------*/
   // Chequear si el perfil tiene links de redes sociales y extraerlos
   // en un array de la forma [{name: "facebook", link: "facebook.com"}]
+  /*------------------------------------------------------------------*/
   useEffect(() => {
     if(profile.social) {
       const keysArray = Object.keys(profile.social);
@@ -25,6 +38,33 @@ const ProfileHeader = ({profile, isAccountOwner, followers, following, setUserFo
       setSocialLinks(data);
     }
   }, [profile]);
+
+
+  /*--------------------*/
+  // Dar follow/unfollow
+  /*--------------------*/
+  const followHandler = async () => {
+    try {
+      setLoading(true);
+
+      const res = await axios({
+        method: "GET",
+        url: `/api/profile/follow/${profile.user.username}`
+      });
+
+      console.log({followRes: res.data});
+      setFollowers(res.data.data.followedUserFollowers);
+      setLoading(false);
+      
+    } catch (error) {
+      let message = error.message;
+      if(error.response) {
+        message = error.response.data.message
+      }
+      setError(message);
+      setLoading(false);
+    }
+  }
 
   return (
     <Segment>
@@ -89,6 +129,7 @@ const ProfileHeader = ({profile, isAccountOwner, followers, following, setUserFo
                 content={isFollowing ? "Unfollow" : "Follow"}
                 icon={isFollowing ? "check circle" : "add user"}
                 color={isFollowing ? "instagram" : "twitter"}
+                onClick={followHandler}
               />
             </>
           }

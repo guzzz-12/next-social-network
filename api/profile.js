@@ -287,7 +287,7 @@ router.get("/user/:username", authMiddleware, async (req, res) => {
     });
 
     // Chequear los followers y following
-    const followersAndFollowing = await Follower.findOne({user: req.userId});
+    const followersAndFollowing = await Follower.findOne({user: user._id});
 
     return res.json({
       status: "success",
@@ -507,11 +507,12 @@ router.get("/follow/:username", authMiddleware, async (req, res) => {
       await followerUser.save();
     }
 
-    followerUser.followers = undefined;
-
     res.json({
       status: "success",
-      data: followerUser
+      data: {
+        followerUserFollowing: followerUser.following,
+        followedUserFollowers: followedUser.followers
+      }
     })
     
   } catch (error) {

@@ -10,9 +10,8 @@ import {NoProfile, NoProfilePosts} from "../components/Layout/NoData";
 import {UserContext} from "../context/UserContext";
 
 const ProfilePage = (props) => {
-  const userContext = useContext(UserContext);
-
   const {profile, error} = props;
+  const userContext = useContext(UserContext);
 
   const [posts, setPosts] = useState([]);
   const [results, setResults] = useState(null);
@@ -99,7 +98,6 @@ const ProfilePage = (props) => {
     return <NoProfile />
   }
 
-
   return (
     <>
       <Grid stackable>
@@ -156,22 +154,26 @@ const ProfilePage = (props) => {
 
 // Desde getInitialProps se debe usar axios para los requests
 // a diferencia de getServerSideProps donde se debe usar código de backend
-ProfilePage.getInitialProps = async (context) => {
+// ProfilePage.getInitialProps = async (context) => {
+export async function getServerSideProps(context) {
   const {token} = parseCookies(context);
+  const {req} = context;
 
   axios.defaults.headers.get.Cookie = `token=${token}`
 
   try {
     const res = await axios({
       method: "GET",
-      url: "/api/profile/me"
+      url: `${req.protocol}://${req.get("host")}/api/profile/me`
     });
   
     return {
-      profile: res.data.data.profile,
-      following: res.data.data.following,
-      followers: res.data.data.followers,
-      error: null
+      props: {
+        profile: res.data.data.profile,
+        following: res.data.data.following,
+        followers: res.data.data.followers,
+        error: null
+      }
     }
     
   } catch (error) {
@@ -182,8 +184,10 @@ ProfilePage.getInitialProps = async (context) => {
     }
 
     return {
-      profile: null,
-      error: message || error.message
+      props: {
+        profile: null,
+        error: message || error.message
+      }
     }
   }
 }
