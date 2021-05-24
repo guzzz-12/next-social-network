@@ -30,7 +30,7 @@ router.get("/me", authMiddleware, async (req, res) => {
     const profile = await Profile.findOne({user: user._id})
     .populate({
       path: "user",
-      select: "_id name username avatar role"
+      select: "_id name username email avatar role"
     });
 
     // Chequear los followers y following
@@ -40,8 +40,8 @@ router.get("/me", authMiddleware, async (req, res) => {
       status: "success",
       data: {
         profile,
-        followers: followersAndFollowing.followers.length,
-        following: followersAndFollowing.following.length
+        followers: followersAndFollowing.followers,
+        following: followersAndFollowing.following
       }
     });
     
@@ -283,7 +283,7 @@ router.get("/user/:username", authMiddleware, async (req, res) => {
     const profile = await Profile.findOne({user: user._id})
     .populate({
       path: "user",
-      select: "_id name username avatar role"
+      select: "_id name username email avatar role"
     });
 
     // Chequear los followers y following
@@ -293,8 +293,8 @@ router.get("/user/:username", authMiddleware, async (req, res) => {
       status: "success",
       data: {
         profile,
-        followers: followersAndFollowing.followers.length,
-        following: followersAndFollowing.following.length
+        followers: followersAndFollowing.followers,
+        following: followersAndFollowing.following
       }
     });
     
@@ -328,7 +328,7 @@ router.get("/:username/posts", authMiddleware, async (req, res) => {
     .sort({createdAt: "desc"})
     .populate({
       path: "user",
-      select: "_id name username avatar role"
+      select: "_id name username email avatar role"
     })
     .populate({
       path: "comments.user",
@@ -369,7 +369,7 @@ router.get("/followers/:username", authMiddleware, async (req, res) => {
     const userFollowers = await Follower.findOne({user: user._id})
     .populate({
       path: "followers.user",
-      select: "_id name username avatar role"
+      select: "_id name username email avatar role"
     });
 
     userFollowers.following = undefined;
@@ -408,7 +408,7 @@ router.get("/following/:username", authMiddleware, async (req, res) => {
     const userFollowing = await Follower.findOne({user: user._id})
     .populate({
       path: "following.user",
-      select: "_id name username avatar role"
+      select: "_id name username email avatar role"
     });
 
     userFollowing.followers = undefined;
