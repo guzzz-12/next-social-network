@@ -41,6 +41,7 @@ const CommonInputs = ({user: {bio, facebook, instagram, youtube, twitter}, onCha
                 icon={item.name}
                 iconPosition="left"
                 name={item.name}
+                placeholder={item.name[0].toUpperCase() + item.name.substring(1)}
                 value={item.value}
                 onChange={onChangeHandler}
               />

@@ -181,7 +181,7 @@ const ProfilePage = (props) => {
       </Grid>
 
       {/* Loader para indicar la carga de los siguientes posts */}
-      {isLoadingMore && actveTab === "profile" ?
+      {isLoadingMore && activeTab === "profile" ?
         <div style={{width: "100%", minHeight: "50px", marginBottom: "1rem"}}>
           <Loader active inline="centered">Loading...</Loader>
         </div>

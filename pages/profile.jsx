@@ -5,11 +5,12 @@ import {parseCookies} from "nookies";
 import ProfileMenuTabs from "../components/profile/ProfileMenuTabs";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import CardPost from "../components/post/CardPost";
-import {PlaceHolderPosts} from "../components/Layout/PlaceHolderGroup";
-import {NoProfile, NoProfilePosts} from "../components/Layout/NoData";
-import {UserContext} from "../context/UserContext";
 import Followers from "../components/profile/Followers";
 import Following from "../components/profile/Following";
+import UpdateProfile from "../components/profile/UpdateProfile";
+import {UserContext} from "../context/UserContext";
+import {NoProfile, NoProfilePosts} from "../components/Layout/NoData";
+import {PlaceHolderPosts} from "../components/Layout/PlaceHolderGroup";
 
 // Token de cancelación de requests de axios
 const CancelToken = axios.CancelToken;
@@ -34,7 +35,6 @@ const ProfilePage = (props) => {
   const [activeTab, setActiveTab] = useState("profile");
   const [followers, setFollowers] = useState(props.followers);
   const [following, setFollowing] = useState(props.following);
-  const [tabError, setTabError] = useState(null);
 
 
   /*---------------------------*/
@@ -184,6 +184,10 @@ const ProfilePage = (props) => {
                 username={profile.user.username}
                 setOwnerFollowing={setFollowing}
               />
+            }
+
+            {activeTab === "updateProfile" &&
+              <UpdateProfile setActiveTab={setActiveTab} />
             }
           </Grid.Column>
         </Grid.Row>
