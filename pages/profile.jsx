@@ -8,6 +8,7 @@ import CardPost from "../components/post/CardPost";
 import {PlaceHolderPosts} from "../components/Layout/PlaceHolderGroup";
 import {NoProfile, NoProfilePosts} from "../components/Layout/NoData";
 import {UserContext} from "../context/UserContext";
+import Followers from "../components/profile/Followers";
 
 const ProfilePage = (props) => {
   const {profile, error} = props;
@@ -25,6 +26,8 @@ const ProfilePage = (props) => {
   const [followers, setFollowers] = useState(props.followers);
   const [following, setFollowing] = useState(props.following);
   const [tabError, setTabError] = useState(null);
+
+  console.log({following})
 
 
   /*---------------------------*/
@@ -143,6 +146,14 @@ const ProfilePage = (props) => {
                   <NoProfilePosts />
                 }
               </>
+            }
+
+            {activeTab === "followers" &&
+              <Followers
+                isProfileOwner
+                username={profile.user.username}
+                setOwnerFollowing={setFollowing}
+              />
             }
           </Grid.Column>
         </Grid.Row>
