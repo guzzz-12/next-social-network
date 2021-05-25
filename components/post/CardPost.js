@@ -319,8 +319,6 @@ const CardPost = ({user, post, setPosts}) => {
           </Card.Content>
         </Card>
       </Segment>
-
-      <Divider hidden />
     </>
   )
 }

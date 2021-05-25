@@ -312,6 +312,8 @@ router.get("/user/:username", authMiddleware, async (req, res) => {
 /*----------------------------------*/
 router.get("/:username/posts", authMiddleware, async (req, res) => {
   try {
+    const page = +req.query.page;
+    const amount = 2;
     const {username} = req.params;
 
     // Chequear si el usuario existe
@@ -325,6 +327,8 @@ router.get("/:username/posts", authMiddleware, async (req, res) => {
 
     // Buscar los posts del usuario
     const userPosts = await Post.find({user: user._id})
+    .limit(amount)
+    .skip(amount * (page - 1))
     .sort({createdAt: "desc"})
     .populate({
       path: "user",

@@ -22,24 +22,28 @@ const HomePage = ({posts}) => {
   const [postsData, setPostsData] = useState(JSON.parse(posts));
   const [showToastr, setShowToastr] = useState(false);
   
-  const [bottomVisible, setBottomVisible] = useState(false);
+  const [loadMore, setLoadMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(2);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [isLastPage, setIsLastPage] = useState(false);
 
-  /*----------------------------------------------*/
-  // Chequear si se llegó al fondo del contenedor
-  /*----------------------------------------------*/
+  /*--------------------------------------------------------*/
+  // Chequear si el scroll pasó de 60% para cargar más posts
+  /*--------------------------------------------------------*/
   const updateHandler = (e, {calculations}) => {
-    setBottomVisible(calculations.bottomVisible);
+    if(calculations.percentagePassed >= 0.60 || calculations.bottomVisible) {
+      setLoadMore(true);
+    } else {
+      setLoadMore(false)
+    }
   }
 
   /*----------------------------------------------------------------------*/
   // Cargar la siguiente página de posts al llegar al fondo del contenedor
   /*----------------------------------------------------------------------*/
   useEffect(() => {
-    if(bottomVisible && !isLastPage) {
+    if(loadMore && !isLastPage) {
       setLoadingMore(true);
 
       // Cancelar el request anterior en caso de repetirlo
@@ -56,11 +60,11 @@ const HomePage = ({posts}) => {
         if(res.data.data.length > 0) {
           setPostsData(prev => [...prev, ...res.data.data])
           setCurrentPage(prev => prev + 1);
-          setBottomVisible(false);
+          setLoadMore(false);
           setLoadingMore(false);
         } else {
           setIsLastPage(true);
-          setBottomVisible(false);
+          setLoadMore(false);
           setLoadingMore(false);
         }
       })
@@ -71,10 +75,10 @@ const HomePage = ({posts}) => {
         }
         setError(message)
         setLoadingMore(false);
-        setBottomVisible(false);
+        setLoadMore(false);
       })
     }
-  }, [bottomVisible, isLastPage]);
+  }, [loadMore, isLastPage]);
 
   /*----------------------------------------------------*/
   // Actualizar el meta tag title con el usuario actual

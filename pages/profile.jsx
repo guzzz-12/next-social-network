@@ -1,6 +1,6 @@
-import {useState, useEffect, useContext} from "react";
+import {useState, useEffect, useContext, useRef} from "react";
+import {Grid, Visibility, Segment, Loader} from "semantic-ui-react";
 import axios from "axios";
-import {Grid} from "semantic-ui-react";
 import {parseCookies} from "nookies";
 import ProfileMenuTabs from "../components/profile/ProfileMenuTabs";
 import ProfileHeader from "../components/profile/ProfileHeader";
@@ -11,16 +11,24 @@ import {UserContext} from "../context/UserContext";
 import Followers from "../components/profile/Followers";
 import Following from "../components/profile/Following";
 
+// Token de cancelación de requests de axios
+const CancelToken = axios.CancelToken;
+
 const ProfilePage = (props) => {
+  const cancellerRef = useRef();
   const {profile, error} = props;
   const userContext = useContext(UserContext);
 
   const [posts, setPosts] = useState([]);
-  const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [postsError, setPostsError] = useState(null);
   const [isAccountOwner, setIsAccountOwner] = useState(false);
+
+  // State de la paginación
+  const [loadMore, setLoadMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLastPage, setIsLastPage] = useState(false);
 
   // State de los tabs
   const [activeTab, setActiveTab] = useState("profile");
@@ -33,18 +41,10 @@ const ProfilePage = (props) => {
   // Click handler de los tabs
   /*---------------------------*/
   const tabClickHandler = async (tab) => {
-    try {
-      setLoading(true);
-      setActiveTab(tab);
-      
-    } catch (error) {
-      let message = error.message;
-      if(error.response) {
-        message = error.response.data.message
-      }
-      setTabError(message);
-      setLoading(false);
-    }
+    setActiveTab(tab);
+    setPosts([]);
+    setIsLastPage(false);
+    setCurrentPage(1)
   }
 
 
@@ -62,19 +62,34 @@ const ProfilePage = (props) => {
   // Consultar los posts del usuario
   /*--------------------------------*/
   useEffect(() => {
-    if(profile) {
-      setLoadingPosts(true);
+    if((activeTab === "profile" && ((profile && !isLastPage && loadMore) || (profile && currentPage === 1)))) {
+      currentPage === 1 && setLoadingPosts(true);
+      currentPage > 1 && setIsLoadingMore(true);
       setPostsError(null);
+
+      // Cancelar el request anterior en caso de repetirlo
+      cancellerRef.current && cancellerRef.current();
 
       axios({
         method: "GET",
-        url: `/api/profile/${profile.user.username}/posts`
+        url: `/api/profile/${profile.user.username}/posts?page=${currentPage}`,
+        cancelToken: new CancelToken((canceller) => {
+          cancellerRef.current = canceller
+        }) 
       })
       .then(res => {
         const {userPosts, results} = res.data.data;
-        setPosts(userPosts);
-        setResults(results);
+        if(results > 0) {
+          setPosts(prev => [...prev, ...userPosts]);
+          setCurrentPage(prev => prev + 1);
+          setIsLastPage(false);
+        } else {
+          setIsLastPage(true);
+        }
+
         setLoadingPosts(false);
+        setLoadMore(false);
+        setIsLoadingMore(false);
       })
       .catch(err => {
         let message = err.message;
@@ -83,13 +98,20 @@ const ProfilePage = (props) => {
         }
         setPostsError(message);
         setLoadingPosts(false);
+        setIsLoadingMore(false);
+        setLoadMore(false);
       })
     }
-  }, [profile]);
+  }, [profile, loadMore, isLastPage, activeTab]);
 
 
-  const setUserFollow = async () => {
-    return;
+  /*--------------------------------------------------------*/
+  // Chequear si el scroll pasó de 60% para cargar más posts
+  /*--------------------------------------------------------*/
+  const scrollUpdateHandler = (e, {calculations}) => {
+    if(calculations.percentagePassed >= 0.60 || calculations.bottomVisible) {
+      setLoadMore(true);
+    }
   }
 
 
@@ -101,7 +123,7 @@ const ProfilePage = (props) => {
   }
 
   return (
-    <>
+    <Visibility onUpdate={scrollUpdateHandler}>
       <Grid stackable>
         <Grid.Row>
           <Grid.Column>
@@ -124,13 +146,13 @@ const ProfilePage = (props) => {
                   isAccountOwner={isAccountOwner}
                   followers={followers}
                   following={following}
-                  setUserFollow={setUserFollow}
                 />
+
                 {/* Mostrar skeletons mientras los posts cargan */}
                 {loadingPosts ? <PlaceHolderPosts /> : null}
 
                 {/* Lista de posts del usuario */}
-                {!loadingPosts && posts.length > 0 ?
+                {!loadingPosts && posts.length > 0 &&
                   posts.map(post => {
                     return (
                       <CardPost
@@ -141,9 +163,10 @@ const ProfilePage = (props) => {
                       />
                     )
                   })
-                  :
-                  <NoProfilePosts />
                 }
+
+                {/* Mensaje de no posts */}
+                {!loadingPosts && posts.length === 0 && <NoProfilePosts />}
               </>
             }
 
@@ -165,7 +188,25 @@ const ProfilePage = (props) => {
           </Grid.Column>
         </Grid.Row>
       </Grid>
-    </>
+
+      {/* Loader para indicar la carga de los siguientes posts */}
+      {isLoadingMore && activeTab === "profile" ?
+        <div style={{width: "100%", minHeight: "50px", marginBottom: "1rem"}}>
+          <Loader active inline="centered">Loading...</Loader>
+        </div>
+        :
+        null
+      }
+
+      {/* Mensaje de no más posts disponibles */}
+      {isLastPage && activeTab === "profile" ?
+        <Segment textAlign="center" vertical>
+          No more posts available
+        </Segment>
+        :
+        null
+      }
+    </Visibility>
   )
 }
 
