@@ -52,18 +52,18 @@ const ProfileHeader = ({profile, isAccountOwner, followers, following, setFollow
         url: `/api/profile/follow/${profile.user.username}`
       });
       
-      const {actionType, me, _id} = res.data.data;
+      const {actionType, seguidor, _id} = res.data.data;
 
       setFollowers(prev => {
         // En caso de unfollow, remover el usuario actual de los seguidores del usuario del perfil visitado
         if(actionType === "unfollow") {
-          const updated = [...prev].filter(el => el.user.toString() !== me.toString());
+          const updated = [...prev].filter(el => el.user.toString() !== seguidor.toString());
           return updated;
         }
 
         // En caso de follow, agregar el usuario actual a los seguidores del usuario del perfil visitado
         if(actionType === "follow") {
-          const updated = [...prev, {_id, user: me}];
+          const updated = [...prev, {_id, user: seguidor}];
           return updated
         }
       });

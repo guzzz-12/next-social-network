@@ -454,11 +454,9 @@ export async function getServerSideProps(context) {
     }
 
   } catch (error) {
-    destroyCookie(context, "token");
     return {
-      redirect: {
-        destination: "/login",
-        permanent: false
+      props: {
+        error: error.message
       }
     }
   }

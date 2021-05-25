@@ -90,17 +90,17 @@ const Followers = ({username, isProfileOwner, setOwnerFollowing}) => {
         url: `/api/profile/follow/${username}`
       });
 
-      const {actionType, target, _id} = res.data.data;
+      const {actionType, siguiendo, _id} = res.data.data;
 
       setCurrentUserFollowing(prev => {
-        // En caso de follow, agregar el usuario target a los followings del usuario actual
+        // En caso de follow, agregar el usuario siguiendo a los followings del usuario actual
         if(actionType === "follow") {
-          return [...prev, {_id, user: {_id: target}}];
+          return [...prev, {_id, user: {_id: siguiendo}}];
         }
 
-        // En caso de unfollow, remover el usuario target de los followings del usuario actual
+        // En caso de unfollow, remover el usuario siguiendo de los followings del usuario actual
         if(actionType === "unfollow") {
-          const filtered = [...prev].filter(el => el.user._id.toString() !== target.toString());
+          const filtered = [...prev].filter(el => el.user._id.toString() !== siguiendo.toString());
           return filtered;
         }
       });
@@ -108,13 +108,12 @@ const Followers = ({username, isProfileOwner, setOwnerFollowing}) => {
       // Actualizar el contador de los siguiendo en el perfil del usuario autenticado
       if(isProfileOwner) {
         setOwnerFollowing(prev => {
-          console.log({prev})
           if(actionType === "follow"){
-            return [...prev, {_id, user: target}]
+            return [...prev, {_id, user: siguiendo}]
           }
 
           if(actionType === "unfollow") {
-            return [...prev].filter(el => el.user.toString() !== target.toString())
+            return [...prev].filter(el => el.user.toString() !== siguiendo.toString())
           }
         })
       }
@@ -172,7 +171,7 @@ const Followers = ({username, isProfileOwner, setOwnerFollowing}) => {
                   color={checkIfFollowing(el.user._id) ? "instagram" : "twitter"}
                   content={checkIfFollowing(el.user._id) ? "Unfollow" : "Follow"}
                   icon={checkIfFollowing(el.user._id) ? "check" : "add user"}
-                  disabled={loadingFollowers || processingFollow}
+                  disabled={loadingFollowers || !!processingFollow}
                   loading={loadingFollowers || processingFollow === el.user.username}
                   onClick={() => followHandler(el.user.username)}
                 />

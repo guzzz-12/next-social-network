@@ -516,8 +516,8 @@ router.get("/follow/:username", authMiddleware, async (req, res) => {
       data: {
         actionType,
         _id: user._id,
-        me: req.userId,
-        target: user._id
+        seguidor: req.userId,
+        siguiendo: user._id
       }
     })
     

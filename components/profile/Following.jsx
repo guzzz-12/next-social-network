@@ -87,16 +87,16 @@ const Following = ({username, isProfileOwner, setOwnerFollowing}) => {
         url: `/api/profile/follow/${username}`
       });
 
-      const {_id, target, actionType} = res.data.data;
+      const {_id, siguiendo, actionType} = res.data.data;
       setCurrentUserFollowing(prev => {
         // Si es follow, agregar el usuario a la lista de following del usuario actual
         if(actionType === "follow") {
-          return [...prev, {_id, user: {_id: target}}]
+          return [...prev, {_id, user: {_id: siguiendo}}]
         }
 
         // Si es unfollow, extraer el usuario de la lista de following del usuario actual
         if(actionType === "unfollow") {
-          const updated = [...prev].filter(el => el.user._id.toString() !== target.toString());
+          const updated = [...prev].filter(el => el.user._id.toString() !== siguiendo.toString());
           return updated;
         }
       });
@@ -107,11 +107,11 @@ const Following = ({username, isProfileOwner, setOwnerFollowing}) => {
       if(isProfileOwner) {
         setOwnerFollowing(prev => {
           if(actionType === "follow") {
-            return [...prev, {_id, user: target}]
+            return [...prev, {_id, user: siguiendo}]
           }
 
           if(actionType === "unfollow") {
-            const updated = [...prev].filter(el => el.user.toString() !== target.toString());
+            const updated = [...prev].filter(el => el.user.toString() !== siguiendo.toString());
             return updated;
           }
         })
@@ -175,7 +175,7 @@ const Following = ({username, isProfileOwner, setOwnerFollowing}) => {
                   color={checkIfFollowing(el.user._id) ? "instagram" : "twitter"}
                   content={checkIfFollowing(el.user._id) ? "Unfollow" : "Follow"}
                   icon={checkIfFollowing(el.user._id) ? "check" : "add user"}
-                  disabled={loadingFollowing || processingFollow}
+                  disabled={loadingFollowing || !!processingFollow}
                   loading={loadingFollowing || processingFollow === el.user.username}
                   onClick={() => followHandler(el.user.username)}
                 />
