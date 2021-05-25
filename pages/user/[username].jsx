@@ -6,10 +6,11 @@ import {parseCookies} from "nookies";
 import ProfileMenuTabs from "../../components/profile/ProfileMenuTabs";
 import ProfileHeader from "../../components/profile/ProfileHeader";
 import CardPost from "../../components/post/CardPost";
+import Followers from "../../components/profile/Followers";
+import Following from "../../components/profile/Following";
 import {PlaceHolderPosts} from "../../components/Layout/PlaceHolderGroup";
 import {NoProfile, NoProfilePosts} from "../../components/Layout/NoData";
 import {UserContext} from "../../context/UserContext";
-import Followers from "../../components/profile/Followers";
 
 const ProfilePage = (props) => {
   const {profile, error} = props;
@@ -144,9 +145,8 @@ const ProfilePage = (props) => {
               </>
             }
 
-            {activeTab === "followers" &&
-              <Followers username={username}/>
-            }
+            {activeTab === "followers" && <Followers username={username}/>}
+            {activeTab === "following" && <Following username={username}/>}
           </Grid.Column>
         </Grid.Row>
       </Grid>

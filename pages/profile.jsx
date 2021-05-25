@@ -9,6 +9,7 @@ import {PlaceHolderPosts} from "../components/Layout/PlaceHolderGroup";
 import {NoProfile, NoProfilePosts} from "../components/Layout/NoData";
 import {UserContext} from "../context/UserContext";
 import Followers from "../components/profile/Followers";
+import Following from "../components/profile/Following";
 
 const ProfilePage = (props) => {
   const {profile, error} = props;
@@ -27,8 +28,6 @@ const ProfilePage = (props) => {
   const [following, setFollowing] = useState(props.following);
   const [tabError, setTabError] = useState(null);
 
-  console.log({following})
-
 
   /*---------------------------*/
   // Click handler de los tabs
@@ -40,11 +39,11 @@ const ProfilePage = (props) => {
       
     } catch (error) {
       let message = error.message;
-        if(error.response) {
-          message = error.response.data.message
-        }
-        setTabError(message);
-        setLoading(false);
+      if(error.response) {
+        message = error.response.data.message
+      }
+      setTabError(message);
+      setLoading(false);
     }
   }
 
@@ -150,6 +149,14 @@ const ProfilePage = (props) => {
 
             {activeTab === "followers" &&
               <Followers
+                isProfileOwner
+                username={profile.user.username}
+                setOwnerFollowing={setFollowing}
+              />
+            }
+
+            {activeTab === "following" &&
+              <Following
                 isProfileOwner
                 username={profile.user.username}
                 setOwnerFollowing={setFollowing}
