@@ -51,9 +51,23 @@ const ProfileHeader = ({profile, isAccountOwner, followers, following, setFollow
         method: "GET",
         url: `/api/profile/follow/${profile.user.username}`
       });
+      
+      const {actionType, me, _id} = res.data.data;
 
-      console.log({followRes: res.data});
-      setFollowers(res.data.data.followedUserFollowers);
+      setFollowers(prev => {
+        // En caso de unfollow, remover el usuario actual de los seguidores del usuario del perfil visitado
+        if(actionType === "unfollow") {
+          const updated = [...prev].filter(el => el.user.toString() !== me.toString());
+          return updated;
+        }
+
+        // En caso de follow, agregar el usuario actual a los seguidores del usuario del perfil visitado
+        if(actionType === "follow") {
+          const updated = [...prev, {_id, user: me}];
+          return updated
+        }
+      });
+
       setLoading(false);
       
     } catch (error) {
@@ -93,19 +107,19 @@ const ProfileHeader = ({profile, isAccountOwner, followers, following, setFollow
                 <List.Icon name="mail" color="blue" />
                 <List.Content content={profile.user.email} />
               </List.Item>
-            {socialLinks.length === 0 &&
-              <span>No social links</span>
-            }
-            {socialLinks.length > 0 &&
-              socialLinks.map(link => {
-                return (
-                  <List.Item key={link.name}>
-                    <List.Icon name={link.name} color="blue" />
-                    <List.Content content={link.link} />
-                  </List.Item>
-                )
-              })
-            }
+              {socialLinks.length === 0 &&
+                <span>No social links</span>
+              }
+              {socialLinks.length > 0 &&
+                socialLinks.map(link => {
+                  return (
+                    <List.Item key={link.name}>
+                      <List.Icon name={link.name} color="blue" />
+                      <List.Content content={link.link} />
+                    </List.Item>
+                  )
+                })
+              }
             </List>
           </Grid.Row>
         </Grid.Column>

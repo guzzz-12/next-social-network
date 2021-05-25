@@ -9,6 +9,7 @@ import CardPost from "../../components/post/CardPost";
 import {PlaceHolderPosts} from "../../components/Layout/PlaceHolderGroup";
 import {NoProfile, NoProfilePosts} from "../../components/Layout/NoData";
 import {UserContext} from "../../context/UserContext";
+import Followers from "../../components/profile/Followers";
 
 const ProfilePage = (props) => {
   const {profile, error} = props;
@@ -141,6 +142,10 @@ const ProfilePage = (props) => {
                   <NoProfilePosts />
                 }
               </>
+            }
+
+            {activeTab === "followers" &&
+              <Followers username={username}/>
             }
           </Grid.Column>
         </Grid.Row>

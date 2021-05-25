@@ -110,8 +110,7 @@ router.post("/", [
     const hashedPassword = await bcrypt.hash(password, salt);
     
     // Generar el nuevo usuario
-    const newUser = new User({name, username, email, password: hashedPassword});
-    await newUser.save();
+    const newUser = await User.create({name, username, email, password: hashedPassword});
 
     // Generar el perfil del nuevo usuario
     const profileSocialLinks = {};
@@ -130,7 +129,7 @@ router.post("/", [
     await newUserProfile.save();
 
     // Crear la colección de seguidores y seguidos
-    await Follower.create({user: req.userId});
+    await Follower.create({user: newUser._id});
 
     // Generar el token de autenticación y setear el cookie
     const token = jwt.sign({userId: newUser._id, userRole: newUser.role}, process.env.JWT_SECRET, {

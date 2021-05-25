@@ -478,6 +478,8 @@ router.get("/follow/:username", authMiddleware, async (req, res) => {
     const followedUserFollowers = [...followedUser.followers];
     const followerIndex = followedUserFollowers.findIndex(el => el.user.toString() === currentUser.toString());
 
+    let actionType = "unset";
+
     // Si es seguidor, dar unfollow
     if(followerIndex !== -1) {
       // Actualizar los seguidores del usuario seguido
@@ -491,6 +493,7 @@ router.get("/follow/:username", authMiddleware, async (req, res) => {
       // Actualizar ambos docs en la base de datos
       await followedUser.save();
       await followerUser.save();
+      actionType = "unfollow";
 
       // Si no es seguidor, dar follow
     } else {
@@ -505,13 +508,16 @@ router.get("/follow/:username", authMiddleware, async (req, res) => {
       // Actualizar ambos docs en la base de datos
       await followedUser.save();
       await followerUser.save();
+      actionType = "follow";
     }
 
     res.json({
       status: "success",
       data: {
-        followerUserFollowing: followerUser.following,
-        followedUserFollowers: followedUser.followers
+        actionType,
+        _id: user._id,
+        me: req.userId,
+        target: user._id
       }
     })
     
