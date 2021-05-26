@@ -1,4 +1,4 @@
-import {useState, useEffect, useContext, useRef} from "react";
+import {useState, useEffect, useRef} from "react";
 import {Grid, Visibility, Segment, Loader} from "semantic-ui-react";
 import axios from "axios";
 import {parseCookies} from "nookies";
@@ -8,7 +8,7 @@ import CardPost from "../components/post/CardPost";
 import Followers from "../components/profile/Followers";
 import Following from "../components/profile/Following";
 import UpdateProfile from "../components/profile/UpdateProfile";
-import {UserContext} from "../context/UserContext";
+import Settings from "../components/profile/Settings";
 import {NoProfile, NoProfilePosts} from "../components/Layout/NoData";
 import {PlaceHolderPosts} from "../components/Layout/PlaceHolderGroup";
 
@@ -17,13 +17,13 @@ const CancelToken = axios.CancelToken;
 
 const ProfilePage = (props) => {
   const cancellerRef = useRef();
-  const {profile, error} = props;
-  const userContext = useContext(UserContext);
+  const {profile, user: currentUser, error} = props;
+
+  console.log({currentUser});
 
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [postsError, setPostsError] = useState(null);
-  const [isAccountOwner, setIsAccountOwner] = useState(false);
 
   // State de la paginación
   const [loadMore, setLoadMore] = useState(false);
@@ -46,16 +46,6 @@ const ProfilePage = (props) => {
     setIsLastPage(false);
     setCurrentPage(1)
   }
-
-
-  /*-----------------------------------------------------*/
-  // Verificar si el perfil pertenece al usuario logueado
-  /*-----------------------------------------------------*/
-  useEffect(() => {
-    if(userContext.currentUser && profile) {
-      setIsAccountOwner(userContext.currentUser._id.toString() === profile.user._id.toString())
-    }
-  }, [userContext.currentUser, profile]);
 
 
   /*--------------------------------*/
@@ -128,11 +118,11 @@ const ProfilePage = (props) => {
         <Grid.Row>
           <Grid.Column>
             <ProfileMenuTabs
+              isAccountOwner
               activeTab={activeTab}
               tabClickHandler={tabClickHandler}
               followers={followers}
               following={following}
-              isAccountOwner={isAccountOwner}
             />
           </Grid.Column>
         </Grid.Row>
@@ -142,8 +132,8 @@ const ProfilePage = (props) => {
             {activeTab === "profile" &&
               <>
                 <ProfileHeader
+                  isAccountOwner
                   profile={profile}
-                  isAccountOwner={isAccountOwner}
                   followers={followers}
                   following={following}
                 />
@@ -157,7 +147,7 @@ const ProfilePage = (props) => {
                     return (
                       <CardPost
                         key={post._id}
-                        user={userContext.currentUser}
+                        user={currentUser}
                         post={post}
                         setPosts={setPosts}
                       />
@@ -173,7 +163,7 @@ const ProfilePage = (props) => {
             {activeTab === "followers" &&
               <Followers
                 isProfileOwner
-                username={profile.user.username}
+                username={currentUser.username}
                 setOwnerFollowing={setFollowing}
               />
             }
@@ -181,13 +171,17 @@ const ProfilePage = (props) => {
             {activeTab === "following" &&
               <Following
                 isProfileOwner
-                username={profile.user.username}
+                username={currentUser.username}
                 setOwnerFollowing={setFollowing}
               />
             }
 
             {activeTab === "updateProfile" &&
               <UpdateProfile setActiveTab={setActiveTab} />
+            }
+
+            {activeTab === "settings" && 
+              <Settings newMessagePopup={currentUser.newMessagePopup} />
             }
           </Grid.Column>
         </Grid.Row>
@@ -232,6 +226,7 @@ export async function getServerSideProps(context) {
   
     return {
       props: {
+        user: res.data.data.profile.user,
         profile: res.data.data.profile,
         following: res.data.data.following,
         followers: res.data.data.followers,

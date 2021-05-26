@@ -30,7 +30,7 @@ router.get("/me", authMiddleware, async (req, res) => {
     const profile = await Profile.findOne({user: user._id})
     .populate({
       path: "user",
-      select: "_id name username email avatar role"
+      select: "-password -__v"
     });
 
     // Chequear los followers y following
@@ -251,7 +251,9 @@ router.patch("/me/update-password", authMiddleware, [
 
     res.json({
       status: "success",
-      data: "Password updated successfully, login again with your new password"
+      data: {
+        message: "Password updated successfully. Please, login again with your new password"
+      }
     });
 
   } catch (error) {
@@ -539,6 +541,7 @@ router.get("/follow/:username", authMiddleware, async (req, res) => {
 /*-------------------------------------------------*/
 router.patch("/settings/message-popup", authMiddleware, async (req, res) => {
   try {
+    const {msgPopupSetting} = req.body;
     const user = await User.findById(req.userId);
     
     if(!user) {
@@ -549,15 +552,14 @@ router.patch("/settings/message-popup", authMiddleware, async (req, res) => {
     }
 
     // Actualizar el campo newMessagePopup
-    let currentSetting = user.newMessagePopup || false;
-    user.newMessagePopup = !currentSetting;
+    user.newMessagePopup = msgPopupSetting;
     await user.save();
 
     user.password = undefined;
 
     res.json({
       status: "success",
-      data: user
+      data: {newMessagePopup: msgPopupSetting}
     });
     
   } catch (error) {
