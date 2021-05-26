@@ -20,4 +20,4 @@ const followerSchema = new mongoose.Schema({
   }]
 });
 
-module.exports = mongoose.model("Follower", followerSchema);
+module.exports = mongoose.models.Follower || mongoose.model("Follower", followerSchema);

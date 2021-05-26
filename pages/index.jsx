@@ -7,6 +7,7 @@ import axios from "axios";
 import {NoPosts} from "../components/Layout/NoData";
 import {UserContext} from "../context/UserContext";
 import Post from "../models/PostModel";
+import Follower from "../models/FollowerModel";
 import CreatePost from "../components/post/CreatePost";
 import CardPost from "../components/post/CardPost";
 import {PlaceHolderPosts} from "../components/Layout/PlaceHolderGroup";
@@ -142,6 +143,7 @@ const HomePage = ({posts}) => {
 }
 
 
+// Chequear si el usuario está autenticado y cargar la primera página de posts
 export async function getServerSideProps(context) {
   try {
     const {token} = parseCookies(context);
@@ -155,12 +157,18 @@ export async function getServerSideProps(context) {
       }
     }
 
-    // Verificar el token
-    jwt.verify(token, process.env.JWT_SECRET);
+    // Verificar y decodificar el token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
     
     // Es necesario extraer la lógica de la consulta a la DB ya que no es posible
     // realizar consultas a los endpoints de la API interna desde getServerSideProps
-    const posts = await Post.find()
+
+    // Cargar la primera página de los posts del usuario y de sus usuarios seguidos
+    const followingData = await Follower.findOne({user: userId});
+    const followingUsers = followingData.following.map(el => el.user);
+
+    const posts = await Post.find({user: {$in: [userId, ...followingUsers]}})
     .limit(2)
     .skip(0)
     .sort({createdAt: "desc"})

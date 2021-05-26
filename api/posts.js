@@ -4,6 +4,7 @@ const cloudinary = require("cloudinary").v2;
 const formidable = require("formidable");
 const Post = require("../models/PostModel");
 const User = require("../models/UserModel");
+const Follower = require("../models/FollowerModel");
 const authMiddleware = require("../middleware/authMiddleware");
 
 /*--------------*/
@@ -146,15 +147,19 @@ router.patch("/:postId", authMiddleware, async (req, res) => {
 });
 
 
-/*--------------------------*/
-// Consultar todos los posts
-/*--------------------------*/
+/*-----------------------------------------------------------------*/
+// Consultar todos los posts del usuario y de sus usuarios seguidos
+/*-----------------------------------------------------------------*/
 router.get("/", authMiddleware, async (req, res) => {
   const page = +req.query.page;
   const amount = 2;
 
   try {
-    const posts = await Post.find()
+    // Buscar los usuarios seguidos por el usuario
+    const followingData = await Follower.findOne({user: req.userId});
+    const followingUsers = followingData.following.map(el => el.user);
+
+    const posts = await Post.find({user: {$in: [req.userId, ...followingUsers]}})
     .limit(amount)
     .skip(amount * (page - 1))
     .sort({createdAt: "desc"})
