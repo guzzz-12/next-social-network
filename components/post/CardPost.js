@@ -264,7 +264,10 @@ const CardPost = ({user, post, setPosts}) => {
               <LikesList
                 postId={post._id}
                 trigger={
-                  <span style={{cursor: "pointer"}}>
+                  <span
+                    style={{cursor: !loading ? "pointer" : "default"}}
+                    onClick={() => !loading && likesHandler(post._id)}
+                  >
                     {likes.length} {likes.length === 1 ? "like" : "likes"}
                   </span>
                 }

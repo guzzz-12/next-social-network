@@ -70,7 +70,7 @@ const ImageModal = ({post, user, likes, comments, setComments, likesHandler, del
               }
 
               {/* Avatar del autor del post */}
-              <Image  src={user.avatar} floated="left" inline avatar />
+              <Image  src={post.user.avatar} floated="left" inline avatar />
 
               {/* Nombre completo del usuario */}
               <Card.Header>

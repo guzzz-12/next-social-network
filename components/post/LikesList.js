@@ -38,7 +38,7 @@ const LikesList = ({postId, trigger}) => {
 
   return (
     <Popup
-      on="click"
+      on="hover"
       onOpen={() => getLikes()}
       onClose={() => setLikes([])}
       popperDependencies={[likes]}
