@@ -46,7 +46,7 @@ const SideMenu = ({user: {unreadNotification, unreadMessage, username, email}}) 
             onClick={() => setActiveRoute("/messages")}
           >
             <Icon
-              name={unreadMessage ? "hand point right" : "mail outline"}
+              name={unreadMessage ? "hand point right" : unreadMessage ? "mail" : "mail outline"}
               size="large"
               color={activeRoute === "/messages" ? "teal" : unreadMessage ? "orange" : "grey"}
             />
@@ -63,7 +63,7 @@ const SideMenu = ({user: {unreadNotification, unreadMessage, username, email}}) 
             onClick={() => setActiveRoute("/notifications")}
           >
             <Icon
-              name={unreadMessage ? "hand point right" : "bell outline"}
+              name={unreadMessage ? "hand point right" : unreadNotification ? "bell" : "bell outline"}
               size="large"
               color={activeRoute === "/notifications" ? "teal" : unreadNotification ? "orange" : "grey"}
             />

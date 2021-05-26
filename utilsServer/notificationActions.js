@@ -31,10 +31,16 @@ const removeNotification = async (type, userId, postId, userNotifierId) => {
     // Buscar el índice de la notificación del tipo especificado
     // del usuario notificador correspondiente al postId
     let notificationIndex = null;
+
     if(type === "like" || type === "comment") {
       notificationIndex = notifications.findIndex(el => el.notificationType === type && el.post.toString() === postId.toString() && el.notificationUser.toString() === userNotifierId.toString());
     }
 
+    if(type === "follower") {
+      notificationIndex = notifications.findIndex(el => el.notificationType === "follower" && el.notificationUser.toString() === userNotifierId.toString());
+    }
+
+    // Si la notificación existe, eliminarla del documento
     if(notificationIndex > -1) {
       notifications.splice(notificationIndex, 1);
       userNotificationsDoc.notifications = notifications;
@@ -127,8 +133,43 @@ const newCommentNotification = async (postId, commentId, commentText, userNotifi
 }
 
 
+/*---------------------------------------*/
+// Crear notificaciones de nuevo seguidor
+/*---------------------------------------*/
+const newFollowerNotification = async (userFollowerId, userToNotifyId) => {
+  try {
+    const userNotificationsDoc = await Notification.findOne({user: userToNotifyId});
+
+    const newNotification = {
+      notificationType: "follower",
+      notificationUser: userFollowerId
+    }
+
+    if(!userNotificationsDoc) {
+      await Notification.create({
+        user: userToNotifyId,
+        notifications: [newNotification]
+      });
+
+      await setUnreadNotification(userToNotifyId);
+      return null;
+    }
+
+    userNotificationsDoc.notifications.push(newNotification);
+    await userNotificationsDoc.save();
+    await setUnreadNotification(userToNotifyId);
+    
+    return null;
+    
+  } catch (error) {
+    throw new Error(`Error creating follower notification: ${error.message}`)
+  }
+}
+
+
 module.exports = {
   removeNotification,
   newLikeNotification,
-  newCommentNotification
+  newCommentNotification,
+  newFollowerNotification
 }

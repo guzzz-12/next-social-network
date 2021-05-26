@@ -9,6 +9,7 @@ const Profile = require("../models/ProfileModel");
 const Post = require("../models/PostModel");
 const Follower = require("../models/FollowerModel");
 const authMiddleware = require("../middleware/authMiddleware");
+const {newFollowerNotification, removeNotification} = require("../utilsServer/notificationActions");
 
 /*---------------------------------------*/
 // Consultar el perfil del usuario actual
@@ -501,7 +502,10 @@ router.get("/follow/:username", authMiddleware, async (req, res) => {
       await followerUser.save();
       actionType = "unfollow";
 
-      // Si no es seguidor, dar follow
+      // Eliminar la notificación de nuevo seguidor
+      await removeNotification("follower", user._id, null, req.userId);
+
+    // Si no es seguidor, dar follow
     } else {
       // Actualizar los seguidores del usuario seguido
       followedUserFollowers.push({user: currentUser});
@@ -515,6 +519,9 @@ router.get("/follow/:username", authMiddleware, async (req, res) => {
       await followedUser.save();
       await followerUser.save();
       actionType = "follow";
+
+      // Generar notificación de nuevo seguidor
+      await newFollowerNotification(req.userId, user._id);
     }
 
     res.json({
