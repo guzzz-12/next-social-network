@@ -5,6 +5,7 @@ const formidable = require("formidable");
 const Post = require("../models/PostModel");
 const User = require("../models/UserModel");
 const Follower = require("../models/FollowerModel");
+const {newLikeNotification, removeLikeNotification} = require("../utilsServer/notificationActions");
 const authMiddleware = require("../middleware/authMiddleware");
 
 /*--------------*/
@@ -292,9 +293,16 @@ router.post("/likes/:postId", authMiddleware, async (req, res) => {
     const likeIndex = updatedLikes.findIndex(like => like.user.toString() === req.userId.toString());
 
     if(likeIndex !== -1) {
+      // Remover el like de los likes en el post
       updatedLikes.splice(likeIndex, 1);
+      // Remover la notificación de like del doc de notificaciones del autor de post
+      await removeLikeNotification(post.user, post._id, req.userId);
+      
     } else {
-      updatedLikes.push({user: req.userId})
+      // Agregar el like a los likes del post
+      updatedLikes.push({user: req.userId});
+      // Agregar la notificación al doc de notificacines del autor del post
+      await newLikeNotification(req.userId, post._id, post.user);
     }
 
     // Actualizar los likes en la data del post
