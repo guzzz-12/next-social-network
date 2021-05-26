@@ -30,6 +30,10 @@ const postSchema = new mongoose.Schema({
   ],
   comments: [
     {
+      _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true
+      },
       user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"

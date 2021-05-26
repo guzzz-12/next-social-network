@@ -2,10 +2,11 @@ const express = require("express");
 const router = express.Router();
 const cloudinary = require("cloudinary").v2;
 const formidable = require("formidable");
+const mongoose = require("mongoose");
 const Post = require("../models/PostModel");
 const User = require("../models/UserModel");
 const Follower = require("../models/FollowerModel");
-const {newLikeNotification, removeLikeNotification} = require("../utilsServer/notificationActions");
+const {newLikeNotification, newCommentNotification, removeNotification} = require("../utilsServer/notificationActions");
 const authMiddleware = require("../middleware/authMiddleware");
 
 /*--------------*/
@@ -296,13 +297,16 @@ router.post("/likes/:postId", authMiddleware, async (req, res) => {
       // Remover el like de los likes en el post
       updatedLikes.splice(likeIndex, 1);
       // Remover la notificación de like del doc de notificaciones del autor de post
-      await removeLikeNotification(post.user, post._id, req.userId);
-      
+      await removeNotification("like", post.user, post._id, req.userId);
+
     } else {
       // Agregar el like a los likes del post
       updatedLikes.push({user: req.userId});
-      // Agregar la notificación al doc de notificacines del autor del post
-      await newLikeNotification(req.userId, post._id, post.user);
+      // Agregar la notificación al doc de notificaciones del autor del post
+      // sólo si el autor del like no es el autor del post
+      if(req.userId.toString() !== post.user.toString()) {
+        await newLikeNotification(req.userId, post._id, post.user);
+      }
     }
 
     // Actualizar los likes en la data del post
@@ -389,7 +393,9 @@ router.post("/comments/:postId", authMiddleware, async (req, res) => {
 
     const author = await User.findById(req.userId);
     
+    const newCommentId = mongoose.Types.ObjectId();
     const newComment = {
+      _id: newCommentId,
       user: {
         _id: author._id,
         name: author.name,
@@ -400,8 +406,15 @@ router.post("/comments/:postId", authMiddleware, async (req, res) => {
       text
     }
 
+    // Guardar el comentario en la base de datos
     post.comments.push(newComment);
     await post.save();
+
+    // Generar la notificación de nuevo comentario
+    // sólo si el comentario no es del autor del post
+    if(req.userId.toString() !== post.user._id.toString()) {
+      await newCommentNotification(post._id, newCommentId, text, req.userId, post.user._id);
+    }
 
     res.json({
       status: "success",
@@ -461,6 +474,10 @@ router.delete("/comments/:postId/:commentId", authMiddleware, async (req, res) =
     const deletedComment = updatedComments.splice(commentIndex, 1);
     post.comments = updatedComments;
     await post.save();
+
+    // Eliminar la notificación asociada al comentario
+    // de la colección de notificaciones del autor de post
+    await removeNotification("comment", post.user._id, post._id, req.userId);
 
     res.json({
       status: "success",
