@@ -6,7 +6,6 @@ const {check, validationResult} = require("express-validator");
 
 const User = require("../models/UserModel");
 const Profile = require("../models/ProfileModel");
-const Follower = require("../models/FollowerModel");
 
 /*---------------*/
 // Iniciar sesión

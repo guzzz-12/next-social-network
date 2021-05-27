@@ -16,6 +16,7 @@ const searchRoutes = require("./api/search");
 const postsRoutes = require("./api/posts");
 const profileRoutes = require("./api/profile");
 const notificationsRoutes = require("./api/notifications");
+const chatsRoutes = require("./api/chats");
 const errorsHandler = require("./middleware/errorsHandler");
 const PORT = process.env.PORT || 5000;
 
@@ -45,6 +46,7 @@ nextApp.prepare()
   app.use("/api/posts", postsRoutes);
   app.use("/api/profile", profileRoutes);
   app.use("/api/notifications", notificationsRoutes);
+  app.use("/api/chats", chatsRoutes);
   app.all("*", (req, res) => handle(req, res));
 
   // Manejo de errores
