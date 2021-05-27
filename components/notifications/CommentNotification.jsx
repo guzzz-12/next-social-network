@@ -6,21 +6,23 @@ const CommentNotification = ({notification}) => {
 
   return (
     <Feed.Event>
-      <Feed.Label image={user.avatar}/>
-      <Feed.Content>
+      <Feed.Label
+        as="a"
+        href={`/user/${user.username}`}
+        image={user.avatar}
+      />
+      <Feed.Content style={{marginTop: 0}}>
         <Feed.Summary>
-          <>
-            <Feed.User as="a" href={`/user/${user.username}`}>
-              {user.name}
-            </Feed.User>
-            {" "}
-            commented on your
-            {" "}
-            {notification.post && <a href={`/post/${notification.post._id}`}>post</a>}
-            {!notification.post && <span>post (deleted)</span>}
+          <Feed.User as="a" href={`/user/${user.username}`}>
+            {user.name}
+          </Feed.User>
+          {" "}
+          commented on your
+          {" "}
+          {notification.post && <a href={`/post/${notification.post._id}`}>post</a>}
+          {!notification.post && <span>post (deleted)</span>}
 
-            <Feed.Date>{moment(notification.date).calendar()}</Feed.Date>
-          </>
+          <Feed.Date>{moment(notification.date).calendar()}</Feed.Date>
         </Feed.Summary>
 
         {/* Imagen del post (si la tiene) */}

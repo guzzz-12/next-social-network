@@ -47,7 +47,7 @@ const NotificationsPage = (props) => {
     <Container style={{marginTop: "1rem"}}>
       {notifications.length > 0 &&
         <Segment>
-          <Header as="h3" textAlign="center">
+          <Header style={{marginTop: "10px"}} as="h3" textAlign="center">
             <Icon
               style={{display: "block", margin: "0 auto"}}
               name="tasks"
@@ -97,7 +97,7 @@ const NotificationsPage = (props) => {
       }
 
       {notifications.length === 0 && <p>No new notifications</p> }
-      
+
     </Container>
   )
 }
