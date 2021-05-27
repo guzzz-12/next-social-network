@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Notification = require("../models/NotificationModel");
+const User = require("../models/UserModel");
 const authMiddleware = require("../middleware/authMiddleware");
 
 // Consultar las notificaciones del usuario autenticado
@@ -31,6 +32,36 @@ router.get("/", authMiddleware, async (req, res) => {
       message: `Error getting notifications: ${error.message}`
     })
   }
+});
+
+
+// Marcar las notificaciones como leídas
+router.patch("/", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select("-password");
+    let isUpdated = null;
+
+    if(user.unreadNotification) {
+      user.unreadNotification = false;
+      await user.save();
+      isUpdated = true;
+    } else {
+      isUpdated = false;
+    }
+
+    
+    res.json({
+      status: "success",
+      data: {user, isUpdated}
+    })
+
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: error.message
+    })
+  }
 })
+
 
 module.exports = router;
