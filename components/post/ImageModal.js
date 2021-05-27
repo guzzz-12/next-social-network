@@ -79,7 +79,9 @@ const ImageModal = ({post, user, likes, comments, setComments, likesHandler, del
                 </Link>
               </Card.Header>
               <Card.Meta>
-                {moment(post.createdAt).calendar()}
+                <Link href={`/post/${post._id}`}>
+                  <a>{moment(post.createdAt).calendar()}</a>
+                </Link>
               </Card.Meta>
 
               {/* Location del post (si se especifica) */}

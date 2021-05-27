@@ -192,14 +192,13 @@ router.get("/:postId", authMiddleware, async (req, res) => {
   try {
     // Buscar el post
     const post = await Post.findById(req.params.postId)
-    .populate("user", "_id name username email")
     .populate({
-      path: "likes.user",
-      select: "_id name username avatar"
+      path: "user",
+      select: "_id name username email avatar"
     })
     .populate({
       path: "comments.user",
-      select: "_id name username avatar"
+      select: "_id name username avatar role"
     });
 
     // Chequear si el post existe

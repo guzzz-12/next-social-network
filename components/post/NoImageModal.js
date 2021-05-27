@@ -60,7 +60,9 @@ const NoImageModal = ({post, user, likes, comments, setComments, likesHandler, d
 
         {/* Fecha de creación del post */}
         <Card.Meta>
-          {moment(post.createdAt).calendar()}
+          <Link href={`/post/${post._id}`}>
+            <a>{moment(post.createdAt).calendar()}</a>
+          </Link>
         </Card.Meta>
 
         {/* Location del post (si se especifica) */}

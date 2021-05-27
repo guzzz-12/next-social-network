@@ -1,28 +1,31 @@
-import {useState, useEffect} from "react";
+import {useEffect, useState, useContext} from "react";
 import Link from "next/link";
-import {Card, Icon, Image, Divider, Segment, Button, Popup, Header, Modal} from "semantic-ui-react";
-import axios from "axios";
+import {useRouter} from "next/router";
+import {Container, Header, Card, Icon, Image, Divider, Segment, Button, Popup, Message} from "semantic-ui-react";
 import moment from "moment";
+import axios from "axios";
+import jwt from "jsonwebtoken";
+import {parseCookies} from "nookies";
 import {ToastContainer, toast} from "react-toastify";
-import PostComment from "./PostComment";
-import CommentInput from "./CommentInput";
-import LikesList from "./LikesList";
-import ImageModal from "./ImageModal";
-import NoImageModal from "./NoImageModal";
-import classes from "./cardPost.module.css";
+import PostComment from "../../components/post/PostComment";
+import CommentInput from "../../components/post/CommentInput";
+import LikesList from "../../components/post/LikesList";
+import {UserContext} from "../../context/UserContext";
 
-const CardPost = ({user, post, setPosts}) => {
-  // console.log({post});
-  // console.log({user});
-  
+const PostPage = (props) => {
+  const router = useRouter();
+  const userContext = useContext(UserContext);
+  const user = userContext.currentUser;
+  const {post} = props;
+
   const [likes, setLikes] = useState(post.likes);
-  const [isLiked, setIsLiked] = useState(false);
   const [comments, setComments] = useState(post.comments);
+  const [isLiked, setIsLiked] = useState(false);
+
+  const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [deleting, setDeleting] = useState(null);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   /*----------------------------------------------------------*/
   // Verificar si el post ya fue likeado por el usuario actual
@@ -36,11 +39,8 @@ const CardPost = ({user, post, setPosts}) => {
     }
   }, [user, likes]);
 
-  if(!user) {
-    return null;
-  }
 
-  /*------------*/
+  //*------------*/
   // Borrar post
   /*------------*/
   const deletePostHandler = async (postId) => {
@@ -55,16 +55,14 @@ const CardPost = ({user, post, setPosts}) => {
         withCredentials: true
       });
 
-      // Extraer el post eliminado del state
-      setPosts(prev => {
-        const filteredPosts = prev.filter(post => post._id.toString() !== postId.toString());
-        return filteredPosts;
-      });
-
       setLoading(false);
       setDeleting(null);
-      setIsModalOpen(false);
-      toast.dark("Post deleted successfully")
+      toast.dark("Post deleted successfully");
+
+      // Redirigir al eliminar el post
+      setTimeout(() => {
+        router.push("/");
+      }, 2500);
       
     } catch (error) {
       let message = error.message;
@@ -78,6 +76,7 @@ const CardPost = ({user, post, setPosts}) => {
       setDeleting(null);
     }
   }
+
 
   /*-------------------------*/
   // Dar/remover like al post
@@ -107,54 +106,41 @@ const CardPost = ({user, post, setPosts}) => {
     }
   }
 
+
+  /*-------------------------------------------*/
+  // Mostrar mensaje de error al cargar el post
+  /*-------------------------------------------*/
+  if(props.error) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          width: "100%",
+          maxWidth: "350px",
+          minHeight: "80vh",
+          margin: "0 auto",
+          paddingTop: "1rem"
+        }}
+      >
+        <Message negative
+          icon="warning sign"
+          header="Error loading post!"
+          content={props.error.includes("Cast to ObjectId") ? "Post not found or deleted" : props.error}
+        />
+      </div>
+    )
+  }
+
   return (
-    <>
-      {isModalOpen ?
-        <Modal
-          className={classes[post.picUrl ? "post-card__image-modal" : "post-card__noimage-modal"]}
-          closeIcon
-          open={isModalOpen}
-          closeOnDimmerClick
-          onClose={() => setIsModalOpen(false)}
-        >
-          <Modal.Content>
-            {post.picUrl ?
-              <ImageModal
-                post={post}
-                user={user}
-                comments={comments}
-                setComments={setComments}
-                likes={likes}
-                isLiked={isLiked}
-                likesHandler={likesHandler}
-                loading={loading}
-                deleting={deleting}
-                deletePostHandler={deletePostHandler}
-              />
-              :
-              <NoImageModal
-                post={post}
-                user={user}
-                comments={comments}
-                setComments={setComments}
-                likes={likes}
-                isLiked={isLiked}
-                likesHandler={likesHandler}
-                loading={loading}
-                deleting={deleting}
-                deletePostHandler={deletePostHandler}
-              />
-            }
-          </Modal.Content>
-        </Modal>
-        :
-        null
-      }
+    <Container text>
+      {/* Toast para indicar que el post fue borrado con éxito */}
       <ToastContainer
         position="bottom-center"
         autoClose={3000}
         hideProgressBar={true}
       />
+
       <Segment basic>
         <Card
           style={{opacity: loading && (deleting === post._id.toString()) ? 0.5 : 1 }}
@@ -163,19 +149,17 @@ const CardPost = ({user, post, setPosts}) => {
         >
           {post.picUrl &&
             <Image
-              style={{cursor: "pointer"}}
               src={post.picUrl}
               floated="left"
               ui={false}
               alt="Post image"
-              onClick={() => setIsModalOpen(true)}
             />
           }
 
           <Card.Content>
             {/* Avatar del usuario y botón de borrar */}
             <Image floated="left" src={post.user.avatar} avatar circular />
-            {user.role === "admin" || (user._id.toString() === post.user._id.toString()) ?
+            {user && user.role === "admin" || (user && user._id.toString() === post.user._id.toString()) ?
               <div style={{position: "relative"}}>
                 <Popup
                   on="click"
@@ -218,12 +202,7 @@ const CardPost = ({user, post, setPosts}) => {
               </Link>
             </Card.Header>
             <Card.Meta>
-              <div
-                className={classes["post-card__link"]}
-                onClick={() => setIsModalOpen(true)}
-              >
-                {moment(post.createdAt).calendar()}
-              </div>
+              {moment(post.createdAt).calendar()}
             </Card.Meta>
 
             {/* Location del post (si se especifica) */}
@@ -283,8 +262,16 @@ const CardPost = ({user, post, setPosts}) => {
             <span>{comments.length} comments</span>
 
             <Divider />
+            
+            {/* Campo para agregar comentarios */}
+            <CommentInput
+              user={user}
+              postId={post._id}
+              setComments={setComments}
+            />
 
-            {comments.length > 0 &&
+            {/* Lista de comentarios del post */}
+            {user && comments.length > 0 &&
               comments.map(comment => {
                 return (
                   <PostComment
@@ -295,35 +282,66 @@ const CardPost = ({user, post, setPosts}) => {
                     setComments={setComments}
                   />
                 )
-              }).slice(0, 6)
+              })
             }
-
-            {/* Mostrar botón de ver más comentarios si el post tiene más de 6 comentarios */}
-            {comments.length > 6 &&
-              <div style={{marginTop: "10px"}}>
-                <Button
-                  content="Read more"
-                  color="teal"
-                  basic
-                  circular
-                  onClick={() => setIsModalOpen(true)}
-                />
-              </div>
-            }
-
-            <Divider hidden />
-
-            {/* Campo para agregar comentarios */}
-            <CommentInput
-              user={user}
-              postId={post._id}
-              setComments={setComments}
-            />
           </Card.Content>
         </Card>
       </Segment>
-    </>
+    </Container>
   )
 }
 
-export default CardPost;
+PostPage.getInitialProps = async (context) => {
+  try {
+    const {postid} = context.query;
+    const {token} = parseCookies(context);
+
+    axios.defaults.headers.get.Cookie = `token=${token}`
+
+    // Redirigir si no hay token
+    if(!token) {
+      return {
+        redirect: {
+          destination: "/login",
+          permanent: false
+        }
+      }
+    }
+
+    // Redirigir si el token expiró
+    const decoded = jwt.decode(token);
+    const tokenExpiry = decoded.exp*1000;
+
+    if(Date.now() >= tokenExpiry) {
+      return {
+        redirect: {
+          destination: "/login",
+          permanent: false
+        }
+      }
+    }
+
+    // Buscar el post
+    const res = await axios({
+      method: "GET",
+      url: `/api/posts/${postid}`
+    })
+
+    return {
+      post: res.data.data
+    }
+    
+  } catch (error) {
+    let message = error.message;
+    
+    if(error.response) {
+      message = error.response.data.message
+    }
+
+    return {
+      error: message
+    }
+  }
+}
+
+export default PostPage;
