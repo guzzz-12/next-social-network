@@ -328,8 +328,26 @@ router.get("/:username/posts", authMiddleware, async (req, res) => {
       });
     }
 
+    // Consultar el número de posts existentes
+    const count = await Post
+    .find({user:  user._id})
+    .lean()
+    .countDocuments();
+
+    // Verificar si es la última página de documentos
+    let isLastPage = count <= (amount * (page - 1));
+    
+    // Retornar indicando que se llegó a la última página de posts
+    if(isLastPage) {
+      return res.json({
+        status: "success",
+        data: {results: 0, userPosts: [], isLastPage}
+      })
+    }
+
     // Buscar los posts del usuario
     const userPosts = await Post.find({user: user._id})
+    .lean()
     .limit(amount)
     .skip(amount * (page - 1))
     .sort({createdAt: "desc"})
@@ -344,7 +362,7 @@ router.get("/:username/posts", authMiddleware, async (req, res) => {
 
     res.json({
       status: "success",
-      data: {results: userPosts.length, userPosts}
+      data: {results: userPosts.length, userPosts, isLastPage}
     })
     
   } catch (error) {

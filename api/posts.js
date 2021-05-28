@@ -161,7 +161,7 @@ router.get("/", authMiddleware, async (req, res) => {
     const followingData = await Follower.findOne({user: req.userId});
     const followingUsers = followingData.following.map(el => el.user);
 
-    // Concultar el número de posts existentes
+    // Consultar el número de posts existentes
     const count = await Post
     .find({user: {$in: [req.userId, ...followingUsers]}})
     .lean().countDocuments();

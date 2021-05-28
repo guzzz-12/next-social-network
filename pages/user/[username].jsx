@@ -82,11 +82,12 @@ const ProfilePage = (props) => {
         })
       })
       .then(res => {
-        const {userPosts, results} = res.data.data;
-        if(results > 0) {
+        const {userPosts, isLastPage} = res.data.data;
+        if(!isLastPage) {
           setPosts(prev => [...prev, ...userPosts]);
           setCurrentPage(prev => prev + 1);
           setIsLastPage(false)
+
         } else {
           setIsLastPage(true);
         }
