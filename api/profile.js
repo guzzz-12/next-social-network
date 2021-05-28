@@ -9,7 +9,7 @@ const Profile = require("../models/ProfileModel");
 const Post = require("../models/PostModel");
 const Follower = require("../models/FollowerModel");
 const authMiddleware = require("../middleware/authMiddleware");
-const {newFollowerNotification, removeNotification} = require("../utilsServer/notificationActions");
+const {newFollowerNotification, removeNotification} = require("../utilsServer/notificationActions")
 
 /*---------------------------------------*/
 // Consultar el perfil del usuario actual
@@ -503,7 +503,7 @@ router.get("/follow/:username", authMiddleware, async (req, res) => {
       actionType = "unfollow";
 
       // Eliminar la notificación de nuevo seguidor
-      await removeNotification("follower", user._id, null, req.userId);
+      await removeNotification("follower", user._id, null, null, req.userId);
 
     // Si no es seguidor, dar follow
     } else {

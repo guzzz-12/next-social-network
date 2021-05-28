@@ -296,7 +296,7 @@ router.post("/likes/:postId", authMiddleware, async (req, res) => {
       // Remover el like de los likes en el post
       updatedLikes.splice(likeIndex, 1);
       // Remover la notificación de like del doc de notificaciones del autor de post
-      await removeNotification("like", post.user, post._id, req.userId);
+      await removeNotification("like", post.user, post._id, null, req.userId);
 
     } else {
       // Agregar el like a los likes del post
@@ -476,7 +476,7 @@ router.delete("/comments/:postId/:commentId", authMiddleware, async (req, res) =
 
     // Eliminar la notificación asociada al comentario
     // de la colección de notificaciones del autor de post
-    await removeNotification("comment", post.user._id, post._id, req.userId);
+    await removeNotification("comment", post.user._id, post._id, deletedComment[0]._id);
 
     res.json({
       status: "success",

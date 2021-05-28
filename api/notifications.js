@@ -7,19 +7,19 @@ const authMiddleware = require("../middleware/authMiddleware");
 // Consultar las notificaciones del usuario autenticado
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const notifications = await Notification.findOne({user: req.userId})
-    .populate({
-      path: "notifications.notificationUser",
-      select: "_id name username email avatar"
-    })
-    .populate("notifications.post", "_id content picUrl");
+    const page = +req.query.page;
+    const limit = 10;
 
-    if(!notifications) {
-      return res.status(404).json({
-        status: "failed",
-        message: "Notifications document or user not found or deleted"
-      })
-    }
+    const notifications = await Notification
+    .find({userToNotify: req.userId})
+    .limit(limit)
+    .skip(limit * (page - 1))
+    .sort({createdAt: -1})
+    .populate({
+      path: "userNotifier",
+      select: "_id name username email avatar role"
+    })
+    .populate("post", "_id content picUrl");
 
     res.json({
       status: "success",

@@ -23,30 +23,40 @@ const setUnreadNotification = async (userId) => {
 /*--------------------------*/
 // Remover una notificación
 /*--------------------------*/
-const removeNotification = async (type, userId, postId, userNotifierId) => {
+const removeNotification = async (type, userId, postId, commentId, userNotifierId) => {
   try {
-    const userNotificationsDoc = await Notification.findOne({user: userId});
-    const notifications = [...userNotificationsDoc.notifications];
+    let query = null;
 
-    // Buscar el índice de la notificación del tipo especificado
-    // del usuario notificador correspondiente al postId
-    let notificationIndex = null;
-
-    if(type === "like" || type === "comment") {
-      notificationIndex = notifications.findIndex(el => el.notificationType === type && el.post.toString() === postId.toString() && el.notificationUser.toString() === userNotifierId.toString());
+    // Buscar y eliminar la notificación de tipo like
+    if(type === "like") {
+      query = Notification.findOneAndDelete({$and: [
+        {userToNotify: userId},
+        {userNotifier: userNotifierId},
+        {notificationType: "like"},
+        {post: postId}
+      ]})
     }
 
+    // Buscar y eliminar la notificación de tipo comment
+    if(type === "comment") {
+      query = Notification.findOneAndDelete({$and: [
+        {userToNotify: userId},
+        {notificationType: "comment"},
+        {post: postId},
+        {commentId}
+      ]})
+    }
+
+    // Buscar y eliminar la notificación de tipo follower
     if(type === "follower") {
-      notificationIndex = notifications.findIndex(el => el.notificationType === "follower" && el.notificationUser.toString() === userNotifierId.toString());
+      query = Notification.findOneAndDelete({$and: [
+        {userToNotify: userId},
+        {userNotifier: userNotifierId},
+        {notificationType: "follower"}
+      ]})
     }
 
-    // Si la notificación existe, eliminarla del documento
-    if(notificationIndex > -1) {
-      notifications.splice(notificationIndex, 1);
-      userNotificationsDoc.notifications = notifications;
-      await userNotificationsDoc.save();
-    }
-
+    await query;
     return null;
     
   } catch (error) {
@@ -60,31 +70,13 @@ const removeNotification = async (type, userId, postId, userNotifierId) => {
 /*--------------------------------------------*/
 const newLikeNotification = async (userNotifierId, postId, userToNotifyId) => {
   try {
-    // Notificaciones del usuario que va a recibir al notificación
-    const userNotificationsDoc = await Notification.findOne({user: userToNotifyId});
-
-    // Cotenido de la notificación
-    const newNotification = {
+    await Notification.create({
+      userToNotify: userToNotifyId,
+      userNotifier: userNotifierId,
       notificationType: "like",
-      // Usuario notificador (el usuario que dio el like)
-      notificationUser: userNotifierId,
-      // Post likeado
-      post: postId,
-      date: Date.now()
-    }
+      post: postId
+    });
 
-    // Inicializar la colección de notificaciones del usuario si no existe
-    if(!userNotificationsDoc) {
-      await Notification.create({
-        user: userToNotifyId,
-        notifications: [newNotification]
-      });
-      await setUnreadNotification(userToNotifyId);
-      return null;
-    }
-
-    userNotificationsDoc.notifications.push(newNotification);
-    await userNotificationsDoc.save();
     await setUnreadNotification(userToNotifyId);
 
     return null;
@@ -100,29 +92,15 @@ const newLikeNotification = async (userNotifierId, postId, userToNotifyId) => {
 /*--------------------------------------------------------*/
 const newCommentNotification = async (postId, commentId, commentText, userNotifierId, userToNotifyId) => {
   try {
-    const userNotificationsDoc = await Notification.findOne({user: userToNotifyId});
-
-    const newNotification = {
+    await Notification.create({
+      userToNotify: userToNotifyId,
+      userNotifier: userNotifierId,
       notificationType: "comment",
-      notificationUser: userNotifierId,
       post: postId,
       commentId,
       commentText
-    }
+    });
 
-    // Inicializar la colección de notificaciones del usuario si no tiene notificaciones
-    if(!userNotificationsDoc) {
-      await Notification.create({
-        user: userToNotifyId,
-        notifications: [newNotification]
-      });
-
-      await setUnreadNotification(userToNotifyId);
-      return null;
-    }
-
-    userNotificationsDoc.notifications.push(newNotification);
-    await userNotificationsDoc.save();
     await setUnreadNotification(userToNotifyId);
 
     return null;
@@ -138,26 +116,13 @@ const newCommentNotification = async (postId, commentId, commentText, userNotifi
 /*---------------------------------------*/
 const newFollowerNotification = async (userFollowerId, userToNotifyId) => {
   try {
-    const userNotificationsDoc = await Notification.findOne({user: userToNotifyId});
+    await Notification.create({
+      userToNotify: userToNotifyId,
+      userNotifier: userFollowerId,
+      notificationType: "follower"
+    });
 
-    const newNotification = {
-      notificationType: "follower",
-      notificationUser: userFollowerId
-    }
-
-    if(!userNotificationsDoc) {
-      await Notification.create({
-        user: userToNotifyId,
-        notifications: [newNotification]
-      });
-
-      await setUnreadNotification(userToNotifyId);
-      return null;
-    }
-
-    userNotificationsDoc.notifications.push(newNotification);
-    await userNotificationsDoc.save();
-    await setUnreadNotification(userToNotifyId);
+    await setUnreadNotificationAlt(userToNotifyId);
     
     return null;
     
