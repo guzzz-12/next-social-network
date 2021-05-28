@@ -6,6 +6,7 @@ import moment from "moment";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import {parseCookies} from "nookies";
+import unauthRedirect from "../../utilsServer/unauthRedirect";
 import {ToastContainer, toast} from "react-toastify";
 import PostComment from "../../components/post/PostComment";
 import CommentInput from "../../components/post/CommentInput";
@@ -291,35 +292,16 @@ const PostPage = (props) => {
   )
 }
 
-PostPage.getInitialProps = async (context) => {
+export async function getServerSideProps(context) {
   try {
     const {postid} = context.query;
     const {token} = parseCookies(context);
 
-    axios.defaults.headers.get.Cookie = `token=${token}`
+    // Verificar el token
+    jwt.verify(token, process.env.JWT_SECRET);  
 
-    // Redirigir si no hay token
-    if(!token) {
-      return {
-        redirect: {
-          destination: "/login",
-          permanent: false
-        }
-      }
-    }
-
-    // Redirigir si el token expiró
-    const decoded = jwt.decode(token);
-    const tokenExpiry = decoded.exp*1000;
-
-    if(Date.now() >= tokenExpiry) {
-      return {
-        redirect: {
-          destination: "/login",
-          permanent: false
-        }
-      }
-    }
+    // Setear el token en los cookies del request
+    axios.defaults.headers.get.Cookie = `token=${token}`;
 
     // Buscar el post
     const res = await axios({
@@ -333,13 +315,22 @@ PostPage.getInitialProps = async (context) => {
     
   } catch (error) {
     let message = error.message;
-    
+
     if(error.response) {
-      message = error.response.data.message
+      message = error.response.data.message;
     }
+    
+    // Redirigir al login si hay error de token
+    if(message.includes("jwt") || message.includes("signature")) {
+      return unauthRedirect(message, context)
+    }
+    
+    console.log(`Error fetching posts: ${message}`);
 
     return {
-      error: message
+      props: {
+        error: message
+      }
     }
   }
 }

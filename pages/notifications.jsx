@@ -1,8 +1,10 @@
 import {Fragment, useState, useEffect, useContext, useRef} from "react";
 import {Container, Feed, Segment, Visibility, Header, Icon, Message, Divider, Loader} from "semantic-ui-react";
 import axios from "axios";
+import jwt from "jsonwebtoken";
 import {parseCookies} from "nookies";
 
+import unauthRedirect from "../utilsServer/unauthRedirect";
 import CommentNotification from "../components/notifications/CommentNotification";
 import FollowerNotification from "../components/notifications/FollowerNotification";
 import LikeNotification from "../components/notifications/LikeNotification";
@@ -192,6 +194,10 @@ export async function getServerSideProps(context) {
     const {token} = parseCookies(context);
     const {req} = context;
 
+    // Verificar el token
+    jwt.verify(token, process.env.JWT_SECRET);  
+
+    // Setear el token en los cookies del request
     axios.defaults.headers.get.Cookie = `token=${token}`;
 
     const res = await axios({
@@ -207,9 +213,18 @@ export async function getServerSideProps(context) {
     
   } catch (error) {
     let message = error.message;
+
     if(error.response) {
       message = error.response.data.message;
+    }    
+    
+    // Redirigir al login si hay error de token
+    if(message.includes("jwt") || message.includes("signature")) {
+      return unauthRedirect(message, context);
     }
+    
+    console.log(`Error fetching posts: ${message}`);
+
     return {
       props: {
         error: message

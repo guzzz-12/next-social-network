@@ -2,8 +2,9 @@ import {useEffect, useState, useContext, useRef} from "react";
 import Head from "next/head";
 import {Segment, Visibility, Loader, Dimmer} from "semantic-ui-react";
 import jwt from "jsonwebtoken";
-import {parseCookies, destroyCookie} from "nookies";
+import {parseCookies} from "nookies";
 import axios from "axios";
+import unauthRedirect from "../utilsServer/unauthRedirect";
 import {NoPosts} from "../components/Layout/NoData";
 import {UserContext} from "../context/UserContext";
 import Post from "../models/PostModel";
@@ -20,7 +21,7 @@ const HomePage = ({posts}) => {
   const cancellerRef = useRef();
 
   const [title, setTitle] = useState("");
-  const [postsData, setPostsData] = useState(JSON.parse(posts));
+  const [postsData, setPostsData] = useState(posts);
   const [showToastr, setShowToastr] = useState(false);
   
   const [loadMore, setLoadMore] = useState(false);
@@ -143,52 +144,48 @@ const HomePage = ({posts}) => {
 }
 
 
-// Chequear si el usuario está autenticado y cargar la primera página de posts
+// Cargar la primera página de posts
 export async function getServerSideProps(context) {
   try {
     const {token} = parseCookies(context);
+    const {req} = context;
 
-    if(!token) {
-      return {
-        redirect: {
-          destination: "/login",
-          permanent: false
-        }
-      }
-    }
+    // Verificar el token
+    jwt.verify(token, process.env.JWT_SECRET);
 
-    // Verificar y decodificar el token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
+    // Setear el token en los cookies del request
+    axios.defaults.headers.get.Cookie = `token=${token}`
     
-    // Es necesario extraer la lógica de la consulta a la DB ya que no es posible
-    // realizar consultas a los endpoints de la API interna desde getServerSideProps
-
-    // Cargar la primera página de los posts del usuario y de sus usuarios seguidos
-    const followingData = await Follower.findOne({user: userId});
-    const followingUsers = followingData.following.map(el => el.user);
-
-    const posts = await Post.find({user: {$in: [userId, ...followingUsers]}})
-    .limit(2)
-    .skip(0)
-    .sort({createdAt: "desc"})
-    .populate("user", "_id avatar name username role email")
-    .populate({
-      path: "comments.user",
-      select: "_id name username avatar"
+    const res = await axios({
+      method: "GET",
+      url: `${req.protocol}://${req.get("host")}/api/posts`,
+      params: {
+        page: 1
+      }
     });
 
     return {
       props: {
-        posts: JSON.stringify(posts)
+        posts: res.data.data
       }
     }
   } catch (error) {
-    destroyCookie(context, "token");
+    let message = error.message;
+
+    if(error.response) {
+      message = error.response.data.message
+    }
+
+    // Redirigir a login si hay error de autenticación o no está autenticado
+    if(message.includes("jwt") || message.includes("signature")) {
+      return unauthRedirect(message, context);
+    }
+
+    console.log(`Error fetching user profile: ${message}`);
+
     return {
-      redirect: {
-        destination: "/login",
-        permanent: false
+      props: {
+        error: message
       }
     }
   }

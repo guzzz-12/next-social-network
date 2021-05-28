@@ -2,7 +2,9 @@ import {useState, useEffect, useContext, useRef} from "react";
 import {useRouter} from "next/router";
 import {Grid, Visibility, Segment, Loader} from "semantic-ui-react";
 import axios from "axios";
+import jwt from "jsonwebtoken";
 import {parseCookies} from "nookies";
+import unauthRedirect from "../../utilsServer/unauthRedirect";
 import ProfileMenuTabs from "../../components/profile/ProfileMenuTabs";
 import ProfileHeader from "../../components/profile/ProfileHeader";
 import CardPost from "../../components/post/CardPost";
@@ -202,17 +204,18 @@ const ProfilePage = (props) => {
 }
 
 
-// Desde getInitialProps se debe usar axios para los requests
-// a diferencia de getServerSideProps donde se debe usar código de backend
-// ProfilePage.getInitialProps = async (context) => {
 export async function getServerSideProps(context) {
   const {token} = parseCookies(context);
   const {req} = context;
   const {username} = context.query;
-
-  axios.defaults.headers.get.Cookie = `token=${token}`
-
+  
   try {
+    // Verificar el token
+    jwt.verify(token, process.env.JWT_SECRET);
+  
+    // Setear el token en los cookies del request
+    axios.defaults.headers.get.Cookie = `token=${token}`
+
     const res = await axios({
       method: "GET",
       url: `${req.protocol}://${req.get("host")}/api/profile/user/${username}`
@@ -233,11 +236,17 @@ export async function getServerSideProps(context) {
     if(error.response) {
       message = error.response.data.message;
     }
+    
+    // Redirigir al login si hay error de token
+    if(message.includes("jwt") || message.includes("signature")) {
+      return unauthRedirect(message, context);
+    }
+    
+    console.log(`Error fetching user profile: ${message}`);
 
     return {
       props: {
-        profile: null,
-        error: message || error.message
+        error: message
       }
     }
   }
