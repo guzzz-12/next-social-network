@@ -2,9 +2,7 @@ import {Feed} from "semantic-ui-react";
 import moment from "moment";
 
 const FollowerNotification = ({notification}) => {
-  const user = notification.notificationUser;
-
-  console.log({notification})
+  const user = notification.userNotifier;
 
   return (
     <Feed.Event>
@@ -22,7 +20,7 @@ const FollowerNotification = ({notification}) => {
           {" "}
           started following you
           {" "}
-          <Feed.Date>{moment(notification.date).calendar()}</Feed.Date>
+          <Feed.Date>{moment(notification.createdAt).calendar()}</Feed.Date>
         </Feed.Summary>
       </Feed.Content>
     </Feed.Event>

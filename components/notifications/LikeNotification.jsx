@@ -2,7 +2,7 @@ import {Feed} from "semantic-ui-react";
 import moment from "moment";
 
 const LikeNotification = ({notification}) => {
-  const user = notification.notificationUser;
+  const user = notification.userNotifier;
 
   return (
     <Feed.Event>
@@ -22,7 +22,7 @@ const LikeNotification = ({notification}) => {
           {notification.post && <a href={`/post/${notification.post._id}`}>post</a>}
           {!notification.post && <span>post (deleted)</span>}
 
-          <Feed.Date>{moment(notification.date).calendar()}</Feed.Date>
+          <Feed.Date>{moment(notification.createdAt).calendar()}</Feed.Date>
         </Feed.Summary>
 
         {notification.post && notification.post.picUrl &&
