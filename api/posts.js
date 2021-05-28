@@ -6,7 +6,8 @@ const mongoose = require("mongoose");
 const Post = require("../models/PostModel");
 const User = require("../models/UserModel");
 const Follower = require("../models/FollowerModel");
-const {newLikeNotification, newCommentNotification, removeNotification} = require("../utilsServer/notificationActions");
+const Like = require("../models/LikeModel");
+const {newCommentNotification, removeNotification} = require("../utilsServer/notificationActions");
 const authMiddleware = require("../middleware/authMiddleware");
 
 /*--------------*/
@@ -177,6 +178,7 @@ router.get("/", authMiddleware, async (req, res) => {
       })
     }
 
+    // Consultar los posts
     const posts = await Post.find({user: {$in: [req.userId, ...followingUsers]}})
     .lean()
     .limit(amount)
@@ -188,9 +190,34 @@ router.get("/", authMiddleware, async (req, res) => {
       select: "_id name username avatar"
     });
 
+    // Extraer las ids de los posts
+    const postsIds = [];
+    for(let post of posts) {
+      postsIds.push(post._id.toString());
+    }
+
+    // Consultar los likes de cada post
+    const allLikes = await Like
+    .find({post: {$in: postsIds}})
+    .lean()
+    .populate({
+      path: "author",
+      select: "author._id"
+    });
+
+    // Combinar cada post con sus likes correspondientes
+    const postsAndLikes = [];
+    for(let post of posts) {
+      const element = {
+        ...post,
+        likes: allLikes.filter(el => el.post.toString() === post._id.toString())
+      }
+      postsAndLikes.push(element)
+    }
+
     res.json({
       status: "success",
-      data: {posts, isLastPage}
+      data: {posts: postsAndLikes, isLastPage}
     });
     
   } catch (error) {
@@ -209,6 +236,7 @@ router.get("/:postId", authMiddleware, async (req, res) => {
   try {
     // Buscar el post
     const post = await Post.findById(req.params.postId)
+    .lean()
     .populate({
       path: "user",
       select: "_id name username email avatar"
@@ -226,9 +254,18 @@ router.get("/:postId", authMiddleware, async (req, res) => {
       })
     }
 
+    // Consultar los likes del post
+    const likes = await Like
+    .find({post: post._id})
+    .lean()
+    .populate({
+      path: "author",
+      select: "author._id"
+    })
+
     res.json({
       status: "success",
-      data: post
+      data: {...post, likes}
     })
     
   } catch (error) {
@@ -279,95 +316,6 @@ router.delete("/:postId", authMiddleware, async (req, res) => {
       status: "success",
       data: `Post ${post._id} deleted successfully`
     })
-    
-  } catch (error) {
-    res.status(500).json({
-      status: "failed",
-      message: `Internal server error: ${error.message}`
-    })
-  }
-});
-
-
-/*---------------------------------------*/
-// Procesar los likes/dislikes de un post
-/*---------------------------------------*/
-router.post("/likes/:postId", authMiddleware, async (req, res) => {
-  try {
-    // Buscar el post
-    const post = await Post.findById(req.params.postId);
-
-    // Chequear si el post existe
-    if(!post) {
-      return res.status(404).json({
-        status: "failed",
-        message: "Post not found or deleted"
-      })
-    }
-
-    // Chequear si ya el usuario le dio like al post y removerlo o crearlo, dependiendo del caso
-    const updatedLikes = [...post.likes];
-    const likeIndex = updatedLikes.findIndex(like => like.user.toString() === req.userId.toString());
-
-    if(likeIndex !== -1) {
-      // Remover el like de los likes en el post
-      updatedLikes.splice(likeIndex, 1);
-      // Remover la notificación de like del doc de notificaciones del autor de post
-      await removeNotification("like", post.user, post._id, null, req.userId);
-
-    } else {
-      // Agregar el like a los likes del post
-      updatedLikes.push({user: req.userId});
-      // Agregar la notificación al doc de notificaciones del autor del post
-      // sólo si el autor del like no es el autor del post
-      if(req.userId.toString() !== post.user.toString()) {
-        await newLikeNotification(req.userId, post._id, post.user);
-      }
-    }
-
-    // Actualizar los likes en la data del post
-    post.likes = updatedLikes;
-    await post.save();
-
-    res.json({
-      status: "success",
-      data: {likes: post.likes}
-    })
-    
-  } catch (error) {
-    res.status(500).json({
-      status: "failed",
-      message: `Internal server error: ${error.message}`
-    })
-  }
-});
-
-
-/*-------------------------------*/
-// Consultar los likes de un post
-/*-------------------------------*/
-router.get("/likes/:postId", async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.postId)
-    .populate({
-      path: "likes.user",
-      select: "_id name username avatar"
-    });
-
-    if(!post){
-      return res.status(404).json({
-        status: "failed",
-        message: "Post not found or deleted"
-      })
-    }
-    
-    res.json({
-      status: "success",
-      data: {
-        likes: post.likes,
-        likesCount: post.likes.length
-      }
-    });
     
   } catch (error) {
     res.status(500).json({

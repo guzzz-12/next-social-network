@@ -8,6 +8,7 @@ const User = require("../models/UserModel");
 const Profile = require("../models/ProfileModel");
 const Post = require("../models/PostModel");
 const Follower = require("../models/FollowerModel");
+const Like = require("../models/LikeModel");
 const authMiddleware = require("../middleware/authMiddleware");
 const {newFollowerNotification, removeNotification} = require("../utilsServer/notificationActions")
 
@@ -358,14 +359,45 @@ router.get("/:username/posts", authMiddleware, async (req, res) => {
     .populate({
       path: "comments.user",
       select: "_id name username avatar role"
-    })
+    });
+
+    // Extraer las ids de los posts
+    const postsIds = [];
+    for(let post of userPosts) {
+      postsIds.push(post._id.toString());
+    }
+
+    // Consultar los likes de cada post
+    const allLikes = await Like
+    .find({post: {$in: postsIds}})
+    .lean()
+    .populate({
+      path: "author",
+      select: "author._id"
+    });
+
+    // Combinar cada post con sus likes correspondientes
+    const postsAndLikes = [];
+    for(let post of userPosts) {
+      const element = {
+        ...post,
+        likes: allLikes.filter(el => el.post.toString() === post._id.toString())
+      }
+      postsAndLikes.push(element)
+    }
 
     res.json({
       status: "success",
-      data: {results: userPosts.length, userPosts, isLastPage}
+      data: {
+        results: userPosts.length,
+        userPosts: postsAndLikes,
+        isLastPage
+      }
     })
     
   } catch (error) {
+    console.log(`Error fetching user posts: ${error.message}`)
+
     res.status(500).json({
       status: "failed",
       message: `Internal server error: ${error.message}`

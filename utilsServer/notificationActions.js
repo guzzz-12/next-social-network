@@ -122,7 +122,7 @@ const newFollowerNotification = async (userFollowerId, userToNotifyId) => {
       notificationType: "follower"
     });
 
-    await setUnreadNotificationAlt(userToNotifyId);
+    await setUnreadNotification(userToNotifyId);
     
     return null;
     
