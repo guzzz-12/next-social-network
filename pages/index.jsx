@@ -63,6 +63,7 @@ const HomePage = ({posts}) => {
           setCurrentPage(prev => prev + 1);
           setLoadMore(false);
           setLoadingMore(false);
+          
         } else {
           setIsLastPage(true);
           setLoadMore(false);
@@ -143,7 +144,7 @@ const HomePage = ({posts}) => {
 }
 
 
-// Cargar la primera página de posts
+// Cargar la primera página de posts y de likes
 export async function getServerSideProps(context) {
   try {
     const {token} = parseCookies(context);
@@ -151,13 +152,13 @@ export async function getServerSideProps(context) {
 
     // Verificar el token
     jwt.verify(token, process.env.JWT_SECRET);
-
-    // Setear el token en los cookies del request
-    axios.defaults.headers.get.Cookie = `token=${token}`
     
     const res = await axios({
       method: "GET",
       url: `${req.protocol}://${req.get("host")}/api/posts`,
+      headers: {
+        Cookie: `token=${token}`
+      },
       params: {
         page: 1
       }

@@ -21,8 +21,6 @@ const ProfilePage = (props) => {
   const cancellerRef = useRef();
   const {profile, user: currentUser, error} = props;
 
-  console.log({currentUser});
-
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [postsError, setPostsError] = useState(null);
@@ -71,6 +69,7 @@ const ProfilePage = (props) => {
       })
       .then(res => {
         const {userPosts, results} = res.data.data;
+        
         if(results > 0) {
           setPosts(prev => [...prev, ...userPosts]);
           setCurrentPage(prev => prev + 1);
@@ -214,18 +213,18 @@ const ProfilePage = (props) => {
 export async function getServerSideProps(context) {
   const {token} = parseCookies(context);
   const {req} = context;
-
   
   try {
     // Verificar el token
-    jwt.verify(token, process.env.JWT_SECRET);  
-  
-    // Setear el token en los cookies del request
-    axios.defaults.headers.get.Cookie = `token=${token}`;
+    jwt.verify(token, process.env.JWT_SECRET);
 
+    // Consultar el perfil del usuario
     const res = await axios({
       method: "GET",
-      url: `${req.protocol}://${req.get("host")}/api/profile/me`
+      url: `${req.protocol}://${req.get("host")}/api/profile/me`,
+      headers: {
+        Cookie: `token=${token}`
+      }
     });
   
     return {

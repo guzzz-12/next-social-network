@@ -20,10 +20,10 @@ const LikesList = ({postId, trigger}) => {
 
       const res = await axios({
         method: "GET",
-        url: `/api/posts/likes/${postId}`
+        url: `/api/likes/${postId}`
       });
 
-      setLikes(res.data.data.likes);
+      setLikes(res.data.data);
       setLoading(false);
       
     } catch (err) {
@@ -39,6 +39,7 @@ const LikesList = ({postId, trigger}) => {
   return (
     <Popup
       on="hover"
+      hoverable
       onOpen={() => getLikes()}
       onClose={() => setLikes([])}
       popperDependencies={[likes]}
@@ -76,12 +77,12 @@ const LikesList = ({postId, trigger}) => {
               return (
                 <List.Item
                   key={like._id}
-                  onClick={() => router.push(`/${like.user.username}`)}
+                  onClick={() => router.push(`/${like.author.username}`)}
                 >
-                  <Image src={like.user.avatar} avatar inline />
+                  <Image src={like.author.avatar} avatar inline />
                   <List.Content>
-                    <List.Header content={like.user.name} />
-                    <List.Description content={`@${like.user.username}`} />
+                    <List.Header content={like.author.name} />
+                    <List.Description content={`@${like.author.username}`} />
                   </List.Content>
                 </List.Item>
               )
@@ -89,7 +90,7 @@ const LikesList = ({postId, trigger}) => {
           </List>
         </div>
         :
-        <span>No likes yet...</span>
+        <span>This post haven't been liked yet</span>
       }
     </Popup>
   )

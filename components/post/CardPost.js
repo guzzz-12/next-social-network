@@ -12,9 +12,6 @@ import NoImageModal from "./NoImageModal";
 import classes from "./cardPost.module.css";
 
 const CardPost = ({user, post, setPosts}) => {
-  // console.log({post});
-  // console.log({user});
-  
   const [likes, setLikes] = useState(post.likes);
   const [isLiked, setIsLiked] = useState(false);
   const [comments, setComments] = useState(post.comments);
@@ -29,7 +26,7 @@ const CardPost = ({user, post, setPosts}) => {
   /*----------------------------------------------------------*/
   useEffect(() => {
     if(user && likes.length > 0) {
-      const isLiked = !!likes.find(like => like.user.toString() === user._id.toString());
+      const isLiked = !!likes.find(like => like.author._id.toString() === user._id.toString());
       setIsLiked(isLiked)
     } else {
       setIsLiked(false);
@@ -87,12 +84,22 @@ const CardPost = ({user, post, setPosts}) => {
       setLoading(true);
 
       const res = await axios({
-        method: "POST",
-        url: `/api/posts/likes/${postId}`,
-        withCredentials: true
+        method: "PATCH",
+        url: `/api/likes/${postId}`,
       });
 
-      setLikes(res.data.data.likes);
+      const {like, eventType} = res.data.data;
+
+      // Chequear si es like o dislike
+      if(eventType === "liked") {
+        setLikes(prev => [...prev, like]);
+
+      } else if(eventType === "disliked") {
+        setLikes(prev => {
+          return [...prev].filter(el => el.author._id.toString() !== like.author._id.toString())
+        })
+      }
+
       setLoading(false);
       
     } catch (error) {
@@ -260,19 +267,17 @@ const CardPost = ({user, post, setPosts}) => {
             />
 
             {/* Popup con la lista de likes */}
-            {likes.length > 0 &&
-              <LikesList
-                postId={post._id}
-                trigger={
-                  <span
-                    style={{cursor: !loading ? "pointer" : "default"}}
-                    onClick={() => !loading && likesHandler(post._id)}
-                  >
-                    {likes.length} {likes.length === 1 ? "like" : "likes"}
-                  </span>
-                }
-              />
-            }
+            <LikesList
+              postId={post._id}
+              trigger={
+                <span
+                  style={{cursor: !loading ? "pointer" : "default"}}
+                  onClick={() => !loading && likesHandler(post._id)}
+                >
+                  {likes.length} {likes.length === 1 ? "like" : "likes"}
+                </span>
+              }
+            />
 
             {/* Comentarios */}
             <Icon

@@ -307,10 +307,12 @@ export async function getServerSideProps(context) {
     const res = await axios({
       method: "GET",
       url: `/api/posts/${postid}`
-    })
+    });
 
     return {
-      post: res.data.data
+      props: {
+        post: res.data.data
+      }
     }
     
   } catch (error) {
