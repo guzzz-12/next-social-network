@@ -7,8 +7,6 @@ import axios from "axios";
 import unauthRedirect from "../utilsServer/unauthRedirect";
 import {NoPosts} from "../components/Layout/NoData";
 import {UserContext} from "../context/UserContext";
-import Post from "../models/PostModel";
-import Follower from "../models/FollowerModel";
 import CreatePost from "../components/post/CreatePost";
 import CardPost from "../components/post/CardPost";
 import {PlaceHolderPosts} from "../components/Layout/PlaceHolderGroup";
@@ -59,8 +57,9 @@ const HomePage = ({posts}) => {
         })
       })
       .then(res => {
-        if(res.data.data.length > 0) {
-          setPostsData(prev => [...prev, ...res.data.data])
+        const {posts, isLastPage} = res.data.data;
+        if(!isLastPage) {
+          setPostsData(prev => [...prev, ...posts])
           setCurrentPage(prev => prev + 1);
           setLoadMore(false);
           setLoadingMore(false);
@@ -166,7 +165,7 @@ export async function getServerSideProps(context) {
 
     return {
       props: {
-        posts: res.data.data
+        posts: res.data.data.posts
       }
     }
   } catch (error) {

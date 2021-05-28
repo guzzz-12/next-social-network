@@ -161,7 +161,24 @@ router.get("/", authMiddleware, async (req, res) => {
     const followingData = await Follower.findOne({user: req.userId});
     const followingUsers = followingData.following.map(el => el.user);
 
+    // Concultar el número de posts existentes
+    const count = await Post
+    .find({user: {$in: [req.userId, ...followingUsers]}})
+    .lean().countDocuments();
+
+    // Verificar si es la última página de documentos
+    let isLastPage = count <= (amount * (page - 1));
+    
+    // Retornar indicando que se llegó a la última página de posts
+    if(isLastPage) {
+      return res.json({
+        status: "success",
+        data: {posts: [], isLastPage}
+      })
+    }
+
     const posts = await Post.find({user: {$in: [req.userId, ...followingUsers]}})
+    .lean()
     .limit(amount)
     .skip(amount * (page - 1))
     .sort({createdAt: "desc"})
@@ -173,7 +190,7 @@ router.get("/", authMiddleware, async (req, res) => {
 
     res.json({
       status: "success",
-      data: posts
+      data: {posts, isLastPage}
     });
     
   } catch (error) {
