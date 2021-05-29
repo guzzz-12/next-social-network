@@ -1,29 +1,30 @@
 import {useState} from "react";
+import Link from "next/link";
 import {Comment, Icon, Popup, Header, Button} from "semantic-ui-react";
 import axios from "axios";
 import moment from "moment";
 
-const PostComment = ({comment, postId, user, setComments}) => {
+const PostComment = ({comment, user, setComments, setCommentsCount}) => {
   const [deleting, setDeleting] = useState(null);
   const [error, setError] = useState(null);
 
   /*-----------------------*/
   // Eliminar un comentario
   /*-----------------------*/
-  const deleteCommentHandler = async (postId, commentId) => {
+  const deleteCommentHandler = async (commentId) => {
     try {
       setDeleting(commentId.toString());
       setError(null);
 
       await axios({
         method: "DELETE",
-        url: `/api/posts/comments/${postId}/${commentId}`,
-        withCredentials: true
+        url: `/api/comments/${commentId}`
       });
 
       setComments(prev => {
         return prev.filter(comment => comment._id.toString() !== commentId.toString())
       });
+      setCommentsCount(prev => prev - 1);
       setDeleting(null);
       
     } catch (error) {
@@ -41,21 +42,26 @@ const PostComment = ({comment, postId, user, setComments}) => {
     <Comment.Group>
       <Comment style={{
         position: "relative",
+        width: "100%",
+        paddingBottom: "6px",
+        borderBottom: "1px solid lightgray",
         opacity: deleting && deleting.toString() === comment._id.toString() ? 0.5 : 1
       }}>
-        <Comment.Avatar src={comment.user.avatar} />
+        <Comment.Avatar src={comment.author.avatar} />
         <Comment.Content>
-          <Comment.Author as="a">{comment.user.name}</Comment.Author>
+          <Comment.Author as={Link} href={`/user/${comment.author.username}`}>
+            {comment.author.name}
+          </Comment.Author>
 
           <Comment.Metadata>
-            <div>{moment(comment.date).calendar()}</div>
+            <div>{moment(comment.createdAt).calendar()}</div>
           </Comment.Metadata>
 
           <Comment.Text>{comment.text}</Comment.Text>
 
           <Comment.Actions style={{position: "absolute", top: 0, right: 0}}>
             <Comment.Action>
-              {user.role === "admin" || (comment.user._id.toString() === user._id.toString()) ?
+              {user.role === "admin" || (comment.user.toString() === user._id.toString()) ?
                 <Popup
                   on="click"
                   position="top right"
@@ -82,7 +88,7 @@ const PostComment = ({comment, postId, user, setComments}) => {
                     basic
                     icon="trash"
                     content="Delete"
-                    onClick={() => deleteCommentHandler(postId, comment._id)}
+                    onClick={() => deleteCommentHandler(comment._id)}
                   />
                 </Popup>
                 :

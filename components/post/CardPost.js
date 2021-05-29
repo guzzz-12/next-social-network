@@ -1,6 +1,6 @@
 import {useState, useEffect} from "react";
 import Link from "next/link";
-import {Card, Icon, Image, Divider, Segment, Button, Popup, Header, Modal} from "semantic-ui-react";
+import {Card, Icon, Image, Divider, Segment, Button, Popup, Header, Modal, Loader} from "semantic-ui-react";
 import axios from "axios";
 import moment from "moment";
 import {ToastContainer, toast} from "react-toastify";
@@ -12,14 +12,41 @@ import NoImageModal from "./NoImageModal";
 import classes from "./cardPost.module.css";
 
 const CardPost = ({user, post, setPosts}) => {
+  const [comments, setComments] = useState([]);
+  const [commentsCount, setCommentsCount] = useState(null);
+  const [loadingComments, setLoadingComments] = useState(true);
+
   const [likes, setLikes] = useState(post.likes);
   const [isLiked, setIsLiked] = useState(false);
-  const [comments, setComments] = useState(post.comments);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  /*-----------------------------------*/
+  // Consultar los comentarios del post
+  /*-----------------------------------*/
+  useEffect(() => {
+    axios({
+      method:"GET",
+      url: `/api/comments/${post._id}`
+    })
+    .then(res => {
+      const {commentsCount, comments} = res.data.data;
+      setCommentsCount(commentsCount);
+      setComments(comments);
+      setLoadingComments(false)
+    })
+    .catch(err => {
+      let message = err.message;
+      if(err.response) {
+        message = err.response.data.message
+      }
+      console.log({errorLoadingComments: message})
+      setLoadingComments(false);
+    })
+  }, [post]);
 
   /*----------------------------------------------------------*/
   // Verificar si el post ya fue likeado por el usuario actual
@@ -131,6 +158,7 @@ const CardPost = ({user, post, setPosts}) => {
                 user={user}
                 comments={comments}
                 setComments={setComments}
+                setCommentsCount={setCommentsCount}
                 likes={likes}
                 isLiked={isLiked}
                 likesHandler={likesHandler}
@@ -144,6 +172,7 @@ const CardPost = ({user, post, setPosts}) => {
                 user={user}
                 comments={comments}
                 setComments={setComments}
+                setCommentsCount={setCommentsCount}
                 likes={likes}
                 isLiked={isLiked}
                 likesHandler={likesHandler}
@@ -285,9 +314,17 @@ const CardPost = ({user, post, setPosts}) => {
               name="comment outline"
               color="blue"
             />
-            <span>{comments.length} comments</span>
+            <span>{commentsCount} comments</span>
 
             <Divider />
+
+            {/* Campo para agregar comentarios */}
+            <CommentInput
+              user={user}
+              postId={post._id}
+              setComments={setComments}
+              setCommentsCount={setCommentsCount}
+            />
 
             {comments.length > 0 &&
               comments.map(comment => {
@@ -298,32 +335,29 @@ const CardPost = ({user, post, setPosts}) => {
                     postId={post._id}
                     user={user}
                     setComments={setComments}
+                    setCommentsCount={setCommentsCount}
                   />
                 )
-              }).slice(0, 6)
+              })
             }
 
-            {/* Mostrar botón de ver más comentarios si el post tiene más de 6 comentarios */}
-            {comments.length > 6 &&
+            {/*--------------------------------*/}
+            {/* To do: Paginar más comentarios */}
+            {/*--------------------------------*/}
+
+            {loadingComments &&
               <div style={{marginTop: "10px"}}>
-                <Button
-                  content="Read more"
-                  color="teal"
-                  basic
-                  circular
-                  onClick={() => setIsModalOpen(true)}
-                />
+                <Loader active inline="centered" />
               </div>
             }
 
-            <Divider hidden />
+            {!loadingComments && commentsCount === 0 &&
+              <>
+                <Divider />
+                <p>No comments yet...</p>
+              </>
+            }
 
-            {/* Campo para agregar comentarios */}
-            <CommentInput
-              user={user}
-              postId={post._id}
-              setComments={setComments}
-            />
           </Card.Content>
         </Card>
       </Segment>

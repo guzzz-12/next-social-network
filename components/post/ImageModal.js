@@ -6,7 +6,7 @@ import CommentInput from "./CommentInput";
 import LikesList from "./LikesList";
 import classes from "./modal.module.css";
 
-const ImageModal = ({post, user, likes, comments, setComments, likesHandler, deleting, deletePostHandler, isLiked, loading}) => {
+const ImageModal = ({post, user, likes, comments, setComments, setCommentsCount, likesHandler, deleting, deletePostHandler, isLiked, loading}) => {
   return (
     <Grid
       stackable
@@ -137,6 +137,17 @@ const ImageModal = ({post, user, likes, comments, setComments, likesHandler, del
 
               <Divider />
 
+              {/* Input para agregar comentarios */}
+              <div className={classes["modal__comment-input"]}>
+                <CommentInput
+                  user={user}
+                  postId={post._id.toString()}
+                  setComments={setComments}
+                />
+              </div>
+
+              <Divider hidden />
+
               {/* Lista de comentarios */}
               <div className={classes["modal__comments-list"]}>
                 {comments.length > 0 &&
@@ -148,19 +159,11 @@ const ImageModal = ({post, user, likes, comments, setComments, likesHandler, del
                         postId={post._id}
                         user={user}
                         setComments={setComments}
+                        setCommentsCount={setCommentsCount}
                       />
                     )
                   })
                 }
-              </div>
-
-              {/* Input para agregar comentarios */}
-              <div className={classes["modal__comment-input"]}>
-                <CommentInput
-                  user={user}
-                  postId={post._id.toString()}
-                  setComments={setComments}
-                />
               </div>
             </Card.Content>
           </Card>

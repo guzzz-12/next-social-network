@@ -1,7 +1,7 @@
 import {useEffect, useState, useContext} from "react";
 import Link from "next/link";
 import {useRouter} from "next/router";
-import {Container, Header, Card, Icon, Image, Divider, Segment, Button, Popup, Message} from "semantic-ui-react";
+import {Container, Header, Card, Icon, Image, Divider, Segment, Button, Popup, Message, Loader, CommentActions} from "semantic-ui-react";
 import moment from "moment";
 import axios from "axios";
 import jwt from "jsonwebtoken";
@@ -20,12 +20,44 @@ const PostPage = (props) => {
   const {post} = props;
 
   const [likes, setLikes] = useState(post.likes);
-  const [comments, setComments] = useState(post.comments);
   const [isLiked, setIsLiked] = useState(false);
+
+  const [comments, setComments] = useState([]);
+  const [commentsCount, setCommentsCount] = useState(0);
+  const [loadingComments, setLoadingComments] = useState(true);
+  const [commentError, setCommentError] = useState(null);
 
   const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+
+  /*-----------------------------------*/
+  // Consultar los comentarios del post
+  /*-----------------------------------*/
+  useEffect(() => {
+    setLoadingComments(true);
+
+    axios({
+      method: "GET",
+      url: `/api/comments/${post._id}`
+    })
+    .then(res => {
+      const {comments, commentsCount} = res.data.data;
+      
+      setComments(prev => [...prev, ...comments]);
+      setCommentsCount(prev => prev + commentsCount);
+      setLoadingComments(false);
+    })
+    .catch(err => {
+      let message = err;
+      if(err.response) {
+        message = err.response.data.message
+      }
+      setCommentError(message);
+      setLoadingComments(false);
+    })
+  }, [post]);
 
 
   /*----------------------------------------------------------*/
@@ -33,7 +65,7 @@ const PostPage = (props) => {
   /*----------------------------------------------------------*/
   useEffect(() => {
     if(user && likes.length > 0) {
-      const isLiked = !!likes.find(like => like.user.toString() === user._id.toString());
+      const isLiked = !!likes.find(like => like.author._id.toString() === user._id.toString());
       setIsLiked(isLiked)
     } else {
       setIsLiked(false);
@@ -87,12 +119,22 @@ const PostPage = (props) => {
       setLoading(true);
 
       const res = await axios({
-        method: "POST",
-        url: `/api/posts/likes/${postId}`,
-        withCredentials: true
+        method: "PATCH",
+        url: `/api/likes/${postId}`,
       });
 
-      setLikes(res.data.data.likes);
+      const {like, eventType} = res.data.data;
+
+      // Chequear si es like o dislike
+      if(eventType === "liked") {
+        setLikes(prev => [...prev, like]);
+
+      } else if(eventType === "disliked") {
+        setLikes(prev => {
+          return [...prev].filter(el => el.author._id.toString() !== like.author._id.toString())
+        })
+      }
+      
       setLoading(false);
       
     } catch (error) {
@@ -240,19 +282,17 @@ const PostPage = (props) => {
             />
 
             {/* Popup con la lista de likes */}
-            {likes.length > 0 &&
-              <LikesList
-                postId={post._id}
-                trigger={
-                  <span
-                    style={{cursor: !loading ? "pointer" : "default"}}
-                    onClick={() => !loading && likesHandler(post._id)}
-                  >
-                    {likes.length} {likes.length === 1 ? "like" : "likes"}
-                  </span>
-                }
-              />
-            }
+            <LikesList
+              postId={post._id}
+              trigger={
+                <span
+                  style={{cursor: !loading ? "pointer" : "default"}}
+                  onClick={() => !loading && likesHandler(post._id)}
+                >
+                  {likes.length} {likes.length === 1 ? "like" : "likes"}
+                </span>
+              }
+            />
 
             {/* Comentarios */}
             <Icon
@@ -260,7 +300,8 @@ const PostPage = (props) => {
               name="comment outline"
               color="blue"
             />
-            <span>{comments.length} comments</span>
+
+            <span>{commentsCount} comments</span>
 
             <Divider />
             
@@ -269,6 +310,7 @@ const PostPage = (props) => {
               user={user}
               postId={post._id}
               setComments={setComments}
+              setCommentsCount={setCommentsCount}
             />
 
             {/* Lista de comentarios del post */}
@@ -281,9 +323,23 @@ const PostPage = (props) => {
                     postId={post._id}
                     user={user}
                     setComments={setComments}
+                    setCommentsCount={setCommentsCount}
                   />
                 )
               })
+            }
+
+            {loadingComments &&
+              <div style={{marginTop: "10px"}}>
+                <Loader active inline="centered" />
+              </div>
+            }
+
+            {!loadingComments && commentsCount === 0 &&
+              <>
+                <Divider />
+                <p>No comments yet...</p>
+              </>
             }
           </Card.Content>
         </Card>

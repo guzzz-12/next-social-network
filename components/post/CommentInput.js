@@ -2,7 +2,7 @@ import {useState} from "react";
 import {Form} from "semantic-ui-react";
 import axios from "axios";
 
-const CommentInput = ({user, postId, setComments}) => {
+const CommentInput = ({postId, setComments, setCommentsCount}) => {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -16,7 +16,7 @@ const CommentInput = ({user, postId, setComments}) => {
 
       const res = await axios({
         method: "POST",
-        url: `/api/posts/comments/${postId}`,
+        url: `/api/comments/${postId}`,
         data: {text},
         headers: {
           "Content-Type": "application/json"
@@ -24,7 +24,8 @@ const CommentInput = ({user, postId, setComments}) => {
         withCredentials: true,
       });
 
-      setComments(res.data.data);
+      setComments(prev => [...prev, res.data.data]);
+      setCommentsCount(prev => prev + 1);
       setLoading(false);
       setText("");
       
