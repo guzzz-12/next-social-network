@@ -119,7 +119,7 @@ const CardPost = ({user, post, setPosts}) => {
 
       // Chequear si es like o dislike
       if(eventType === "liked") {
-        setLikes(prev => [...prev, like]);
+        setLikes(prev => [like, ...prev]);
 
       } else if(eventType === "disliked") {
         setLikes(prev => {

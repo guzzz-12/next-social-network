@@ -27,6 +27,7 @@ router.get("/:postId", authMiddleware, async (req, res) => {
     // Consultar los comentarios
     const comments = await Comment
     .find({commentedPost: postId})
+    .sort({createdAt: -1})
     .limit(amount)
     .skip(amount * (page - 1))
     .lean()
@@ -87,8 +88,10 @@ router.post("/:postId", authMiddleware, async (req, res) => {
 
     await newComment.save();
 
-    // Crear la notificación de nuevo comentario
-    await newCommentNotification(post._id, newComment._id, text, req.userId, post.user);
+    // Crear la notificación de nuevo comentario (sólo si no es el autor del post)
+    if(post.user.toString() !== req.userId.toString()) {
+      await newCommentNotification(post._id, newComment._id, text, req.userId, post.user)
+    }
 
     res.json({
       status: "success",

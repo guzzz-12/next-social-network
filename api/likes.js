@@ -11,6 +11,7 @@ router.get("/:postId", authMiddleware, async (req, res) => {
 
     const likes = await Like
     .find({post: postId})
+    .sort({createdAt: -1})
     .lean()
     .populate({
       path: "author",
@@ -69,8 +70,10 @@ router.patch("/:postId", authMiddleware, async (req, res) => {
         post: postId
       });
 
-      // Crear notificación de tipo like
-      await newLikeNotification(authorId, post._id, post.user);
+      // Crear notificación de tipo like (sólo si no es el autor del post)
+      if(post.user.toString() !== authorId.toString()) {
+        await newLikeNotification(authorId, post._id, post.user);
+      }
 
       res.json({
         status: "success",

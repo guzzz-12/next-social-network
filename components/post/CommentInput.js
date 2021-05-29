@@ -24,7 +24,7 @@ const CommentInput = ({postId, setComments, setCommentsCount}) => {
         withCredentials: true,
       });
 
-      setComments(prev => [...prev, res.data.data]);
+      setComments(prev => [res.data.data, ...prev]);
       setCommentsCount(prev => prev + 1);
       setLoading(false);
       setText("");
