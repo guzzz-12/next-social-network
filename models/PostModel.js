@@ -19,27 +19,7 @@ const postSchema = new mongoose.Schema({
   picPublicId: {
     type: String,
     default: null
-  },
-  comments: [
-    {
-      _id: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true
-      },
-      user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-      },
-      text: {
-        type: String,
-        required: true
-      },
-      date: {
-        type: Date,
-        default: Date.now
-      }
-    }
-  ]
+  }
 }, {timestamps: true});
 
 module.exports = mongoose.models.Post || mongoose.model("Post", postSchema);

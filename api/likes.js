@@ -49,7 +49,7 @@ router.patch("/:postId", authMiddleware, async (req, res) => {
     }
 
     // Verificar si el like ya existe
-    const checkLike = await Like
+    const like = await Like
     .findOne({author: authorId, post: postId})
     .populate({
       path: "author",
@@ -60,7 +60,7 @@ router.patch("/:postId", authMiddleware, async (req, res) => {
     let eventType = null;
     
     // Crear el like si no existe
-    if(!checkLike) {
+    if(!like) {
       eventType = "liked";
 
       await Like.create({
@@ -88,7 +88,7 @@ router.patch("/:postId", authMiddleware, async (req, res) => {
     } else {
       eventType = "disliked";
 
-      await checkLike.delete();
+      await like.delete();
 
       // Eliminar la notificación de like asociada al post y a los usuarios
       await removeNotification("like", post.user, post._id, null, authorId);

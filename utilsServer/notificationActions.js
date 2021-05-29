@@ -29,31 +29,26 @@ const removeNotification = async (type, userId, postId, commentId, userNotifierI
 
     // Buscar y eliminar la notificación de tipo like
     if(type === "like") {
-      query = Notification.findOneAndDelete({$and: [
-        {userToNotify: userId},
-        {userNotifier: userNotifierId},
-        {notificationType: "like"},
-        {post: postId}
-      ]})
+      query = Notification.findOneAndDelete({
+        userToNotify: userId,
+        userNotifier: userNotifierId,
+        notificationType: "like",
+        post: postId
+      })
     }
 
     // Buscar y eliminar la notificación de tipo comment
     if(type === "comment") {
-      query = Notification.findOneAndDelete({$and: [
-        {userToNotify: userId},
-        {notificationType: "comment"},
-        {post: postId},
-        {commentId}
-      ]})
+      query = Notification.findOneAndDelete({notificationType: "comment", commentId})
     }
 
     // Buscar y eliminar la notificación de tipo follower
     if(type === "follower") {
-      query = Notification.findOneAndDelete({$and: [
-        {userToNotify: userId},
-        {userNotifier: userNotifierId},
-        {notificationType: "follower"}
-      ]})
+      query = Notification.findOneAndDelete({
+        userToNotify: userId,
+        userNotifier: userNotifierId,
+        notificationType: "follower"
+      })
     }
 
     await query;

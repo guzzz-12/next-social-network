@@ -184,11 +184,7 @@ router.get("/", authMiddleware, async (req, res) => {
     .limit(amount)
     .skip(amount * (page - 1))
     .sort({createdAt: "desc"})
-    .populate("user", "_id avatar name username role email")
-    .populate({
-      path: "comments.user",
-      select: "_id name username avatar"
-    });
+    .populate("user", "_id avatar name username role email");
 
     // Extraer las ids de los posts
     const postsIds = [];
@@ -202,7 +198,7 @@ router.get("/", authMiddleware, async (req, res) => {
     .lean()
     .populate({
       path: "author",
-      select: "author._id"
+      select: "_id"
     });
 
     // Combinar cada post con sus likes correspondientes
@@ -260,7 +256,7 @@ router.get("/:postId", authMiddleware, async (req, res) => {
     .lean()
     .populate({
       path: "author",
-      select: "author._id"
+      select: "_id"
     })
 
     res.json({
@@ -294,11 +290,9 @@ router.delete("/:postId", authMiddleware, async (req, res) => {
     }
 
     // Chequear si el usuario es admin o el autor del post
-    const user = await User.findById(req.userId);
-    const isAdmin = user.role === "admin";
-    const isOwner = user.id === post.user.id;
+    const isOwner = req.userId.toString() === post.user.id.toString();
 
-    if(!isAdmin && !isOwner) {
+    if((req.userRole !== "admin") && !isOwner) {
       return res.status(403).json({
         status: "failed",
         message: "You're not allowed to perform this task"
