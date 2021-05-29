@@ -115,7 +115,7 @@ const ProfilePage = (props) => {
   /*--------------------------------------------------------*/
   const scrollUpdateHandler = (e, {calculations}) => {
     console.log({calculations})
-    if(calculations.percentagePassed >= 0.60 || calculations.bottomVisible) {
+    if(calculations.percentagePassed >= 0.50 || calculations.bottomVisible) {
       setLoadMore(true);
     }
   }

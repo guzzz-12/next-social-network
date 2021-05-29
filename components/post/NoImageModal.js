@@ -92,17 +92,19 @@ const NoImageModal = ({post, user, likes, comments, setComments, setCommentsCoun
               color="red"
               onClick={() => !loading && likesHandler(post._id)}
             />
+            
             {/* Popup con la lista de likes */}
-            {likes.length > 0 &&
-              <LikesList
-                postId={post._id}
-                trigger={
-                  <span style={{cursor: "pointer"}}>
-                    {likes.length} {likes.length === 1 ? "like" : "likes"}
-                  </span>
-                }
-              />
-            }
+            <LikesList
+              postId={post._id}
+              trigger={
+                <span
+                  style={{cursor: "pointer"}}
+                  onClick={() => !loading && likesHandler(post._id)}
+                >
+                  {likes.length} {likes.length === 1 ? "like" : "likes"}
+                </span>
+              }
+            />
           </div>
 
           {/* Contador de comentarios */}

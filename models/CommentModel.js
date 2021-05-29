@@ -24,4 +24,4 @@ const commentSchema = new mongoose.Schema({
   }
 }, {timestamps: true});
 
-module.exports = mongoose.models.CommentAlt || mongoose.model("CommentAlt", commentSchema);
+module.exports = mongoose.models.Comment || mongoose.model("Comment", commentSchema);

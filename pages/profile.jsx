@@ -100,7 +100,7 @@ const ProfilePage = (props) => {
   // Chequear si el scroll pasó de 60% para cargar más posts
   /*--------------------------------------------------------*/
   const scrollUpdateHandler = (e, {calculations}) => {
-    if(calculations.percentagePassed >= 0.60 || calculations.bottomVisible) {
+    if(calculations.percentagePassed >= 0.50 || calculations.bottomVisible) {
       setLoadMore(true);
     }
   }

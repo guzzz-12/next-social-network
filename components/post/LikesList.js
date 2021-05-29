@@ -77,7 +77,7 @@ const LikesList = ({postId, trigger}) => {
               return (
                 <List.Item
                   key={like._id}
-                  onClick={() => router.push(`/${like.author.username}`)}
+                  onClick={() => router.push(`/user/${like.author.username}`)}
                 >
                   <Image src={like.author.avatar} avatar inline />
                   <List.Content>

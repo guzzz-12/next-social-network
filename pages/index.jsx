@@ -9,7 +9,6 @@ import {NoPosts} from "../components/Layout/NoData";
 import {UserContext} from "../context/UserContext";
 import CreatePost from "../components/post/CreatePost";
 import CardPost from "../components/post/CardPost";
-import {PlaceHolderPosts} from "../components/Layout/PlaceHolderGroup";
 
 // Token de cancelación de requests de axios
 const CancelToken = axios.CancelToken;
@@ -32,10 +31,8 @@ const HomePage = ({posts}) => {
   // Chequear si el scroll pasó de 60% para cargar más posts
   /*--------------------------------------------------------*/
   const updateHandler = (e, {calculations}) => {
-    if(calculations.percentagePassed >= 0.60 || calculations.bottomVisible) {
+    if(calculations.percentagePassed >= 0.50 || calculations.bottomVisible) {
       setLoadMore(true);
-    } else {
-      setLoadMore(false)
     }
   }
 
@@ -43,11 +40,11 @@ const HomePage = ({posts}) => {
   // Cargar la siguiente página de posts al llegar al fondo del contenedor
   /*----------------------------------------------------------------------*/
   useEffect(() => {
-    if(loadMore && !isLastPage) {
-      setLoadingMore(true);
-
+    if(loadMore && !isLastPage) {      
       // Cancelar el request anterior en caso de repetirlo
       cancellerRef.current && cancellerRef.current();
+
+      setLoadingMore(true);
 
       axios({
         method: "GET",
@@ -107,6 +104,7 @@ const HomePage = ({posts}) => {
             {userContext.currentUser &&
               <CreatePost user={userContext.currentUser} setPosts={setPostsData} />
             }
+            
             {/* Lista de todos los posts disponibles */}
             {postsData.map(post => {
               return (

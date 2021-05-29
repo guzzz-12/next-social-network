@@ -1,7 +1,7 @@
 import {useEffect, useState, useContext} from "react";
 import Link from "next/link";
 import {useRouter} from "next/router";
-import {Container, Header, Card, Icon, Image, Divider, Segment, Button, Popup, Message, Loader, CommentActions} from "semantic-ui-react";
+import {Container, Header, Card, Icon, Image, Divider, Segment, Button, Popup, Message, Loader} from "semantic-ui-react";
 import moment from "moment";
 import axios from "axios";
 import jwt from "jsonwebtoken";
