@@ -29,6 +29,8 @@ const NotificationsPage = (props) => {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(props.error);
 
+  const [deletingNotif, setDeletingNotif] = useState("");
+
 
   /*-----------------------------------------------------------------------*/
   // Marcar notificaciones como leídas al entrar a la página notificaciones
@@ -101,6 +103,38 @@ const NotificationsPage = (props) => {
 
   }, [isLastPage, loadMore]);
 
+  /*---------------------*/
+  //Eliminar notificación
+  /*---------------------*/
+  const deleteNotificationHandler = async (id) => {
+    try {
+      setDeletingNotif(id);
+
+      const res = await axios({
+        method: "DELETE",
+        url: `/api/notifications/${id}`
+      });
+
+      const {_id} = res.data.data;
+      setNotifications(prev => {
+        const updated = [...prev].filter(item => item._id.toString() !== _id.toString());
+        return updated
+      });
+
+      setDeletingNotif("");
+
+    } catch (error) {
+      let message = error.message;
+
+      if(error.response) {
+        message = error.response.data.message
+      }
+
+      setErrorMsg(message);
+      setDeletingNotif("");
+    }
+  }
+
 
   /*------------------------------------------------------------*/
   // Verificar si el scroll llegó al fondo de las notificaciones
@@ -116,18 +150,18 @@ const NotificationsPage = (props) => {
 
   return (
     <Container style={{marginTop: "1rem"}}>
-      {notifications.length > 0 &&
-        <Segment>
-          <Header style={{marginTop: "10px"}} as="h3" textAlign="center">
-            <Icon
-              style={{display: "block", margin: "0 auto"}}
-              name="tasks"
+      <Segment style={{minHeight: "85vh"}}>
+        <Header style={{marginTop: "10px"}} as="h3" textAlign="center">
+          <Icon
+            style={{display: "block", margin: "0 auto"}}
+            name="tasks"
             />
-            Notifications
-          </Header>
+          Notifications
+        </Header>
 
-          <Divider />
+        <Divider />
 
+        {notifications.length > 0 &&
           <div
             style={{
               position: "relative",
@@ -143,19 +177,31 @@ const NotificationsPage = (props) => {
                     <Fragment key={el._id}>
                       {el.notificationType === "like" &&
                         <>
-                          <LikeNotification notification={el}/>
+                          <LikeNotification
+                            notification={el}
+                            deleting={deletingNotif}
+                            deleteNotificationHandler={deleteNotificationHandler}
+                          />
                           <Divider />
                         </>
                       }
                       {el.notificationType === "comment" &&
                         <>
-                          <CommentNotification notification={el}/>
+                          <CommentNotification
+                            notification={el}
+                            deleting={deletingNotif}
+                            deleteNotificationHandler={deleteNotificationHandler}
+                          />
                           <Divider />
                         </>
                       }
                       {el.notificationType === "follower" &&
                         <>
-                          <FollowerNotification notification={el}/>
+                          <FollowerNotification
+                            notification={el}
+                            deleting={deletingNotif}
+                            deleteNotificationHandler={deleteNotificationHandler}
+                          />
                           <Divider />
                         </>
                       }
@@ -180,11 +226,17 @@ const NotificationsPage = (props) => {
               />
             }
           </div>
-        </Segment>
-      }
+        }
 
-      {notifications.length === 0 && <p>No new notifications</p> }
-
+        {notifications.length === 0 &&
+          <Segment placeholder>
+            <Header icon as="h4">
+              <Icon name="meh outline" />
+              You don't have notifications
+            </Header>
+          </Segment>
+        }
+      </Segment>
     </Container>
   )
 }

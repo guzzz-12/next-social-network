@@ -61,6 +61,27 @@ router.patch("/", authMiddleware, async (req, res) => {
       message: error.message
     })
   }
+});
+
+
+// Eliminar una notificación
+router.delete("/:notifId", authMiddleware, async (req, res) => {
+  try {
+    const notification = await Notification.findOneAndDelete({_id: req.params.notifId});
+
+    res.json({
+      status: "success",
+      data: {
+        _id: notification._id
+      }
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: error.message
+    })
+  }
 })
 
 
