@@ -2,12 +2,10 @@ const express = require("express");
 const router = express.Router();
 const cloudinary = require("cloudinary").v2;
 const formidable = require("formidable");
-const mongoose = require("mongoose");
 const Post = require("../models/PostModel");
 const User = require("../models/UserModel");
 const Follower = require("../models/FollowerModel");
 const Like = require("../models/LikeModel");
-const {newCommentNotification, removeNotification} = require("../utilsServer/notificationActions");
 const authMiddleware = require("../middleware/authMiddleware");
 
 /*--------------*/
@@ -155,28 +153,12 @@ router.patch("/:postId", authMiddleware, async (req, res) => {
 /*-----------------------------------------------------------------*/
 router.get("/", authMiddleware, async (req, res) => {
   const page = +req.query.page;
-  const amount = 2;
+  const amount = 3;
 
   try {
     // Buscar los usuarios seguidos por el usuario
     const followingData = await Follower.findOne({user: req.userId});
     const followingUsers = followingData.following.map(el => el.user);
-
-    // Consultar el número de posts existentes
-    const count = await Post
-    .find({user: {$in: [req.userId, ...followingUsers]}})
-    .lean().countDocuments();
-
-    // Verificar si es la última página de documentos
-    let isLastPage = count <= (amount * (page - 1));
-    
-    // Retornar indicando que se llegó a la última página de posts
-    if(isLastPage) {
-      return res.json({
-        status: "success",
-        data: {posts: [], isLastPage}
-      })
-    }
 
     // Consultar los posts
     const posts = await Post.find({user: {$in: [req.userId, ...followingUsers]}})
@@ -210,6 +192,9 @@ router.get("/", authMiddleware, async (req, res) => {
       }
       postsAndLikes.push(element)
     }
+
+    // Verificar si es la última página de documentos
+    let isLastPage = posts.length < amount;
 
     res.json({
       status: "success",

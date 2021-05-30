@@ -22,7 +22,7 @@ router.get("/:postId", authMiddleware, async (req, res) => {
     }
 
     // Consultar el número de comentarios totales del post
-    const commentsCount = await Comment.countDocuments({commentedPost: postId})
+    const commentsCount = await Comment.countDocuments({commentedPost: postId});
 
     // Consultar los comentarios
     const comments = await Comment
@@ -36,10 +36,17 @@ router.get("/:postId", authMiddleware, async (req, res) => {
       select: "_id name username email avatar role"
     });
 
+    // Verificar si es la última página de documentos
+    let isLastPage = comments.length < amount;
+
     res.json({
       status: "success",
-      data: {commentsCount, comments}
-    })
+      data: {
+        commentsCount,
+        comments,
+        isLastPage
+      }
+    });
     
   } catch (error) {
     console.log(`Error fetching post comments: ${error.message}`);
