@@ -3,12 +3,14 @@ import Link from "next/link";
 import {Comment, Form, Icon, Popup, Header, Button} from "semantic-ui-react";
 import axios from "axios";
 import moment from "moment";
+import CommentHistory from "./CommentHistory";
 
 const PostComment = ({comment, user, setComments, setCommentsCount}) => {
   const [editMode, setEditMode] = useState(false);
-  const [text, setText] = useState(comment.text);
+  const [text, setText] = useState("");
   const [editing, setEditing] = useState(false);
   const [editingError, setEditingError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [deleting, setDeleting] = useState(null);
   const [error, setError] = useState(null);
@@ -21,7 +23,7 @@ const PostComment = ({comment, user, setComments, setCommentsCount}) => {
       window.onkeydown = (e) => {
         if(e.keyCode === 27) {
           setEditMode(false);
-          setText(comment.text)
+          setText("")
         } else {
           return null
         }
@@ -87,6 +89,7 @@ const PostComment = ({comment, user, setComments, setCommentsCount}) => {
 
       setEditing(false);
       setEditMode(false);
+      setText("");
       
     } catch (error) {
       let message = error.message;
@@ -95,7 +98,7 @@ const PostComment = ({comment, user, setComments, setCommentsCount}) => {
         message = error.response.data.message
       }
 
-      setText(comment.text);
+      setText("");
       setEditing(false);
       setEditingError(message);
     }
@@ -125,6 +128,16 @@ const PostComment = ({comment, user, setComments, setCommentsCount}) => {
       {/* Contenido del comentario */}
       {!editMode &&
         <Comment.Group>
+          {/* Modal para mostrar el historial de cambios del comentario */}
+          {comment.editHistory && comment.editHistory.length > 0 &&
+            <CommentHistory
+              history={comment.editHistory}
+              isModalOpen={isModalOpen}
+              setIsModalOpen={setIsModalOpen}
+            />
+          }
+
+          {/* Cuerpo del comentario */}
           <Comment style={{
             position: "relative",
             width: "100%",
@@ -142,7 +155,16 @@ const PostComment = ({comment, user, setComments, setCommentsCount}) => {
                 <div>
                   {moment(comment.createdAt).calendar()}
                   {" "}
-                  {comment.createdAt.toString() !== comment.updatedAt.toString() ? "(Edited)" : ""}
+
+                  {/* Link para abrir el modal de historial de cambios (si el comentario fue editado) */}
+                  {comment.editHistory && comment.editHistory.length > 0 &&                  
+                    <span
+                      style={{fontWeight: "700", cursor: "pointer"}}
+                      onClick={() => setIsModalOpen(true)}
+                    >
+                      Edited (See changes)
+                    </span>
+                  }
                 </div>
               </Comment.Metadata>
 
@@ -150,7 +172,7 @@ const PostComment = ({comment, user, setComments, setCommentsCount}) => {
 
               <Comment.Actions style={{position: "absolute", top: 0, right: 0}}>
                 <Comment.Action>
-                  {user.role === "admin" || (comment.user.toString() === user._id.toString()) ?
+                  {user.role === "admin" || (comment.author._id.toString() === user._id.toString()) ?
                     <Popup
                       on="click"
                       position="top right"
@@ -182,7 +204,10 @@ const PostComment = ({comment, user, setComments, setCommentsCount}) => {
                         content="Edit"
                         icon="edit outline"
                         disabled={deleting && deleting.toString() === comment._id.toString()}
-                        onClick={() => setEditMode(true)}
+                        onClick={() => {
+                          setEditMode(true);
+                          setText(comment.text);
+                        }}
                       />
                       <Button
                         color="red"
