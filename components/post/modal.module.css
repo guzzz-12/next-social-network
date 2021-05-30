@@ -44,12 +44,9 @@
 }
 
 .modal__description {
-  height: auto;
-  max-height: 200px !important;
   font-size: 17px;
   word-spacing: 0.35px;
   white-space: pre-line;
-  overflow: auto;
 }
 
 /*
