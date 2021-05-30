@@ -6,13 +6,30 @@ import CommentInput from "./CommentInput";
 import LikesList from "./LikesList";
 import classes from "./modal.module.css";
 
-const ImageModal = ({post, user, likes, comments, setComments, setCommentsCount, likesHandler, deleting, deletePostHandler, isLiked, loading}) => {
+const ImageModal = ({
+  post,
+  user,
+  likes,
+  comments,
+  setComments,
+  setCurrentPage,
+  endOfComments,
+  loadingComments,
+  commentsCount,
+  setCommentsCount,
+  likesHandler,
+  deleting,
+  deletePostHandler,
+  isLiked,
+  loading
+}) => {
+
   return (
     <Grid
       stackable
       relaxed
       className={classes["modal__grid"]}
-      style={{opacity: loading && deleting ? 0.5 : 1}}
+      style={{ opacity: loading && deleting ? 0.5 : 1}}
     >
       <Grid.Row className={classes["modal__row"]}>
         <Grid.Column
@@ -21,9 +38,8 @@ const ImageModal = ({post, user, likes, comments, setComments, setCommentsCount,
           verticalAlign="middle"
         >
           <Image
-            style={{width: "100%"}}
+            className={classes["modal__img"]}
             src={post.picUrl}
-            size="large"
             wrapped
           />
         </Grid.Column>
@@ -148,8 +164,6 @@ const ImageModal = ({post, user, likes, comments, setComments, setCommentsCount,
                 />
               </div>
 
-              <Divider hidden />
-
               {/* Lista de comentarios */}
               <div className={classes["modal__comments-list"]}>
                 {comments.length > 0 &&
@@ -165,6 +179,27 @@ const ImageModal = ({post, user, likes, comments, setComments, setCommentsCount,
                       />
                     )
                   })
+                }
+
+                {/* Botón para cargar más comentarios */}
+                {commentsCount > 0 &&
+                  <div style={{display: "flex", justifyContent: "center", marginTop: "10px"}}>
+                    <Button
+                      compact
+                      content={`${!endOfComments ? "Load more comments..." : "End of comments..."}`}
+                      loading={loadingComments}
+                      disabled={loadingComments || endOfComments}
+                      onClick={() => setCurrentPage(prev => prev + 1)}
+                    />
+                  </div>
+                }
+
+                {/* Mensaje de post sin comentarios */}
+                {!loadingComments && commentsCount === 0 &&
+                  <>
+                    <Divider />
+                    <p>No comments yet...</p>
+                  </>
                 }
               </div>
             </Card.Content>

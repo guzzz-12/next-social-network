@@ -6,7 +6,23 @@ import CommentInput from "./CommentInput";
 import LikesList from "./LikesList";
 import classes from "./modal.module.css";
 
-const NoImageModal = ({post, user, likes, comments, setComments, setCommentsCount, likesHandler, deleting, deletePostHandler, isLiked, loading}) => {
+const NoImageModal = ({
+  post,
+  user,
+  likes,
+  comments,
+  setComments,
+  setCurrentPage,
+  endOfComments,
+  loadingComments,
+  commentsCount,
+  setCommentsCount,
+  likesHandler,
+  deleting,
+  deletePostHandler,
+  isLiked,
+  loading
+}) => {
   return (
     <Card fluid className={classes["modal__text"]}>
       {/* Información del post (Flex item 1) */}
@@ -129,8 +145,6 @@ const NoImageModal = ({post, user, likes, comments, setComments, setCommentsCoun
           />
         </div>
 
-        <Divider hidden />
-
         {/* Lista de comentarios */}
         <div className={classes["modal__comments-list"]}>
           {comments.length > 0 &&
@@ -146,6 +160,27 @@ const NoImageModal = ({post, user, likes, comments, setComments, setCommentsCoun
                 />
               )
             })
+          }
+
+          {/* Botón para cargar más comentarios */}
+          {commentsCount > 0 &&
+            <div style={{display: "flex", justifyContent: "center", marginTop: "10px"}}>
+              <Button
+                compact
+                content={`${!endOfComments ? "Load more comments..." : "End of comments..."}`}
+                loading={loadingComments}
+                disabled={loadingComments || endOfComments}
+                onClick={() => setCurrentPage(prev => prev + 1)}
+              />
+            </div>
+          }
+
+          {/* Mensaje de post sin comentarios */}
+          {!loadingComments && commentsCount === 0 &&
+            <>
+              <Divider />
+              <p>No comments yet...</p>
+            </>
           }
         </div>
       </Card.Content>

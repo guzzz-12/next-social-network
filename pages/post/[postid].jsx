@@ -27,6 +27,9 @@ const PostPage = (props) => {
   const [loadingComments, setLoadingComments] = useState(true);
   const [commentError, setCommentError] = useState(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [endOfComments, setEndOfComments] = useState(false);
+
   const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -35,29 +38,35 @@ const PostPage = (props) => {
   /*-----------------------------------*/
   // Consultar los comentarios del post
   /*-----------------------------------*/
-  useEffect(() => {
-    setLoadingComments(true);
+  useEffect(() => {    
+    if(!endOfComments){
+      setLoadingComments(true);
+      axios({
+        method: "GET",
+        url: `/api/comments/${post._id}?page=${currentPage}`
+      })
+      .then(res => {
+        const {comments, commentsCount, isLastPage} = res.data.data;
+        
+        setCommentsCount(commentsCount);
+        setComments(prev => [...prev, ...comments]);
 
-    axios({
-      method: "GET",
-      url: `/api/comments/${post._id}`
-    })
-    .then(res => {
-      const {comments, commentsCount} = res.data.data;
-      
-      setComments(prev => [...prev, ...comments]);
-      setCommentsCount(prev => prev + commentsCount);
-      setLoadingComments(false);
-    })
-    .catch(err => {
-      let message = err;
-      if(err.response) {
-        message = err.response.data.message
-      }
-      setCommentError(message);
-      setLoadingComments(false);
-    })
-  }, [post]);
+        if(isLastPage) {
+          setEndOfComments(true);
+        }
+
+        setLoadingComments(false);
+      })
+      .catch(err => {
+        let message = err;
+        if(err.response) {
+          message = err.response.data.message
+        }
+        setCommentError(message);
+        setLoadingComments(false);
+      })
+    }
+  }, [post, endOfComments, currentPage]);
 
 
   /*----------------------------------------------------------*/
@@ -332,6 +341,18 @@ const PostPage = (props) => {
             {loadingComments &&
               <div style={{marginTop: "10px"}}>
                 <Loader active inline="centered" />
+              </div>
+            }
+
+            {/* Botón para cargar más comentarios */}
+            {commentsCount > 0 &&
+              <div style={{display: "flex", justifyContent: "center", marginTop: "10px"}}>
+                <Button
+                  compact
+                  content={`${!endOfComments ? "Load more comments..." : "End of comments..."}`}
+                  disabled={loadingComments || endOfComments}
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                />
               </div>
             }
 

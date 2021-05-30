@@ -16,7 +16,10 @@ const CardPost = ({user, post, setPosts}) => {
   const [commentsCount, setCommentsCount] = useState(null);
   const [loadingComments, setLoadingComments] = useState(true);
 
-  const [likes, setLikes] = useState(post.likes);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [endOfComments, setEndOfComments] = useState(false);
+
+  const [likes, setLikes] = useState(post.likes || []);
   const [isLiked, setIsLiked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -28,25 +31,35 @@ const CardPost = ({user, post, setPosts}) => {
   // Consultar los comentarios del post
   /*-----------------------------------*/
   useEffect(() => {
-    axios({
-      method:"GET",
-      url: `/api/comments/${post._id}`
-    })
-    .then(res => {
-      const {commentsCount, comments} = res.data.data;
-      setCommentsCount(commentsCount);
-      setComments(comments);
-      setLoadingComments(false)
-    })
-    .catch(err => {
-      let message = err.message;
-      if(err.response) {
-        message = err.response.data.message
-      }
-      console.log({errorLoadingComments: message})
-      setLoadingComments(false);
-    })
-  }, [post]);
+    if(!endOfComments) {
+      setLoadingComments(true);
+
+      axios({
+        method:"GET",
+        url: `/api/comments/${post._id}?page=${currentPage}`
+      })
+      .then(res => {
+        const {commentsCount, comments, isLastPage} = res.data.data;
+
+        setCommentsCount(commentsCount);
+        setComments(prev => [...prev, ...comments]);
+        setLoadingComments(false);
+
+        if(isLastPage) {
+          setEndOfComments(true);
+        }
+      })
+      .catch(err => {
+        let message = err.message;
+        if(err.response) {
+          message = err.response.data.message
+        }
+        console.log({errorLoadingComments: message})
+        setLoadingComments(false);
+      })
+    }
+
+  }, [post, endOfComments, currentPage]);
 
   /*----------------------------------------------------------*/
   // Verificar si el post ya fue likeado por el usuario actual
@@ -159,6 +172,10 @@ const CardPost = ({user, post, setPosts}) => {
                 comments={comments}
                 setComments={setComments}
                 setCommentsCount={setCommentsCount}
+                commentsCount={commentsCount}
+                endOfComments={endOfComments}
+                loadingComments={loadingComments}
+                setCurrentPage={setCurrentPage}
                 likes={likes}
                 isLiked={isLiked}
                 likesHandler={likesHandler}
@@ -173,6 +190,10 @@ const CardPost = ({user, post, setPosts}) => {
                 comments={comments}
                 setComments={setComments}
                 setCommentsCount={setCommentsCount}
+                commentsCount={commentsCount}
+                endOfComments={endOfComments}
+                loadingComments={loadingComments}
+                setCurrentPage={setCurrentPage}
                 likes={likes}
                 isLiked={isLiked}
                 likesHandler={likesHandler}
@@ -199,7 +220,13 @@ const CardPost = ({user, post, setPosts}) => {
         >
           {post.picUrl &&
             <Image
-              style={{cursor: "pointer"}}
+              style={{
+                width: "100%",
+                maxHeight: "95vh",
+                objectFit: "contain",
+                objectPosition: "center center",
+                cursor: "pointer"
+              }}
               src={post.picUrl}
               floated="left"
               ui={false}
@@ -210,7 +237,13 @@ const CardPost = ({user, post, setPosts}) => {
 
           <Card.Content>
             {/* Avatar del usuario y botón de borrar */}
-            <Image floated="left" src={post.user.avatar} avatar circular />
+            <Image
+              floated="left"
+              src={post.user.avatar}
+              avatar circular
+            />
+
+            {/* Popup para eliminar el post */}
             {user.role === "admin" || (user._id.toString() === post.user._id.toString()) ?
               <div style={{position: "relative"}}>
                 <Popup
@@ -341,23 +374,32 @@ const CardPost = ({user, post, setPosts}) => {
               })
             }
 
-            {/*--------------------------------*/}
-            {/* To do: Paginar más comentarios */}
-            {/*--------------------------------*/}
-
+            {/* Loader indicador de carga de comentarios */}
             {loadingComments &&
               <div style={{marginTop: "10px"}}>
                 <Loader active inline="centered" />
               </div>
             }
 
+            {/* Botón para cargar más comentarios */}
+            {commentsCount > 0 &&
+              <div style={{display: "flex", justifyContent: "center", marginTop: "10px"}}>
+                <Button
+                  compact
+                  content={`${!endOfComments ? "Load more comments..." : "End of comments..."}`}
+                  disabled={loadingComments || endOfComments}
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                />
+              </div>
+            }
+
+            {/* Mensaje de post sin comentarios */}
             {!loadingComments && commentsCount === 0 &&
               <>
                 <Divider />
                 <p>No comments yet...</p>
               </>
             }
-
           </Card.Content>
         </Card>
       </Segment>
