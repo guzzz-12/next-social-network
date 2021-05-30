@@ -55,16 +55,14 @@ const HomePage = ({posts}) => {
       })
       .then(res => {
         const {posts, isLastPage} = res.data.data;
-        if(!isLastPage) {
-          setPostsData(prev => [...prev, ...posts])
-          setCurrentPage(prev => prev + 1);
-          setLoadMore(false);
-          setLoadingMore(false);
-          
-        } else {
+
+        setPostsData(prev => [...prev, ...posts])
+        setCurrentPage(prev => prev + 1);
+        setLoadMore(false);
+        setLoadingMore(false);
+
+        if(isLastPage) {
           setIsLastPage(true);
-          setLoadMore(false);
-          setLoadingMore(false);
         }
       })
       .catch(err => {

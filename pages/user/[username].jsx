@@ -33,7 +33,7 @@ const ProfilePage = (props) => {
   const [loadMore, setLoadMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLastPage, setIsLastPage] = useState(false);
+  const [endOfPosts, setEndOfPosts] = useState(false);
 
   // State de los tabs
   const [activeTab, setActiveTab] = useState("profile");
@@ -57,7 +57,7 @@ const ProfilePage = (props) => {
   const tabClickHandler = async (tab) => {
     setActiveTab(tab);
     setPosts([]);
-    setIsLastPage(false);
+    setEndOfPosts(false);
     setCurrentPage(1)
   }
 
@@ -66,7 +66,7 @@ const ProfilePage = (props) => {
   // Consultar los posts del usuario
   /*--------------------------------*/
   useEffect(() => {
-    if((activeTab === "profile" && ((profile && !isLastPage && loadMore) || (profile && currentPage === 1)))) {
+    if((activeTab === "profile" && !endOfPosts) && (currentPage === 1 || loadMore)) {
       currentPage === 1 && setLoadingPosts(true);
       currentPage > 1 && setIsLoadingMore(true);
       setPostsError(null);
@@ -83,13 +83,13 @@ const ProfilePage = (props) => {
       })
       .then(res => {
         const {userPosts, isLastPage} = res.data.data;
-        if(!isLastPage) {
-          setPosts(prev => [...prev, ...userPosts]);
-          setCurrentPage(prev => prev + 1);
-          setIsLastPage(false)
 
-        } else {
-          setIsLastPage(true);
+        setPosts(prev => [...prev, ...userPosts]);
+        setCurrentPage(prev => prev + 1);
+        setEndOfPosts(false);
+
+        if(isLastPage) {
+          setEndOfPosts(true);
         }
         
         setIsLoadingMore(false);
@@ -107,14 +107,13 @@ const ProfilePage = (props) => {
         setLoadMore(false);
       })
     }
-  }, [profile, username, loadMore, isLastPage, activeTab]);
+  }, [profile, loadMore, endOfPosts, activeTab]);
 
 
   /*--------------------------------------------------------*/
   // Chequear si el scroll pasó de 60% para cargar más posts
   /*--------------------------------------------------------*/
   const scrollUpdateHandler = (e, {calculations}) => {
-    console.log({calculations})
     if(calculations.percentagePassed >= 0.50 || calculations.bottomVisible) {
       setLoadMore(true);
     }
@@ -193,7 +192,7 @@ const ProfilePage = (props) => {
       }
 
       {/* Mensaje de no más posts disponibles */}
-      {isLastPage && activeTab === "profile" ?
+      {endOfPosts && activeTab === "profile" ?
         <Segment textAlign="center" vertical>
           No more posts available
         </Segment>
