@@ -188,7 +188,15 @@ router.patch("/:commentId", authMiddleware, async (req, res) => {
     const prevComment = await Comment
     .findById(req.params.commentId)
     .lean()
-    .select("text updatedAt");
+    .select("user author text updatedAt");
+
+    // Verificar si el usuario es admin o el autor del comentario
+    if(req.userRole !== "admin" && (req.userId.toString() !== prevComment.author.toString())) {
+      return res.status(403).json({
+        status: "failed",
+        message: "You're not allowed to perform this task"
+      })
+    }
 
     // Editar el comentario y verificar si existe
     const editedComment = await Comment
