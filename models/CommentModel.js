@@ -17,6 +17,12 @@ const commentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  editHistory: [
+    {
+      text: String,
+      date: Date
+    }
+  ],
   commentedPost: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Post",

@@ -184,15 +184,25 @@ router.patch("/:commentId", authMiddleware, async (req, res) => {
       })
     }
 
-    // Editarel comentario y verificar si existe
-    const comment = await Comment
-    .findOneAndUpdate({_id: req.params.commentId}, {text}, {new: true})
+    // Buscar el comentario y actualizar el historial de cambios
+    const prevComment = await Comment
+    .findById(req.params.commentId)
+    .lean()
+    .select("text updatedAt");
+
+    // Editar el comentario y verificar si existe
+    const editedComment = await Comment
+    .findOneAndUpdate(
+      {_id: req.params.commentId},
+      {text, $push: {editHistory: {text: prevComment.text, date: prevComment.updatedAt}}},
+      {new: true}
+    )
     .populate({
       path: "author",
       select: "_id name username email avatar role"
     });
 
-    if(!comment) {
+    if(!editedComment) {
       return res.status(404).json({
         status: "failed",
         message: "Comment not found or deleted"
@@ -201,7 +211,7 @@ router.patch("/:commentId", authMiddleware, async (req, res) => {
 
     res.json({
       status: "success",
-      data: comment
+      data: editedComment
     })
     
   } catch (error) {
