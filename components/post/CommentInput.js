@@ -42,7 +42,7 @@ const CommentInput = ({postId, setComments, setCommentsCount}) => {
 
 
   return (
-    <Form reply>
+    <Form reply style={{marginBottom: "10px"}}>
       <Form.Input
         value={text}
         onChange={(e) => setText(e.target.value)}

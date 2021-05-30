@@ -144,7 +144,7 @@ router.delete("/:commentId", authMiddleware, async (req, res) => {
     }
 
     // Verificar si el comentario pertenece al usuario que lo intenta eliminar o si el usuario es admin
-    if(req.userRole !== "admin" || (comment.author.toString() !== req.userId.toString())) {
+    if(req.userRole !== "admin" && (comment.author.toString() !== req.userId.toString())) {
       return res.status(403).json({
         status: "failed",
         message: "You're not allowed to perform this task"
@@ -173,7 +173,44 @@ router.delete("/:commentId", authMiddleware, async (req, res) => {
 
 // Editar un comentario
 router.patch("/:commentId", authMiddleware, async (req, res) => {
-  return null
+  try {
+    const {text} = req.body;
+
+    // Validar texto del comentario
+    if(!text || text.length === 0) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Comments cannot be empty"
+      })
+    }
+
+    // Editarel comentario y verificar si existe
+    const comment = await Comment
+    .findOneAndUpdate({_id: req.params.commentId}, {text}, {new: true})
+    .populate({
+      path: "author",
+      select: "_id name username email avatar role"
+    });
+
+    if(!comment) {
+      return res.status(404).json({
+        status: "failed",
+        message: "Comment not found or deleted"
+      })
+    }
+
+    res.json({
+      status: "success",
+      data: comment
+    })
+    
+  } catch (error) {
+    console.log(`Error editing comment: ${error.message}`);
+    res.status(500).json({
+      status: "failed",
+      message: `Error editing comment: ${error.message}`
+    })
+  }
 });
 
 module.exports = router;
