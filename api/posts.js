@@ -6,6 +6,8 @@ const Post = require("../models/PostModel");
 const User = require("../models/UserModel");
 const Follower = require("../models/FollowerModel");
 const Like = require("../models/LikeModel");
+const Comment = require("../models/CommentModel");
+const Notification = require("../models/NotificationModel");
 const authMiddleware = require("../middleware/authMiddleware");
 
 /*--------------*/
@@ -283,6 +285,17 @@ router.delete("/:postId", authMiddleware, async (req, res) => {
         message: "You're not allowed to perform this task"
       })
     }
+
+    // Eliminar todos los comentarios, likes y notificaciones asociados al post
+    const deletedComments = await Comment.deleteMany({commentedPost: post._id});
+    const deletedLikes = await Like.deleteMany({post: post._id});
+    const deletedNotifications = await Notification.deleteMany({post: post._id});
+
+    console.log({
+      deletedComments: deletedComments.deletedCount,
+      deletedLikes: deletedLikes.deletedCount,
+      deletedNotifications: deletedNotifications.deletedCount
+    });
 
     // Borrar la imagen del post de cloudinary (si la tiene)
     const postImageId = post.picPublicId;
