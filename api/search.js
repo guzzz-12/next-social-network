@@ -11,7 +11,12 @@ router.get("/:searchTerm", authMiddleware, async (req, res) => {
     }
 
     const termPattern = new RegExp(`^${searchTerm}`);
-    const results = await User.find({$or: [{username: {$regex: termPattern, $options: "i"}}, {name: {$regex: termPattern, $options: "i"}}]});
+    const results = await User
+    .find({$or: [
+      {username: {$regex: termPattern, $options: "i"}},
+      {name: {$regex: termPattern, $options: "i"}}
+    ]})
+    .select("_id name username email role avatar avatarId");
 
     if(results.length === 0) {
       return res.status(404).json({
