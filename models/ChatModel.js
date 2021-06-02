@@ -29,7 +29,8 @@ const chatSchema = new mongoose.Schema({
     type: String,
     enum: ["active", "inactive"],
     default: "active"
-  }
+  },
+  disabledBy: {}
 }, {timestamps: true});
 
 module.exports = mongoose.models.Chat || mongoose.model("Chat", chatSchema);

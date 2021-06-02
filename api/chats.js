@@ -95,6 +95,65 @@ router.post("/:messagesWithId", authMiddleware, async (req, res) => {
 });
 
 
+/*-------------------------------*/
+// Deshabilitar/habilitar un chat
+/*-------------------------------*/
+router.patch("/disable-chat/:chatId", authMiddleware, async (req, res) => {
+  try {
+    const currentUser = req.userId.toString();
+    const chat = await Chat
+    .findById(req.params.chatId)
+    .populate({
+      path: "user",
+      select: "_id name username email avatar role"
+    })
+    .populate({
+      path: "messagesWith",
+      select: "_id name username email avatar role"
+    });
+
+    // Verificar si el usuario es participante del chat
+    if((currentUser !== chat.user._id.toString()) && (currentUser !== chat.messagesWith._id.toString())) {
+      return res.status(401).json({
+        status: "failed",
+        message: "You're not allowed to disable/enable this chat"
+      })
+    }
+
+    const currentStatus = chat.status;
+
+    // Habilitar o inhabilitar el chat, dependiendo del status actual
+    if(currentStatus === "active") {
+      chat.status = "inactive";
+      chat.disabledBy = req.userId;
+
+    } else {
+      if(req.userId.toString() !== chat.disabledBy.toString()) {
+        return res.status(401).json({
+          status: "failed",
+          message: "Only the user that disabled the chat is allowed to enable it again"
+        })
+      }
+      chat.status = "active";
+      chat.disabledBy = null;
+    }
+
+    await chat.save();
+
+    res.json({
+      status: "success",
+      data: chat
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Error disabling chat: ${error.message}`
+    })
+  }
+})
+
+
 /*----------------------------------*/
 // Consultar los chats de un usuario
 /*----------------------------------*/
@@ -153,12 +212,20 @@ router.post("/:chatId/message/:messagesWithId", authMiddleware, async (req, res)
     }
 
     // Verificar si el chat existe y si está activo
-    const chatExists = await Chat.findOne({_id: chatId, status: "active"});
+    const chatExists = await Chat.findOne({_id: chatId});
 
     if(!chatExists) {
       return res.status(404).json({
         status: "failed",
-        message: "Chat not found or disabled"
+        message: "Chat not found"
+      })
+    }
+
+    // Verificar si el chat está deshabilitado
+    if(chatExists.status === "inactive") {
+      return res.status(401).json({
+        status: "failed",
+        message: "The chat is disabled"
       })
     }
 
@@ -343,7 +410,7 @@ router.patch("/message/:messageId", authMiddleware, async (req, res) => {
       message: `Error deleting message: ${error.message}`
     })
   }
-})
+});
 
 
 module.exports = router;
