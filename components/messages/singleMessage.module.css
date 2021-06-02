@@ -1,0 +1,9 @@
+.message {
+  position: relative;
+  min-width: 120px !important;
+  max-width: 70% !important;
+  margin-bottom: 10px !important;
+  padding: 1rem !important;
+  border-radius: 5px !important;
+  /* background-color: lightcyan !important; */
+}
