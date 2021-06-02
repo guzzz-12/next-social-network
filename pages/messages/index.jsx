@@ -3,10 +3,10 @@ import {Container, Segment, Header, List, Image, Button, Icon, Form, TextArea, C
 import {useRouter} from "next/router";
 import axios from "axios";
 import jwt from "jsonwebtoken";
-import moment from "moment";
 import {parseCookies, destroyCookie} from "nookies";
 
 import Search from "../../components/Layout/Search";
+import ChatItem from "../../components/messages/ChatItem";
 import SingleMessage from "../../components/messages/SingleMessage";
 import {UserContext} from "../../context/UserContext";
 import styles from "./messages.module.css";
@@ -33,6 +33,8 @@ const MessagesPage = (props) => {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
 
+  const [disablingChat, setDisablingChat] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -46,6 +48,48 @@ const MessagesPage = (props) => {
       lastMsgRef.current = lastMsg;
     }
   }, [lastLoadedMsg]);
+
+  /*----------------------------*/
+  // Deshabilitar/habilitar chat
+  /*----------------------------*/
+  const disableChatHandler = async (chatId) => {
+    try {
+      setError(null);
+      setDisablingChat(true);
+      
+      const res = await axios({
+        method: "PATCH",
+        url: `/api/chats/disable-chat/${chatId}`
+      });
+
+      console.log({response: res.data.data});
+      const updatedChat = res.data.data;
+
+      // Buscar el índice del chat en el state
+      const chatIndex = [...chats].findIndex(el => el._id.toString() === chatId.toString());
+
+      // Actualizar el status del chat en el state
+      setChats(prev => {
+        const updated = [...prev];
+        updated.splice(chatIndex, 1, updatedChat);
+        return updated;
+      });
+
+      setSelectedChat(updatedChat);
+      setDisablingChat(false);
+      
+    } catch (error) {
+      let message = error.message;
+      if(error.response) {
+        message = error.response.data.message
+      }
+
+      console.log(`Error disabling/enabling chat: ${message}`)
+
+      setDisablingChat(false);
+      setError(message);
+    }
+  }
 
   /*------------------------------------------*/
   // Cargar los mensajes del chat seleccionado
@@ -237,38 +281,16 @@ const MessagesPage = (props) => {
                   verticalAlign="middle"
                 >
                   {chats.map(item => {
-                    // Verificar si el usuario es el creador del chat
-                    const isChatCreator = currentUser && currentUser._id === item.user._id;
-
                     return (
-                      <List.Item
-                        style={{
-                          backgroundColor: item._id === selectedChat._id && "rgba(0,0,0,.06)"}}
+                      <ChatItem
                         key={item._id}
-                        onClick={() => chatItemClickHandler(item)}
-                      >
-                        <Image
-                          className={styles["messages__chat-item-avatar"]}
-                          src={isChatCreator ? item.messagesWith.avatar : item.user.avatar}
-                        />
-                        <List.Content>
-                          <List.Header>
-                            {isChatCreator ? item.messagesWith.name : item.user.name}
-                          </List.Header>
-                          {item.isEmpty && "Empty chat..."}
-                          {!item.isEmpty &&
-                            <>
-                              <span>
-                                {item.latestMessage.text.substring(0, 25)}...
-                              </span>
-                              <br />
-                              <small>
-                                {moment(item.latestMessage.date).calendar()}
-                              </small>
-                            </>
-                          }
-                        </List.Content>
-                      </List.Item>
+                        item={item}
+                        currentUser={currentUser}
+                        selectedChat={selectedChat}
+                        disablingChat={disablingChat}
+                        disableChatHandler={disableChatHandler}
+                        chatItemClickHandler={chatItemClickHandler}
+                      />
                     )
                   })}
                 </List>
@@ -278,9 +300,12 @@ const MessagesPage = (props) => {
         </div>
 
         {/* Columna derecha: Bandeja de mensajes del chat seleccionado */}
-        <div  className={styles["messages__inbox-column"]}>
+        <div className={styles["messages__inbox-column"]}>
           <Ref innerRef={inboxRef}>
-            <Segment className={styles["messages__inbox"]}>
+            <Segment
+              style={{background: selectedChat.status === "inactive" ? "ghostwhite" : "white"}}
+              className={styles["messages__inbox"]}
+            >
               <Button
                 className={styles["messages__inbox-load-more-btn"]}
                 content={!endResults ? "Load more messages..." : "No more messages available..."}
@@ -307,11 +332,14 @@ const MessagesPage = (props) => {
             <Segment className={styles["messages__inbox-input"]}>
               <Form className={styles["messages__inbox-input-form"]}>
                 <TextArea
-                  style={{resize: "none"}}
+                  style={{
+                    resize: "none",
+                    background: selectedChat.status === "inactive" ? "ghostwhite" : "white"
+                  }}
                   rows={3}
                   value={text}
-                  disabled={sending}
-                  placeholder="Write message..."
+                  disabled={sending || selectedChat.status === "inactive"}
+                  placeholder={selectedChat.status === "inactive" ? "Chat disabled..." : "Write message..."}
                   onChange={(e) => {
                     setText(e.target.value)
                   }}
@@ -321,7 +349,7 @@ const MessagesPage = (props) => {
                 className={styles["messages__inbox-btn"]}
                 icon
                 basic
-                disabled={text.length === 0 || sending}
+                disabled={text.length === 0 || sending || selectedChat.status === "inactive"}
                 onClick={sendMessageHandler}
               >
                 <Icon name="send" size="large" color="teal"/>
