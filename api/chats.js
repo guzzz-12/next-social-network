@@ -15,7 +15,11 @@ router.post("/:messagesWithId", authMiddleware, async (req, res) => {
     const {messagesWithId} = req.params;
 
     // Chequear si los usuarios existen
-    const user = await User.exists({_id: req.userId});
+    const user = await User
+    .findById({_id: req.userId})
+    .lean()
+    .select("_id name username avatar email role");
+
     const messagesWith = await User
     .findById(messagesWithId)
     .lean()
@@ -63,7 +67,14 @@ router.post("/:messagesWithId", authMiddleware, async (req, res) => {
         updatedAt: chat.updatedAt,
         isEmpty: chat.isEmpty,
         status: chat.status,
-        user: chat.user,
+        user: {
+          _id: user._id,
+          name: user.name,
+          username: user.username,
+          avatar: user.avatar,
+          role: user.role,
+          email: user.email
+        },
         messagesWith: {
           _id: messagesWith._id,
           name: messagesWith.name,
@@ -151,6 +162,44 @@ router.post("/:chatId/message/:messagesWithId", authMiddleware, async (req, res)
       })
     }
 
+    // Buscar la data de los usuarios
+    const sender = await User
+    .findById(req.userId)
+    .lean()
+    .select("_id name username avatar email role");
+
+    const recipient = await User
+    .findById(messagesWithId)
+    .lean()
+    .select("_id name username avatar email role");
+
+    // Chequear si los usuarios existen
+    if(!sender || !recipient) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found or deleted"
+      })
+    }
+
+    // Extraer la data de los usuarios
+    const senderData = {
+      _id: sender._id,
+      name: sender.name,
+      username: sender.username,
+      avatar: sender.avatar,
+      email: sender.email,
+      role: sender.role
+    }
+
+    const recipientData = {
+      _id: recipient._id,
+      name: recipient.name,
+      username: recipient.username,
+      avatar: recipient.avatar,
+      email: recipient.email,
+      role: recipient.role
+    }
+
     // Crear el mensaje
     const message = await Message.create({
       chat: chatId,
@@ -159,13 +208,24 @@ router.post("/:chatId/message/:messagesWithId", authMiddleware, async (req, res)
       text: messageText
     });
 
+    // Data del nuevo mensaje creado
+    const messageData = {
+      _id: message._id,
+      chat: message.chat,
+      sender: senderData,
+      recipient: recipientData,
+      text: message.text,
+      status: message.status,
+      createdAt: message.createdAt
+    }
+
     // Especificar que el chat no está vacío
     chatExists.isEmpty = false;
     await chatExists.save();
 
     res.json({
       status: "success",
-      data: message
+      data: messageData
     })
     
   } catch (error) {
@@ -184,22 +244,24 @@ router.get("/:chatId/messages", authMiddleware, async (req, res) => {
   try {
     const {chatId} = req.params;
     const {page} = req.query;
-    const amount = 10;
+    const amount = 5;
+
+    // const totalMessagesCount = await Message.countDocuments();
 
     const messages = await Message
     .find({chat: chatId})
     .lean()
-    .limit(amount)
     .skip(amount * (page - 1))
+    .limit(amount)
     .sort({createdAt: -1})
     .populate({
       path: "sender",
-      select: "_id name username email avatar role"
+      select: "_id name username avatar email role"
     })
     .populate({
       path: "recipient",
-      select: "_id name username email avatar role"
-    });
+      select: "_id name username avatar email role"
+    })
 
     // Verificar el status del mensaje y no enviar el texto si está inactivo (eliminado)
     if(messages.length > 0) {
@@ -210,12 +272,18 @@ router.get("/:chatId/messages", authMiddleware, async (req, res) => {
       })
     }
 
+    const sortedMessages = [...messages].sort((a, b) => {
+      if(a.createdAt > b.createdAt) return 1;
+      if(a.createdAt < b.createdAt) return -1;
+      return 0;
+    })
+
     // Verificar si es la última página de mensajes
-    const isLastPage = messages.length <= amount;
+    const isLastPage = messages.length < amount;
 
     res.json({
       status: "success",
-      data: {messages, isLastPage}
+      data: {messages: sortedMessages, isLastPage}
     })
     
   } catch (error) {
@@ -225,6 +293,52 @@ router.get("/:chatId/messages", authMiddleware, async (req, res) => {
     })
   }
 });
+
+
+/*--------------------------------------------------*/
+// Eliminar un mensaje (Cambiar su status a inactive)
+/*--------------------------------------------------*/
+router.patch("/message/:messageId", authMiddleware, async (req, res) => {
+  try {
+    const message = await Message
+    .findOneAndUpdate({_id: req.params.messageId}, {status: "inactive"}, {new: true})
+    .lean()
+    .populate({
+      path: "sender",
+      select: "_id name username avatar email role"
+    })
+    .populate({
+      path: "recipient",
+      select: "_id name username avatar email role"
+    })
+
+    if(!message) {
+      return res.status(404).json({
+        status: "failed",
+        message: "Message nor found or already deleted"
+      })
+    }
+
+    // Impedir qu pueda eliminar el mensaje de otro usuario
+    if(message.sender._id.toString() !== req.userId.toString()) {
+      return res.status(401).json({
+        status: "failed",
+        message: "You're not allowed to delete this message"
+      })
+    }
+
+    res.json({
+      status: "success",
+      data: message
+    })
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Error deleting message: ${error.message}`
+    })
+  }
+})
 
 
 module.exports = router;
