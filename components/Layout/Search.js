@@ -2,10 +2,12 @@ import {useState, useRef} from "react";
 import Router from "next/router";
 import {List, Item, Search} from "semantic-ui-react";
 import axios from "axios";
-import jsCookie from "js-cookie";
 
-const SearchComponent = () => {
-  const timeoutRef = useRef();
+// Token de cancelación de requests de axios
+const CancelToken = axios.CancelToken;
+
+const SearchComponent = ({type, onClickHandler}) => {
+  const cancellerRef = useRef();
   
   const [term, setTerm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,11 +17,16 @@ const SearchComponent = () => {
   const searchUsers = async (term) => {
     setLoading(true);
 
+    // Cancelar el request anterior en caso de repetirlo
+    cancellerRef.current && cancellerRef.current();
+
     try {
       const res = await axios({
         method: "GET",
         url: `/api/search/${term}`,
-        withCredentials: true
+        cancelToken: new CancelToken((canceller) => {
+          cancellerRef.current = canceller
+        })
       });
 
       // console.log({searchResults: res.data});
@@ -41,17 +48,7 @@ const SearchComponent = () => {
 
   const onSearchChangeHandler = (e) => {
     setTerm(e.target.value);
-
-    // Resetear el timeout anterior si se tipea de nuevo antes de que termine
-    if(timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    // Ejecutar el request para chequear el username sólo
-    // si se deja de tipear durante el tiempo especificado
-    timeoutRef.current = setTimeout(() => {
-      searchUsers(e.target.value);
-    }, 500);
+    searchUsers(e.target.value);
   }
 
   const ResultsRenderer = ({_id, avatar, name, username}) => {
@@ -71,7 +68,10 @@ const SearchComponent = () => {
             alt={`${name} avatar`}
           />
           <Item.Content verticalAlign="middle">
-            <Item.Header style={{fontSize: "18px"}} as="a">
+            <Item.Header
+              style={{fontSize: "18px"}}
+              as={type === "chat" ? "p" : "a"}
+            >
               @{username}
             </Item.Header>
           </Item.Content>
@@ -84,12 +84,21 @@ const SearchComponent = () => {
     <Search
       onBlur={() => setResults([])}
       loading={loading}
+      placeholder="Search user"
       value={term}
       onSearchChange={onSearchChangeHandler}
       resultRenderer={(props) => <ResultsRenderer {...props} />}
       results={results}
-      minCharacters={3}
-      onResultSelect={(e, data) => Router.push(`/user/${data.result.username}`)}
+      minCharacters={1}
+      onResultSelect={(e, data) => {
+        if(type === "chat") {
+          const clickedUserId = data.result._id;
+          onClickHandler(clickedUserId);
+          setTerm("");
+        } else {
+          Router.push(`/user/${data.result.username}`)
+        }
+      }}
     />
   )
 }

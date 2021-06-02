@@ -56,12 +56,12 @@ const Layout = (props) => {
   /*------------------------------------------*/
   // Mostrar el tiempo restante en la consola
   /*------------------------------------------*/
-  useEffect(() => {
-    if(timerContext.counter > 0) {
-      // console.clear();
-      // console.log({timeRemaining: timerContext.counter})
-    }
-  }, [timerContext.counter]);
+  // useEffect(() => {
+  //   if(timerContext.counter > 0) {
+  //     console.clear();
+  //     console.log({timeRemaining: timerContext.counter})
+  //   }
+  // }, [timerContext.counter]);
 
   return (
     <>
@@ -72,25 +72,31 @@ const Layout = (props) => {
           <Ref innerRef={contextRef}>
             <Grid>
               {/* Contenido no scrolleable */}
-              <Grid.Column floated="left" width={3}>
-                <Sticky context={contextRef}>
-                  <SideMenu user={userContext.currentUser}/>
-                </Sticky>
-              </Grid.Column>
-              {/* Contenido scrolleable */}
-              <Grid.Column width={9}>
+              {router.pathname !== "/messages" &&
+                <Grid.Column floated="left" width={3}>
+                  <Sticky context={contextRef}>
+                    <SideMenu user={userContext.currentUser}/>
+                  </Sticky>
+                </Grid.Column>
+              }
+
+              {/* Contenido scrolleable (contenido de las páginas) */}
+              <Grid.Column width={router.pathname === "/messages" ? 16 : 9}>
                 <Visibility context={contextRef}>
                   {props.children}
                 </Visibility>
               </Grid.Column>
+
               {/* Contenido no scrolleable */}
-              <Grid.Column floated="left" width={4}>
-                <Sticky context={contextRef}>
-                  <Segment basic>
-                    <Search />
-                  </Segment>
-                </Sticky>
-              </Grid.Column>
+              {router.pathname !== "/messages" &&
+                <Grid.Column floated="right" width={4}>
+                  <Sticky context={contextRef}>
+                    <Segment basic>
+                      <Search />
+                    </Segment>
+                  </Sticky>
+                </Grid.Column>
+              }
             </Grid>
           </Ref>
         </div>

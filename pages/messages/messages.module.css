@@ -1,0 +1,118 @@
+.messages__container {
+  padding-bottom: 2rem !important;
+}
+
+.messages__grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1rem;
+  height: 85vh;
+  max-height: 85vh;
+}
+
+.messages__chat-list-column {
+  height: 85vh;
+  max-height: 85vh;
+}
+
+/* Columna izquierda */
+.messages__chat-list {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  height: 85vh;
+  max-height: 85vh;
+}
+
+/* Flex item 1 de la columna izquierda */
+.messages__chat-list-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0,0,0,0.25)
+}
+
+/* Flex item 2 de la columna izquierda */
+.messages__chat-list-wrapper {
+  overflow: auto;
+}
+
+.messages__chat-list-items {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  flex-grow: 1;
+}
+
+.messages__chat-item-avatar {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.messages__chat-list-empty {
+  margin-top: auto !important;
+  margin-bottom: auto !important;
+  text-align: center;
+}
+
+
+/* Columna derecha (sección de bandeja de entrada) */
+.messages__inbox-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  height: 85vh !important;
+  max-height: 85vh !important;
+}
+
+/* Flex item 1 */
+.messages__inbox {
+  margin-bottom: 0 !important;
+  flex-grow: 1 !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  overflow: auto;
+}
+
+.messages__inbox-load-more-btn {
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.messages__inbox-messages-list {
+  display: flex !important;
+  flex-direction: column !important;
+  max-width: 100% !important;
+}
+
+/* Flex item 2 */
+.messages__inbox-input-wrapper {
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
+}
+
+.messages__inbox-input {
+  display: flex;
+  flex-direction: row;
+  border-top-color: transparent !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
+.messages__inbox-input-form {
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+.messages__inbox-input-btn {
+  flex-shrink: 0;
+  border-color: transparent !important
+}
