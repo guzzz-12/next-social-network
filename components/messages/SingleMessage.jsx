@@ -65,6 +65,7 @@ const SingleMessage = ({message, setMessages, currentUser}) => {
         backgroundColor: message.status === "inactive" ? "gainsboro" : "aliceblue"
       }}
       className={styles["message"]}
+      data-msgid={message._id.toString()}
     >
       {/* Popup para eliminar el mensaje */}
       {isCurrentUserSender && message.status === "active" ?

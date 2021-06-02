@@ -13,9 +13,10 @@ const chatSchema = new mongoose.Schema({
     ref: "User",
     required: true
   },
-  // Fecha del último mensaje recibido en el chat
-  lastMessageDate: {
-    type: Date
+  // Último mensaje recibido en el chat
+  latestMessage: {
+    text: String,
+    date: Date
   },
   // Verificar si el chat tiene mensajes
   isEmpty: {

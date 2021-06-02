@@ -3,6 +3,7 @@ import {Container, Segment, Header, List, Image, Button, Icon, Form, TextArea, C
 import {useRouter} from "next/router";
 import axios from "axios";
 import jwt from "jsonwebtoken";
+import moment from "moment";
 import {parseCookies, destroyCookie} from "nookies";
 
 import Search from "../../components/Layout/Search";
@@ -12,6 +13,7 @@ import styles from "./messages.module.css";
 
 
 const MessagesPage = (props) => {
+  const lastMsgRef = useRef();
   const inboxRef = useRef();
   const router = useRouter();
   const {currentUser} = useContext(UserContext);
@@ -25,14 +27,25 @@ const MessagesPage = (props) => {
   const [endResults, setEndResults] = useState(false);
   const [loadMore, setLoadMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-
-  // console.log({selectedChatMessages});
+  const [lastLoadedMsg, setLastLoadedMsg] = useState(null);
+  const [moreRecentMsg, setMoreRecentMsg] = useState(null);
 
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  /*---------------------------------------------------------------*/
+  // Almacenar el último mensaje cargado para mantenerlo en el view
+  /*---------------------------------------------------------------*/
+  useEffect(() => {
+    if(lastLoadedMsg) {
+      const msgId = lastLoadedMsg._id.toString();
+      const lastMsg = document.querySelector(`[data-msgid="${msgId}"]`);
+      lastMsgRef.current = lastMsg;
+    }
+  }, [lastLoadedMsg]);
 
   /*------------------------------------------*/
   // Cargar los mensajes del chat seleccionado
@@ -47,18 +60,28 @@ const MessagesPage = (props) => {
         url: `/api/chats/${selectedChat._id}/messages?page=${currentPage}`
       })
       .then(res => {
-        // console.log({mensajes: res.data.data});
         const {messages, isLastPage} = res.data.data;
+
+        // Almacenar el mensaje más reciente en la carga inicial
+        if(initialMessagesLoad) {
+          setMoreRecentMsg(messages[messages.length - 1])
+        }
+
         setSelectedChatMessages(prev => [...messages, ...prev]);
         setCurrentPage(prev => prev + 1);
         setLoadMore(false);
         setLoadingMore(false);
         setInitialMessagesLoad(false);
 
+        // Mantener el scroll en el último mensaje recibido en la carga anterior
+        lastMsgRef.current && lastMsgRef.current.scrollIntoView({block: "end"});
+
+        // Almacenar la id del último mensaje cargado
+        setLastLoadedMsg(messages[0]);
+
         if(isLastPage) {
           setEndResults(true)
         }
-
       })
       .catch(error => {
         let message = error.mesage;
@@ -76,13 +99,14 @@ const MessagesPage = (props) => {
   // Seleccionar el chat y reinicializar el state al clickear un item del chat
   /*--------------------------------------------------------------------------*/
   const chatItemClickHandler = (item) => {
+    setSelectedChat(item);
+    setSelectedChatMessages([]);
     setLoadMore(true);
     setLoadingMore(true);
     setCurrentPage(1);
     setEndResults(false);
-    setSelectedChatMessages([]);
-    setSelectedChat(item);
     setInitialMessagesLoad(true);
+    setLastLoadedMsg(null);
   }
 
   /*--------------------*/
@@ -231,7 +255,18 @@ const MessagesPage = (props) => {
                           <List.Header>
                             {isChatCreator ? item.messagesWith.name : item.user.name}
                           </List.Header>
-                          {item.isEmpty ? "Chat vacío" : "Último mensaje recibido"}
+                          {item.isEmpty && "Empty chat..."}
+                          {!item.isEmpty &&
+                            <>
+                              <span>
+                                {item.latestMessage.text.substring(0, 25)}...
+                              </span>
+                              <br />
+                              <small>
+                                {moment(item.latestMessage.date).calendar()}
+                              </small>
+                            </>
+                          }
                         </List.Content>
                       </List.Item>
                     )

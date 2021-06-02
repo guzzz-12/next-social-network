@@ -219,8 +219,13 @@ router.post("/:chatId/message/:messagesWithId", authMiddleware, async (req, res)
       createdAt: message.createdAt
     }
 
-    // Especificar que el chat no está vacío
+    // Especificar que el chat no está vacío y actualizar el último mensaje recibido
     chatExists.isEmpty = false;
+    chatExists.latestMessage = {
+      text: message.text,
+      date: Date.now()
+    }
+
     await chatExists.save();
 
     res.json({
@@ -261,7 +266,10 @@ router.get("/:chatId/messages", authMiddleware, async (req, res) => {
     .populate({
       path: "recipient",
       select: "_id name username avatar email role"
-    })
+    });
+
+    // Verificar si es la última página de mensajes
+    const isLastPage = messages.length < amount;
 
     // Verificar el status del mensaje y no enviar el texto si está inactivo (eliminado)
     if(messages.length > 0) {
@@ -276,10 +284,7 @@ router.get("/:chatId/messages", authMiddleware, async (req, res) => {
       if(a.createdAt > b.createdAt) return 1;
       if(a.createdAt < b.createdAt) return -1;
       return 0;
-    })
-
-    // Verificar si es la última página de mensajes
-    const isLastPage = messages.length < amount;
+    });
 
     res.json({
       status: "success",
