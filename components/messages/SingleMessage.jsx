@@ -9,13 +9,13 @@ const SingleMessage = ({message, setMessages, currentUser, socket}) => {
   const [isCurrentUserSender, setIsCurrentUserSender] = useState(currentUser === message.sender.username);
   const [user, setUser] = useState({});
 
+  const [deleting, setDeleting] = useState(false);
+  const [errorDeleting, setErrorDeleting] = useState(null);
+
   useEffect(() => {
     setIsCurrentUserSender(currentUser === message.sender.username);
     setUser(message.sender);
   }, [message, currentUser]);
-
-  const [deleting, setDeleting] = useState(false);
-  const [errorDeleting, setErrorDeleting] = useState(null);
 
   /*------------------------------------------------*/
   // Borrar el mensaje (Cambiar su status a inactive)
@@ -104,7 +104,6 @@ const SingleMessage = ({message, setMessages, currentUser, socket}) => {
         :
         null
       }
-
       {/* Cuerpo del mensaje */}
       <Comment.Avatar src={user.avatar} as="a" href={`/user/${user.username}`} />
       <Comment.Content>
@@ -125,6 +124,16 @@ const SingleMessage = ({message, setMessages, currentUser, socket}) => {
           </span>
         </Comment.Text>
       </Comment.Content>
+      
+      {message.seen && isCurrentUserSender &&
+        <div className={styles["message__seen-info"]}>
+          <small>
+            Seen: {moment(message.seen.at).calendar()}
+          </small>
+          <Icon name="check circle outline" size="small" color="teal" />
+        </div>
+      }
+
     </Comment>
   )
 }

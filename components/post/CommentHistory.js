@@ -16,7 +16,7 @@ const CommentHistory = ({history, isModalOpen, setIsModalOpen}) => {
         <List divided relaxed>
           {history.map(item => {
             return (
-              <List.Item>
+              <List.Item key={item._id}>
                 <List.Content>
                   <List.Header>{moment(item.date).calendar()}</List.Header>
                   <List.Description>{item.text}</List.Description>

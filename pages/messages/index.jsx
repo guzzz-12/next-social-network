@@ -10,6 +10,7 @@ import Search from "../../components/Layout/Search";
 import ChatItem from "../../components/messages/ChatItem";
 import SingleMessage from "../../components/messages/SingleMessage";
 import {UserContext} from "../../context/UserContext";
+import {UnreadMessagesContext} from "../../context/UnreadMessagesContext";
 import styles from "./messages.module.css";
 
 
@@ -19,6 +20,7 @@ const MessagesPage = (props) => {
   const inboxRef = useRef();
   const router = useRouter();
   const {currentUser} = useContext(UserContext);
+  const unreadContext = useContext(UnreadMessagesContext);
 
   const [chats, setChats] = useState(props.chats);
   const [selectedChat, setSelectedChat] = useState(props.chats[0] || {});
@@ -28,7 +30,7 @@ const MessagesPage = (props) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [endResults, setEndResults] = useState(false);
   const [loadMore, setLoadMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(true);
   const [lastLoadedMsg, setLastLoadedMsg] = useState(null);
   const [moreRecentMsg, setMoreRecentMsg] = useState(null);
 
@@ -125,6 +127,20 @@ const MessagesPage = (props) => {
       })
     });
 
+    // Actualizar el status de los mensajes vistos
+    socket.current.on("readMessages", (update) => {
+      setSelectedChatMessages(prev => {
+        const currentMessages = [...prev];
+
+        update.forEach(updatedItem => {
+          const index = currentMessages.findIndex(el => el._id.toString() === updatedItem._id.toString());
+          currentMessages.splice(index, 1, updatedItem);
+        });
+
+        return currentMessages;
+      })
+    });
+
     // Poner el status offline al salir del chat
     return () => socket.current.emit("offline");
 
@@ -140,6 +156,52 @@ const MessagesPage = (props) => {
       lastMsgRef.current = lastMsg;
     }
   }, [lastLoadedMsg]);
+
+  /*------------------------------------------*/
+  // Cambiar el estado de los mensajes a leído
+  /*------------------------------------------*/
+  useEffect(() => {
+    if(currentUser && selectedChat && !loadingMore) {
+      // Extraer las ids de los mensajes a actualizar donde el remitente
+      // no sea el usuario logueado y que no hayan sido leídos
+      const messagesIds = [];
+      selectedChatMessages.forEach(el => {
+        if(el.sender._id.toString() !== currentUser._id.toString() && el.unread) {
+          messagesIds.push(el._id)
+        }
+      });
+      
+      axios({
+        method: "PATCH",
+        url: `/api/chats/read-messages`,
+        data: {messagesIds},
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      .then(res => {
+        const updatedMessages = res.data.data;
+
+        // Emitir el evento de mensajes vistos al recipiente
+        if(updatedMessages.length > 0) {
+          socket.current.emit("messagesRead", {
+            updatedMessages,
+            senderId: updatedMessages[0].sender._id.toString(),
+            seenById: currentUser._id
+          });
+        }
+
+        unreadContext.setAllRead();
+      })
+      .catch(err => {
+        let message = err.message;
+        if(err.response) {
+          message = err.response.data.message
+        }
+        console.log({message});
+      })
+    }
+  }, [selectedChat, loadingMore]);
 
   /*----------------------------*/
   // Deshabilitar/habilitar chat
