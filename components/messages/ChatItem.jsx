@@ -1,13 +1,17 @@
-import React from "react";
+import {useState} from "react";
 import {List, Image, Popup, Header, Button, Icon} from "semantic-ui-react";
 import moment from "moment";
+import OnlineIndicator from "./OnlineIndicator";
 import styles from "../../pages/messages/messages.module.css";
 
-const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disableChatHandler, disablingChat}) => {
+const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disableChatHandler, disablingChat, onlineUsers}) => {
 
   if(!currentUser) {
     return null;
   }
+
+  // Verificar si el otro participante del chat seleccionado está online
+  const isOnline = onlineUsers.some(el => el.userId.toString() === item.user._id.toString() || el.userId.toString() === item.messagesWith._id.toString());
 
   // Verificar si el usuario es el creador del chat
   const isChatCreator = currentUser._id === item.user._id;
@@ -36,9 +40,9 @@ const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disabl
                 cursor: disablingChat ? "default" : "pointer"
               }}
               disabled={disablingChat}
-              name="times"
+              name="chevron down"
               size="small"
-              color="red"
+              color="grey"
               floated="right"
             />
           }
@@ -72,25 +76,34 @@ const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disabl
         :
         null
       }
-
+      
       <Image
+        style={{position: "relative"}}
         className={styles["messages__chat-item-avatar"]}
         src={isChatCreator ? item.messagesWith.avatar : item.user.avatar}
       />
+      
       <List.Content>
-        <List.Header>
+        <List.Header style={{display: "flex", alignItems: "center"}}>
           {isChatCreator ? item.messagesWith.name : item.user.name}
+          {item.status === "active" && <OnlineIndicator isOnline={isOnline} />}
         </List.Header>
-        {item.isEmpty && "Empty chat..."}
+
+        {item.isEmpty && "Chat empty..."}
+
         {!item.isEmpty &&
           <>
             <span>
-              {item.latestMessage.text.substring(0, 25)}...
+              {item.status === "active" ? item.latestMessage.text.substring(0, 25) : "Chat disabled"}...
             </span>
-            <br />
-            <small>
-              {moment(item.latestMessage.date).calendar()}
-            </small>
+            {item.status === "active" &&
+              <>
+                <br />
+                <small>
+                  {moment(item.latestMessage.date).calendar()}
+                </small>
+              </>
+            }
           </>
         }
       </List.Content>

@@ -4,7 +4,7 @@ import moment from "moment";
 import axios from "axios";
 import styles from "./singleMessage.module.css";
 
-const SingleMessage = ({message, setMessages, currentUser}) => {
+const SingleMessage = ({message, setMessages, currentUser, socket}) => {
   // Verificar si el usuario actual es el que envía
   const [isCurrentUserSender, setIsCurrentUserSender] = useState(currentUser === message.sender.username);
   const [user, setUser] = useState({});
@@ -42,6 +42,9 @@ const SingleMessage = ({message, setMessages, currentUser}) => {
         allMessages.splice(msgIndex, 1, updatedMessage);
         return allMessages;
       });
+
+      // Emitir el mensaje eliminado al recipiente
+      socket.current.emit("deletedMessage", updatedMessage);
 
       setDeleting(false);
       

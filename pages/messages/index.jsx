@@ -1,9 +1,10 @@
 import {useState, useContext, useEffect, useRef} from "react";
-import {Container, Segment, Header, List, Image, Button, Icon, Form, TextArea, Comment, Ref} from "semantic-ui-react";
+import {Segment, Header, List, Button, Icon, Form, TextArea, Comment, Ref} from "semantic-ui-react";
 import {useRouter} from "next/router";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import {parseCookies, destroyCookie} from "nookies";
+import ioClient from "socket.io-client";
 
 import Search from "../../components/Layout/Search";
 import ChatItem from "../../components/messages/ChatItem";
@@ -13,6 +14,7 @@ import styles from "./messages.module.css";
 
 
 const MessagesPage = (props) => {
+  const socket = useRef();
   const lastMsgRef = useRef();
   const inboxRef = useRef();
   const router = useRouter();
@@ -37,6 +39,96 @@ const MessagesPage = (props) => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const [onlineUsers, setOnlineUsers] = useState([]);
+
+  /*-------------------------------------------------------------------------------*/
+  // Incializar cliente de Socket.io y actualizar mensajes entrantes en tiempo real
+  /*-------------------------------------------------------------------------------*/
+  useEffect(() => {
+    if(!socket.current) {
+      socket.current = ioClient(process.env.BASE_URL)
+    }
+
+    if(socket.current && currentUser) {      
+      socket.current.emit("join", {userId: currentUser._id});
+
+      // Actualizar el state de los usuarios online
+      socket.current.on("onlineUsers", (onlineUsers) => {
+        const filtered = onlineUsers.filter(el => el.userId.toString() !== currentUser._id.toString());
+        setOnlineUsers(filtered);
+      });
+
+      // Actualizar la bandeja con el nuevo mensaje recibido en el recipiente
+      socket.current.on("newMessageReceived", (data) => {
+        setSelectedChatMessages(prev => {
+          // Filtrar mensajes duplicados
+          const filteredDuplicates = [...prev, data].reduce((acc, item) => {
+            const x = acc.find(el => el._id === item._id);
+            if(!x) {
+              return acc.concat(item)
+            } else {
+              return acc
+            }
+          },[]);
+
+          return filteredDuplicates
+        });
+
+        inboxRef.current.scrollTop = inboxRef.current.scrollHeight;
+      });
+
+      // Actualizar la bandeja con el mensaje eliminado en el recipiente
+      socket.current.on("messageDeleted", (data) => {
+        setSelectedChatMessages(prev => {
+          const updatedMsgs = [...prev];
+          const msgIndex = updatedMsgs.findIndex(el => el._id.toString() === data._id.toString());
+          updatedMsgs.splice(msgIndex, 1, data);
+          return updatedMsgs;
+        })
+      })
+    }
+
+    // Actualizar el chat en el otro usuario al deshabilitarlo
+    socket.current.on("chatDisabled", (data) => {
+      const chatId = data._id.toString();
+
+      // Si el chat seleccionado fue deshabilitado, actualizarlo
+      if(chatId === selectedChat._id.toString()) {
+        setSelectedChat(data);
+      }
+
+      // Actualizar el status del chat en la lista de chats
+      setChats(prev => {
+        const updatedChats = [...prev];
+        const chatIndex = updatedChats.findIndex(el => el._id.toString() === chatId);
+        updatedChats.splice(chatIndex, 1, data);
+        return updatedChats;
+      })
+    });
+
+    // Actualizar el chat en el otro usuario al habilitarlo
+    socket.current.on("chatEnabled", (data) => {
+      const chatId = data._id.toString();
+
+      // Si el chat seleccionado fue habilitado, actualizarlo
+      if(chatId === selectedChat._id.toString()) {
+        setSelectedChat(data);
+      }
+
+      // Actualizar el status del chat en la lista de chats
+      setChats(prev => {
+        const updatedChats = [...prev];
+        const chatIndex = updatedChats.findIndex(el => el._id.toString() === chatId);
+        updatedChats.splice(chatIndex, 1, data);
+        return updatedChats;
+      })
+    });
+
+    // Poner el status offline al salir del chat
+    return () => socket.current.emit("offline");
+
+  }, [socket.current, currentUser]);
 
   /*---------------------------------------------------------------*/
   // Almacenar el último mensaje cargado para mantenerlo en el view
@@ -74,6 +166,16 @@ const MessagesPage = (props) => {
         updated.splice(chatIndex, 1, updatedChat);
         return updated;
       });
+
+      // Emitir el chat deshabilitado
+      if(updatedChat.status === "inactive") {
+        socket.current.emit("disabledChat", updatedChat);
+      }
+
+      // Emitir el chat habilitado
+      if(updatedChat.status === "active") {
+        socket.current.emit("enabledChat", {updatedChat, enabledBy: currentUser._id})
+      }
 
       setSelectedChat(updatedChat);
       setDisablingChat(false);
@@ -197,6 +299,10 @@ const MessagesPage = (props) => {
 
       // console.log({msgResponse: res.data.data});
       const newMessage = res.data.data;
+      
+      // Emitir el nuevo mensaje enviado al recipiente
+      socket.current.emit("newMessage", newMessage);
+
       setSelectedChatMessages(prev => [...prev, newMessage]);
       setSending(false);
       setText("");
@@ -225,7 +331,7 @@ const MessagesPage = (props) => {
   }, [inboxRef.current, initialMessagesLoad]);
 
   return (
-    <Container className={styles["messages__container"]}>
+    <section className={styles["messages__container"]}>
       <Button
         floated="left"
         labelPosition="left"
@@ -235,7 +341,7 @@ const MessagesPage = (props) => {
         Go back
       </Button>
 
-      <Header style={{paddingBottom: "1.5rem"}} as="h3" textAlign="center">
+      <Header style={{paddingBottom: "1rem"}} as="h3" textAlign="center">
         <Icon
           style={{display: "block", margin: "0 auto"}}
           name="comments outline"
@@ -285,6 +391,7 @@ const MessagesPage = (props) => {
                       <ChatItem
                         key={item._id}
                         item={item}
+                        onlineUsers={onlineUsers}
                         currentUser={currentUser}
                         selectedChat={selectedChat}
                         disablingChat={disablingChat}
@@ -319,6 +426,7 @@ const MessagesPage = (props) => {
                     <SingleMessage
                       key={msg._id}
                       message={msg}
+                      socket={socket}
                       setMessages={setSelectedChatMessages}
                       currentUser={currentUser.username}
                     />
@@ -358,7 +466,7 @@ const MessagesPage = (props) => {
           </div>
         </div>
       </div>
-    </Container>
+    </section>
   )
 }
 

@@ -5,7 +5,7 @@ import UserContextProvider from "../context/UserContext";
 import "react-toastify/dist/ReactToastify.css";
 import "semantic-ui-css/semantic.min.css";
 
-axios.defaults.baseURL = "http://localhost:5000";
+axios.defaults.baseURL = process.env.BASE_URL;
 
 const MyApp = ({Component, pageProps}) => {
   return (
