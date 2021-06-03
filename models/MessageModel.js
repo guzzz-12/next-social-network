@@ -17,6 +17,14 @@ const messageSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  unread: {
+    type: Boolean,
+    default: true
+  },
+  seen: {
+    status: Boolean,
+    at: Date
+  },
   // Status del mensaje. Al eliminar el mensaje, éste cambia su status a inactive,
   // esta acción oculta el mensaje para ambos usuarios, pero el mensaje permanecerá
   // almacenado en la DB para fines de seguridad (casos de amenazas, etc.)

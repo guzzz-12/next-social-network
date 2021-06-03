@@ -15,6 +15,7 @@ const chatSchema = new mongoose.Schema({
   },
   // Último mensaje recibido en el chat
   latestMessage: {
+    messageId: String,
     text: String,
     date: Date
   },

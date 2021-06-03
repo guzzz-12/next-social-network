@@ -289,6 +289,7 @@ router.post("/:chatId/message/:messagesWithId", authMiddleware, async (req, res)
     // Especificar que el chat no está vacío y actualizar el último mensaje recibido
     chatExists.isEmpty = false;
     chatExists.latestMessage = {
+      messageId: messageData._id.toString(),
       text: message.text,
       date: Date.now()
     }
@@ -387,11 +388,11 @@ router.patch("/message/:messageId", authMiddleware, async (req, res) => {
     if(!message) {
       return res.status(404).json({
         status: "failed",
-        message: "Message nor found or already deleted"
+        message: "Message not found or already deleted"
       })
     }
 
-    // Impedir qu pueda eliminar el mensaje de otro usuario
+    // Impedir que pueda eliminar el mensaje de otro usuario
     if(message.sender._id.toString() !== req.userId.toString()) {
       return res.status(401).json({
         status: "failed",
@@ -411,6 +412,70 @@ router.patch("/message/:messageId", authMiddleware, async (req, res) => {
     })
   }
 });
+
+
+/*---------------------------------*/
+// Consultar los mensajes no le´idos
+/*---------------------------------*/
+router.get("/unread-messages", authMiddleware, async (req, res) => {
+  try {
+    const recipient = req.userId;
+    const unreadCount = await Message.countDocuments({recipient, unread: true});
+
+    res.json({
+      status: "success",
+      data: unreadCount
+    });
+    
+  } catch (error) {
+    console.log(`Error fetching unread messages: ${error.message}`);
+    res.status(500).json({
+      status: "failed",
+      message: `Error fetching unread messages: ${error.message}`
+    })
+  }
+});
+
+
+/*------------------------------------------*/
+// Cambiar el estado de los mensajes a leído
+/*------------------------------------------*/
+router.patch("/read-messages", authMiddleware, async (req, res) => {
+  try {
+    const {messagesIds} = req.body;
+
+    await Message.updateMany(
+      {_id: {$in: messagesIds}},
+      {unread: false, seen: {status: true, at: Date.now()}}
+    );
+
+    // Buscar los mensajes actualizados
+    const updatedMessages = await Message
+    .find({_id: {$in: messagesIds}, status: "active"})
+    .lean()
+    .populate({
+      path: "sender",
+      select: "_id name username avatar email role"
+    })
+    .populate({
+      path: "recipient",
+      select: "_id name username avatar email role"
+    });
+
+
+    res.json({
+      status: "success",
+      data: updatedMessages
+    })
+    
+  } catch (error) {
+    console.log(`Error changing status to read: ${error.message}`);
+    res.status(500).json({
+      status: "failed",
+      message: `Error changing status to read: ${error.message}`
+    })
+  }
+})
 
 
 module.exports = router;

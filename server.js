@@ -96,6 +96,18 @@ io.on("connection", (socket) => {
       io.to(recipient.socketId).emit("chatEnabled", updatedChat);
     }
   });
+
+
+  // Notificar al remitente que sus mensajes fueron leídos por el recipiente
+  socket.on("messagesRead", (data) => {
+    const {senderId, seenById, updatedMessages} = data;
+
+    const recipient = users.find(el => el.userId.toString() === senderId.toString());
+    
+    if(recipient && recipient !== seenById.toString()) {
+      io.to(recipient.socketId).emit("readMessages", updatedMessages);
+    }
+  })
 });
 
 
