@@ -1,20 +1,22 @@
 import {useEffect, useState, useContext, useRef} from "react";
 import Head from "next/head";
-import {Segment, Visibility, Loader, Dimmer} from "semantic-ui-react";
+import {Segment, Visibility, Loader} from "semantic-ui-react";
 import jwt from "jsonwebtoken";
 import {parseCookies} from "nookies";
 import axios from "axios";
 import unauthRedirect from "../utilsServer/unauthRedirect";
 import {NoPosts} from "../components/Layout/NoData";
-import {UserContext} from "../context/UserContext";
 import CreatePost from "../components/post/CreatePost";
 import CardPost from "../components/post/CardPost";
+import {UserContext} from "../context/UserContext";
+import {UnreadMessagesContext} from "../context/UnreadMessagesContext";
 
 // Token de cancelación de requests de axios
 const CancelToken = axios.CancelToken;
 
-const HomePage = ({posts}) => {
+const HomePage = ({posts, unreadMessages}) => {
   const userContext = useContext(UserContext);
+  const {setUnreadCount} = useContext(UnreadMessagesContext);
   const cancellerRef = useRef();
 
   const [title, setTitle] = useState("");
@@ -35,6 +37,13 @@ const HomePage = ({posts}) => {
       setLoadMore(true);
     }
   }
+
+  /*----------------------------------------------------------*/
+  // Mostrar el número de mensajes sin leer al entrar a la app
+  /*----------------------------------------------------------*/
+  useEffect(() => {
+    setUnreadCount(unreadMessages)
+  }, []);
 
   /*----------------------------------------------------------------------*/
   // Cargar la siguiente página de posts al llegar al fondo del contenedor
@@ -144,14 +153,15 @@ const HomePage = ({posts}) => {
 export async function getServerSideProps(context) {
   try {
     const {token} = parseCookies(context);
-    const {req} = context;
+    const baseUrl = process.env.BASE_URL;
 
     // Verificar el token
     jwt.verify(token, process.env.JWT_SECRET);
     
+    // Consultar la primera página de posts
     const res = await axios({
       method: "GET",
-      url: `${req.protocol}://${req.get("host")}/api/posts`,
+      url: `${baseUrl}/api/posts`,
       headers: {
         Cookie: `token=${token}`
       },
@@ -160,9 +170,19 @@ export async function getServerSideProps(context) {
       }
     });
 
+    // Consultar si hay mensajes sin leer
+    const res2 = await axios({
+      method: "GET",
+      url: `${baseUrl}/api/chats/unread-messages`,
+      headers: {
+        Cookie: `token=${token}`
+      }
+    });
+
     return {
       props: {
-        posts: res.data.data.posts
+        posts: res.data.data.posts,
+        unreadMessages: res2.data.data
       }
     }
   } catch (error) {

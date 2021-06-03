@@ -3,10 +3,15 @@ import Link from "next/link";
 import {useRouter} from "next/router";
 import {List, Icon} from "semantic-ui-react";
 import {UserContext} from "../../context/UserContext";
+import {UnreadMessagesContext} from "../../context/UnreadMessagesContext";
+import styles from "./sideMenu.module.css";
 
 const SideMenu = ({user: {unreadNotification, unreadMessage, username, email}}) => {
   const userContext = useContext(UserContext);
+  const {unreadCount, setAllRead} = useContext(UnreadMessagesContext);
   const router = useRouter();
+
+  console.log({unreadCount});
 
   const [activeRoute, setActiveRoute] = useState(null);
   
@@ -41,15 +46,22 @@ const SideMenu = ({user: {unreadNotification, unreadMessage, username, email}}) 
 
         <Link href="/messages">
           <List.Item
-            style={{padding: "10px", marginBottom: "10px"}}
+            className={styles["side-menu__list-item"]}
             active={activeRoute === "/messages"}
             onClick={() => setActiveRoute("/messages")}
           >
-            <Icon
-              name={unreadMessage ? "hand point right" : unreadMessage ? "mail" : "mail outline"}
-              size="large"
-              color={activeRoute === "/messages" ? "teal" : unreadMessage ? "orange" : "grey"}
-            />
+            <div className={styles["side-menu__icon-wrapper"]}>
+              <Icon
+                name={unreadCount > 0 ? "mail" : "mail outline"}
+                size="large"
+                color={activeRoute === "/messages" ? "teal" : "grey"}
+              />
+              {unreadCount > 0 &&
+                <div className={styles["side-menu__icon-badge"]}>
+                  {unreadCount}
+                </div>
+              }
+            </div>
             <List.Content>
               <List.Header content="Messages" />
             </List.Content>

@@ -1,0 +1,33 @@
+.side-menu__list-item {
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  padding: 10px !important;
+  margin-bottom: 10px !important
+}
+
+.side-menu__icon-wrapper {
+  position: relative;
+  margin-right: 1rem
+}
+
+.side-menu__icon-wrapper i {
+  margin: 0 !important
+}
+
+.side-menu__icon-badge {
+  display: flex;
+  position: absolute;
+  top: -8px;
+  right: -5px;
+  justify-content: center;
+  align-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 5px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 50%;
+  color: white;
+  background-color: red
+}
