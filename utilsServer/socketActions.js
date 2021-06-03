@@ -3,7 +3,7 @@ const users = [];
 // Agregar un usuario a socket
 const addUser = (userId, socketId) => {
   // Verificar si ya el usuario está agregado
-  const user = users.some(el => el.userId.toString() === userId.toString());
+  const user = users.find(el => el.userId.toString() === userId.toString());
 
   // Si ya está agregado, retornar
   if(user && user.socketId === socketId) {
@@ -19,7 +19,7 @@ const addUser = (userId, socketId) => {
   const newUser = {userId, socketId}
   users.push(newUser);
 
-  console.log({userAdded: {userId, socketId}});
+  console.log({usuarioAgregado: {userId, socketId}});
   
   return users;
 }
@@ -28,6 +28,7 @@ const addUser = (userId, socketId) => {
 const removeUser = (socketId) => {
   const userIndex = users.findIndex(el => el.socketId === socketId);
   users.splice(userIndex, 1);
+  console.log("Usuario removido");
   return users;
 }
 

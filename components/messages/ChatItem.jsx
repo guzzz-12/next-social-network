@@ -1,14 +1,17 @@
-import {useState} from "react";
+import {useContext} from "react";
 import {List, Image, Popup, Header, Button, Icon} from "semantic-ui-react";
 import moment from "moment";
 import OnlineIndicator from "./OnlineIndicator";
+import {SocketContext} from "../../context/SocketProvider";
 import styles from "../../pages/messages/messages.module.css";
 
-const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disableChatHandler, disablingChat, onlineUsers}) => {
+const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disableChatHandler, disablingChat}) => {
 
   if(!currentUser) {
     return null;
   }
+
+  const {onlineUsers} = useContext(SocketContext);
 
   // Verificar si el otro participante del chat seleccionado está online
   const isOnline = onlineUsers.some(el => el.userId.toString() === item.user._id.toString() || el.userId.toString() === item.messagesWith._id.toString());

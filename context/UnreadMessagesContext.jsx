@@ -1,29 +1,18 @@
 import {createContext, useState} from "react";
 
 export const UnreadMessagesContext = createContext({
-  unreadCount: 0,
-  setUnreadCount: () => {},
-  setAllRead: () => {}
+  unreadMessages: 0,
+  setUnreadMessages: () => {}
 });
 
 const UnreadMsgsContextProvider = ({children}) => {
   const [unreadMessages, setUnreadMessages] = useState(0);
 
-  const setUnreadCount = (count) => {
-    console.log({countUpdated: count});
-    setUnreadMessages(count)
-  }
-
-  const setAllRead = () => {
-    setUnreadMessages(0)
-  }
-
   return (
     <UnreadMessagesContext.Provider
       value={{
-        unreadCount: unreadMessages,
-        setUnreadCount,
-        setAllRead
+        unreadMessages,
+        setUnreadMessages
       }}
     >
       {children}

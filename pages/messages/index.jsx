@@ -4,23 +4,23 @@ import {useRouter} from "next/router";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import {parseCookies, destroyCookie} from "nookies";
-import ioClient from "socket.io-client";
 
 import Search from "../../components/Layout/Search";
 import ChatItem from "../../components/messages/ChatItem";
 import SingleMessage from "../../components/messages/SingleMessage";
 import {UserContext} from "../../context/UserContext";
 import {UnreadMessagesContext} from "../../context/UnreadMessagesContext";
+import {SocketContext} from "../../context/SocketProvider";
 import styles from "./messages.module.css";
 
 
 const MessagesPage = (props) => {
-  const socket = useRef();
   const lastMsgRef = useRef();
   const inboxRef = useRef();
   const router = useRouter();
   const {currentUser} = useContext(UserContext);
   const unreadContext = useContext(UnreadMessagesContext);
+  const {socket, onlineUsers} = useContext(SocketContext);
 
   const [chats, setChats] = useState(props.chats);
   const [selectedChat, setSelectedChat] = useState(props.chats[0] || {});
@@ -42,28 +42,21 @@ const MessagesPage = (props) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const [onlineUsers, setOnlineUsers] = useState([]);
+  /*---------------------------------------------------*/
+  // Resetear el contador de mensajes al entrar al chat
+  /*---------------------------------------------------*/
+  useEffect(() => {
+    unreadContext.setUnreadMessages(0)
+  }, []);
 
   /*-------------------------------------------------------------------------------*/
   // Incializar cliente de Socket.io y actualizar mensajes entrantes en tiempo real
   /*-------------------------------------------------------------------------------*/
   useEffect(() => {
-    if(!socket.current) {
-      socket.current = ioClient(process.env.BASE_URL)
-    }
-
-    if(socket.current && currentUser) {      
-      socket.current.emit("join", {userId: currentUser._id});
-
-      // Actualizar el state de los usuarios online
-      socket.current.on("onlineUsers", (onlineUsers) => {
-        const filtered = onlineUsers.filter(el => el.userId.toString() !== currentUser._id.toString());
-        setOnlineUsers(filtered);
-      });
-
+    if(socket && currentUser) {
       // Actualizar la bandeja con el nuevo mensaje recibido en el recipiente
-      socket.current.on("newMessageReceived", (data) => {
-        setSelectedChatMessages(prev => {
+      socket.on("newMessageReceived", (data) => {
+        setSelectedChatMessages(prev => {          
           // Filtrar mensajes duplicados
           const filteredDuplicates = [...prev, data].reduce((acc, item) => {
             const x = acc.find(el => el._id === item._id);
@@ -76,12 +69,17 @@ const MessagesPage = (props) => {
 
           return filteredDuplicates
         });
-
-        inboxRef.current.scrollTop = inboxRef.current.scrollHeight;
+        
+        // Scrollear al fondo de la bandeja al recibir el nuevo mensaje
+        if(router.pathname === "/messages" && inboxRef.current) {
+          inboxRef.current.scrollTop = inboxRef.current.scrollHeight;
+        }
       });
 
       // Actualizar la bandeja con el mensaje eliminado en el recipiente
-      socket.current.on("messageDeleted", (data) => {
+      socket.on("messageDeleted", (data) => {
+        console.log({MensajeEliminado: data})
+
         setSelectedChatMessages(prev => {
           const updatedMsgs = [...prev];
           const msgIndex = updatedMsgs.findIndex(el => el._id.toString() === data._id.toString());
@@ -92,7 +90,7 @@ const MessagesPage = (props) => {
     }
 
     // Actualizar el chat en el otro usuario al deshabilitarlo
-    socket.current.on("chatDisabled", (data) => {
+    socket.on("chatDisabled", (data) => {
       const chatId = data._id.toString();
 
       // Si el chat seleccionado fue deshabilitado, actualizarlo
@@ -110,7 +108,7 @@ const MessagesPage = (props) => {
     });
 
     // Actualizar el chat en el otro usuario al habilitarlo
-    socket.current.on("chatEnabled", (data) => {
+    socket.on("chatEnabled", (data) => {
       const chatId = data._id.toString();
 
       // Si el chat seleccionado fue habilitado, actualizarlo
@@ -128,7 +126,7 @@ const MessagesPage = (props) => {
     });
 
     // Actualizar el status de los mensajes vistos
-    socket.current.on("readMessages", (update) => {
+    socket.on("readMessages", (update) => {
       setSelectedChatMessages(prev => {
         const currentMessages = [...prev];
 
@@ -142,9 +140,9 @@ const MessagesPage = (props) => {
     });
 
     // Poner el status offline al salir del chat
-    return () => socket.current.emit("offline");
+    // return () => socket.current.emit("offline");
 
-  }, [socket.current, currentUser]);
+  }, [socket, currentUser, inboxRef.current]);
 
   /*---------------------------------------------------------------*/
   // Almacenar el último mensaje cargado para mantenerlo en el view
@@ -184,14 +182,14 @@ const MessagesPage = (props) => {
 
         // Emitir el evento de mensajes vistos al recipiente
         if(updatedMessages.length > 0) {
-          socket.current.emit("messagesRead", {
+          socket.emit("messagesRead", {
             updatedMessages,
             senderId: updatedMessages[0].sender._id.toString(),
             seenById: currentUser._id
           });
         }
 
-        unreadContext.setAllRead();
+        unreadContext.setUnreadMessages(0)
       })
       .catch(err => {
         let message = err.message;
@@ -231,12 +229,12 @@ const MessagesPage = (props) => {
 
       // Emitir el chat deshabilitado
       if(updatedChat.status === "inactive") {
-        socket.current.emit("disabledChat", updatedChat);
+        socket.emit("disabledChat", updatedChat);
       }
 
       // Emitir el chat habilitado
       if(updatedChat.status === "active") {
-        socket.current.emit("enabledChat", {updatedChat, enabledBy: currentUser._id})
+        socket.emit("enabledChat", {updatedChat, enabledBy: currentUser._id})
       }
 
       setSelectedChat(updatedChat);
@@ -283,6 +281,9 @@ const MessagesPage = (props) => {
 
         // Mantener el scroll en el último mensaje recibido en la carga anterior
         lastMsgRef.current && lastMsgRef.current.scrollIntoView({block: "end"});
+
+        // Marcar todos como leídos
+        unreadContext.setUnreadMessages(0)
 
         // Almacenar la id del último mensaje cargado
         setLastLoadedMsg(messages[0]);
@@ -363,7 +364,7 @@ const MessagesPage = (props) => {
       const newMessage = res.data.data;
       
       // Emitir el nuevo mensaje enviado al recipiente
-      socket.current.emit("newMessage", newMessage);
+      socket.emit("newMessage", newMessage);
 
       setSelectedChatMessages(prev => [...prev, newMessage]);
       setSending(false);
@@ -488,7 +489,6 @@ const MessagesPage = (props) => {
                     <SingleMessage
                       key={msg._id}
                       message={msg}
-                      socket={socket}
                       setMessages={setSelectedChatMessages}
                       currentUser={currentUser.username}
                     />

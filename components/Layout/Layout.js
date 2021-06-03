@@ -3,6 +3,7 @@ import Router, {useRouter} from "next/router";
 import {Container, Visibility, Grid, Sticky, Ref, Segment} from "semantic-ui-react";
 import nprogress from "nprogress";
 import jsCookie from "js-cookie";
+
 import HeadTags from "./HeadTags";
 import Navbar from "./Navbar";
 import SideMenu from "./SideMenu";

@@ -4,16 +4,26 @@ import {useRouter} from "next/router";
 import {List, Icon} from "semantic-ui-react";
 import {UserContext} from "../../context/UserContext";
 import {UnreadMessagesContext} from "../../context/UnreadMessagesContext";
+import {SocketContext} from "../../context/SocketProvider";
 import styles from "./sideMenu.module.css";
 
 const SideMenu = ({user: {unreadNotification, unreadMessage, username, email}}) => {
   const userContext = useContext(UserContext);
-  const {unreadCount, setAllRead} = useContext(UnreadMessagesContext);
+  const {socket} = useContext(SocketContext);
+
+  const {setUnreadMessages, unreadMessages} = useContext(UnreadMessagesContext);
   const router = useRouter();
 
-  console.log({unreadCount});
-
   const [activeRoute, setActiveRoute] = useState(null);
+
+  // Actualizar el contador de mensajes al recibir un nuevo mensaje
+  useEffect(() => {
+    if(socket && router.pathname !== "/messages") {
+      socket.on("newMessageReceived", () => {
+        setUnreadMessages(prev => prev + 1)
+      })
+    }
+  }, [socket]);
   
   useEffect(() => {
     setActiveRoute(router.pathname);
@@ -52,13 +62,13 @@ const SideMenu = ({user: {unreadNotification, unreadMessage, username, email}}) 
           >
             <div className={styles["side-menu__icon-wrapper"]}>
               <Icon
-                name={unreadCount > 0 ? "mail" : "mail outline"}
+                name={unreadMessages > 0 ? "mail" : "mail outline"}
                 size="large"
                 color={activeRoute === "/messages" ? "teal" : "grey"}
               />
-              {unreadCount > 0 &&
+              {unreadMessages > 0 &&
                 <div className={styles["side-menu__icon-badge"]}>
-                  {unreadCount}
+                  {unreadMessages}
                 </div>
               }
             </div>
@@ -92,7 +102,7 @@ const SideMenu = ({user: {unreadNotification, unreadMessage, username, email}}) 
             onClick={() => setActiveRoute(`/profile`)}
           >
             <Icon
-              name="user"
+              name="user outline"
               size="large"
               color={activeRoute === `/profile` ? "teal" : "grey"}
             />

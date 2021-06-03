@@ -1,10 +1,13 @@
-import {useState, useEffect} from "react";
+import {useState, useEffect, useContext} from "react";
 import {Comment, Popup, Button, Icon, Header} from "semantic-ui-react";
 import moment from "moment";
 import axios from "axios";
+import {SocketContext} from "../../context/SocketProvider";
 import styles from "./singleMessage.module.css";
 
-const SingleMessage = ({message, setMessages, currentUser, socket}) => {
+const SingleMessage = ({message, setMessages, currentUser}) => {
+  const {socket} = useContext(SocketContext);
+
   // Verificar si el usuario actual es el que envía
   const [isCurrentUserSender, setIsCurrentUserSender] = useState(currentUser === message.sender.username);
   const [user, setUser] = useState({});
@@ -44,7 +47,7 @@ const SingleMessage = ({message, setMessages, currentUser, socket}) => {
       });
 
       // Emitir el mensaje eliminado al recipiente
-      socket.current.emit("deletedMessage", updatedMessage);
+      socket.emit("deletedMessage", updatedMessage);
 
       setDeleting(false);
       
