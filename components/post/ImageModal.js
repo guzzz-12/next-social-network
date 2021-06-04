@@ -9,6 +9,7 @@ import classes from "./modal.module.css";
 const ImageModal = ({
   post,
   user,
+  socket,
   likes,
   comments,
   setComments,
@@ -154,6 +155,8 @@ const ImageModal = ({
                   <CommentInput
                     user={user}
                     postId={post._id.toString()}
+                    postAuthor={post.user._id}
+                    socket={socket}
                     setComments={setComments}
                   />
                 </div>

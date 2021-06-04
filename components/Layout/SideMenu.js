@@ -4,25 +4,36 @@ import {useRouter} from "next/router";
 import {List, Icon} from "semantic-ui-react";
 import {UserContext} from "../../context/UserContext";
 import {UnreadMessagesContext} from "../../context/UnreadMessagesContext";
+import {NotificationsContext} from "../../context/NotificationsContext";
 import {SocketContext} from "../../context/SocketProvider";
 import styles from "./sideMenu.module.css";
 
-const SideMenu = ({user: {unreadNotification, unreadMessage, username, email}}) => {
+const SideMenu = () => {
   const userContext = useContext(UserContext);
+  const {setUnreadMessages, unreadMessages} = useContext(UnreadMessagesContext);
+  const {unreadNotifications, setUnreadNotifications} = useContext(NotificationsContext)
   const {socket} = useContext(SocketContext);
 
-  const {setUnreadMessages, unreadMessages} = useContext(UnreadMessagesContext);
   const router = useRouter();
 
   const [activeRoute, setActiveRoute] = useState(null);
 
   // Actualizar el contador de mensajes al recibir un nuevo mensaje
+  // y el contador de notificaciones al recibir una nueva notificación
   useEffect(() => {
     if(socket && router.pathname !== "/messages") {
       socket.on("newMessageReceived", () => {
         setUnreadMessages(prev => prev + 1)
       })
     }
+
+    if(socket) {
+      socket.on("receivedNotification", () => {
+        console.log("receivedNotification")
+        setUnreadNotifications(prev => prev + 1)
+      })
+    }
+
   }, [socket]);
   
   useEffect(() => {
@@ -68,7 +79,7 @@ const SideMenu = ({user: {unreadNotification, unreadMessage, username, email}}) 
               />
               {unreadMessages > 0 &&
                 <div className={styles["side-menu__icon-badge"]}>
-                  {unreadMessages}
+                  {unreadMessages > 99 ? "99+" : unreadMessages}
                 </div>
               }
             </div>
@@ -80,15 +91,25 @@ const SideMenu = ({user: {unreadNotification, unreadMessage, username, email}}) 
 
         <Link href="/notifications">
           <List.Item
-            style={{padding: "10px", marginBottom: "10px"}}
+            className={styles["side-menu__list-item"]}
             active={activeRoute === "/notifications"}
-            onClick={() => setActiveRoute("/notifications")}
+            onClick={() => {
+              setActiveRoute("/notifications");
+              setUnreadNotifications(0)
+            }}
           >
-            <Icon
-              name={unreadMessage ? "hand point right" : unreadNotification ? "bell" : "bell outline"}
-              size="large"
-              color={activeRoute === "/notifications" ? "teal" : unreadNotification ? "orange" : "grey"}
-            />
+            <div className={styles["side-menu__icon-wrapper"]}>
+              <Icon
+                name={unreadNotifications.length > 0 ? "bell" : "bell outline"}
+                size="large"
+                color={activeRoute === "/notifications" ? "teal" : "grey"}
+              />
+              {unreadNotifications.length > 0 &&
+                <div className={styles["side-menu__icon-badge"]}>
+                  {unreadNotifications.length > 99 ? "99+" : unreadNotifications.length}
+                </div>
+              }
+            </div>
             <List.Content>
               <List.Header content="Notifications" />
             </List.Content>

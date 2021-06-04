@@ -2,9 +2,11 @@ import {useState, useEffect, useContext} from "react";
 import {Segment, Grid, Image, Header, Divider, Button, List} from "semantic-ui-react";
 import axios from "axios";
 import {UserContext} from "../../context/UserContext";
+import {SocketContext} from "../../context/SocketProvider";
 
 const ProfileHeader = ({profile, isAccountOwner, followers, following, setFollowers}) => {
   const userContext = useContext(UserContext);
+  const {socket} = useContext(SocketContext);
 
   const [socialLinks, setSocialLinks] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -64,6 +66,10 @@ const ProfileHeader = ({profile, isAccountOwner, followers, following, setFollow
         // En caso de follow, agregar el usuario actual a los seguidores del usuario del perfil visitado
         if(actionType === "follow") {
           const updated = [...prev, {_id, user: seguidor}];
+
+          // Emitir al backend el evento del usuario seguido
+          socket.emit("notificationReceived", {userToNotify: profile.user._id});
+
           return updated
         }
       });

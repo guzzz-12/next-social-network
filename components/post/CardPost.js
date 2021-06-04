@@ -1,4 +1,4 @@
-import {useState, useEffect} from "react";
+import {useState, useEffect, useContext} from "react";
 import Link from "next/link";
 import {Card, Icon, Image, Divider, Segment, Button, Popup, Header, Modal, Loader} from "semantic-ui-react";
 import axios from "axios";
@@ -9,9 +9,12 @@ import CommentInput from "./CommentInput";
 import LikesList from "./LikesList";
 import ImageModal from "./ImageModal";
 import NoImageModal from "./NoImageModal";
+import {SocketContext} from "../../context/SocketProvider";
 import classes from "./cardPost.module.css";
 
 const CardPost = ({user, post, setPosts}) => {
+  const {socket} = useContext(SocketContext);
+
   const [comments, setComments] = useState([]);
   const [commentsCount, setCommentsCount] = useState(null);
   const [loadingComments, setLoadingComments] = useState(true);
@@ -134,6 +137,9 @@ const CardPost = ({user, post, setPosts}) => {
       if(eventType === "liked") {
         setLikes(prev => [like, ...prev]);
 
+        // Emitir al backend el evento de notificación al likear el post
+        socket.emit("notificationReceived", {userToNotify:post.user._id});
+
       } else if(eventType === "disliked") {
         setLikes(prev => {
           return [...prev].filter(el => el.author._id.toString() !== like.author._id.toString())
@@ -169,6 +175,7 @@ const CardPost = ({user, post, setPosts}) => {
               <ImageModal
                 post={post}
                 user={user}
+                socket={socket}
                 comments={comments}
                 setComments={setComments}
                 setCommentsCount={setCommentsCount}
@@ -187,6 +194,7 @@ const CardPost = ({user, post, setPosts}) => {
               <NoImageModal
                 post={post}
                 user={user}
+                socket={socket}
                 comments={comments}
                 setComments={setComments}
                 setCommentsCount={setCommentsCount}
@@ -355,6 +363,8 @@ const CardPost = ({user, post, setPosts}) => {
             <CommentInput
               user={user}
               postId={post._id}
+              postAuthor={post.user._id}
+              socket={socket}
               setComments={setComments}
               setCommentsCount={setCommentsCount}
             />

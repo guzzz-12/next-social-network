@@ -515,14 +515,15 @@ const MessagesPage = (props) => {
                   }}
                 />
               </Form>
+
               <Button
-                className={styles["messages__inbox-btn"]}
+                className={styles["messages__inbox-input-btn"]}
                 icon
                 basic
                 disabled={text.length === 0 || sending || selectedChat.status === "inactive"}
                 onClick={sendMessageHandler}
               >
-                <Icon name="send" size="large" color="teal"/>
+                <Icon name="paper plane outline" size="large" color="grey"/>
               </Button>
             </Segment>
           </div>

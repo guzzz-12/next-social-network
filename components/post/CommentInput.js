@@ -2,7 +2,7 @@ import {useState} from "react";
 import {Form} from "semantic-ui-react";
 import axios from "axios";
 
-const CommentInput = ({postId, setComments, setCommentsCount}) => {
+const CommentInput = ({postId, setComments, setCommentsCount, socket, postAuthor}) => {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -28,6 +28,9 @@ const CommentInput = ({postId, setComments, setCommentsCount}) => {
       setCommentsCount(prev => prev + 1);
       setLoading(false);
       setText("");
+
+      // Emitir evento de notificación al backend
+      socket.emit("notificationReceived", {userToNotify: postAuthor});
       
     } catch (error) {
       let message = error.message;

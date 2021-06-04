@@ -115,8 +115,3 @@
   flex-grow: 1;
   margin-right: 10px;
 }
-
-.messages__inbox-input-btn {
-  flex-shrink: 0;
-  border-color: transparent !important
-}
