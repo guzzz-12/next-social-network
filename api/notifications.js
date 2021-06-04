@@ -35,6 +35,27 @@ router.get("/", authMiddleware, async (req, res) => {
 });
 
 
+// Consultar las notificaciones sin leer
+router.get("/unread", authMiddleware, async (req, res) => {
+  try {
+    const notifications = await Notification
+    .find({seen: false})
+    .lean();
+
+    res.json({
+      status: "success",
+      data: notifications
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Error getting unread notifications: ${error.message}`
+    })
+  }
+})
+
+
 // Marcar las notificaciones como leídas
 router.patch("/", authMiddleware, async (req, res) => {
   try {

@@ -10,13 +10,15 @@ import CreatePost from "../components/post/CreatePost";
 import CardPost from "../components/post/CardPost";
 import {UserContext} from "../context/UserContext";
 import {UnreadMessagesContext} from "../context/UnreadMessagesContext";
+import {NotificationsContext} from "../context/NotificationsContext";
 
 // Token de cancelación de requests de axios
 const CancelToken = axios.CancelToken;
 
-const HomePage = ({posts, unreadMessages}) => {
+const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
   const userContext = useContext(UserContext);
   const {setUnreadMessages} = useContext(UnreadMessagesContext);
+  const {setUnreadNotifications} = useContext(NotificationsContext);
   const cancellerRef = useRef();
 
   const [title, setTitle] = useState("");
@@ -43,6 +45,13 @@ const HomePage = ({posts, unreadMessages}) => {
   /*----------------------------------------------------------*/
   useEffect(() => {
     setUnreadMessages(unreadMessages);
+  }, []);
+
+  /*-----------------------------------------------------------------*/
+  // Mostrar el número de notificaciones sin leer al entrar a la app
+  /*-----------------------------------------------------------------*/
+  useEffect(() => {
+    setUnreadNotifications(unreadNotifications)
   }, []);
 
   /*----------------------------------------------------------------------*/
@@ -179,10 +188,20 @@ export async function getServerSideProps(context) {
       }
     });
 
+    // Consultar las notificaciones no leídas
+    const res3 = await axios({
+      method: "GET",
+      url: `${baseUrl}/api/notifications/unread`,
+      headers: {
+        Cookie: `token=${token}`
+      }
+    });
+
     return {
       props: {
         posts: res.data.data.posts,
-        unreadMessages: res2.data.data
+        unreadMessages: res2.data.data,
+        unreadNotifications: res3.data.data,
       }
     }
   } catch (error) {
