@@ -20,6 +20,7 @@ const notificationsRoutes = require("./api/notifications");
 const chatsRoutes = require("./api/chats");
 const commentsRoutes = require("./api/comments");
 const likesRoutes = require("./api/likes");
+const resetPassword = require("./api/reset-password");
 const errorsHandler = require("./middleware/errorsHandler");
 const {addUser, removeUser, users} = require("./utilsServer/socketActions");
 const PORT = process.env.PORT || 5000;
@@ -149,6 +150,7 @@ nextApp.prepare()
   app.use("/api/chats", chatsRoutes);
   app.use("/api/comments", commentsRoutes);
   app.use("/api/likes", likesRoutes);
+  app.use("/api/reset-password", resetPassword);
   app.all("*", (req, res) => handle(req, res));
 
   // Manejo de errores

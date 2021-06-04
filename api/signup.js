@@ -9,7 +9,6 @@ const formidable = require("formidable");
 const User = require("../models/UserModel");
 const Profile = require("../models/ProfileModel");
 const Follower = require("../models/FollowerModel");
-const Chat = require("../models/ChatModel");
 
 const regexUserName = /^(?!.*\.\.)(?!.*\.$)[^\W][\w.]{0,29}$/;
 
@@ -131,9 +130,6 @@ router.post("/", [
 
     // Inicializar la colección de seguidores y seguidos
     await Follower.create({user: newUser._id});
-
-    // Inicializar la colección de chats del usuario
-    await Chat.create({user: newUser._id});
 
     // Generar el token de autenticación y setear el cookie
     const token = jwt.sign({userId: newUser._id, userRole: newUser.role}, process.env.JWT_SECRET, {

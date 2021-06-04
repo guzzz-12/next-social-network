@@ -30,6 +30,7 @@ router.get("/me", authMiddleware, async (req, res) => {
     
     // Consultar el perfil del usuario
     const profile = await Profile.findOne({user: user._id})
+    .lean()
     .populate({
       path: "user",
       select: "-password -__v"
