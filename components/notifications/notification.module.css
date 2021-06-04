@@ -1,0 +1,10 @@
+.notification--not-seen {
+  background-color: #d7f0ff !important;
+  transition: all 1000ms !important;
+}
+
+.notification--seen {
+  background-color: white !important;
+  transition: all 1000ms !important;
+}
+

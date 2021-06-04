@@ -1,5 +1,6 @@
 import {Feed, Popup, Header, Button, Icon} from "semantic-ui-react";
 import moment from "moment";
+import styles from "./notification.module.css";
 
 const LikeNotification = ({notification, deleteNotificationHandler, deleting}) => {
   const user = notification.userNotifier;
@@ -41,7 +42,9 @@ const LikeNotification = ({notification, deleteNotificationHandler, deleting}) =
   }
 
   return (
-    <Feed.Event>
+    <Feed.Event
+      className={styles[`${notification.seen ? "notification--seen" : "notification--not-seen"}`]}
+    >
       <Feed.Label
         as="a"
         href={`/user/${user.username}`}
