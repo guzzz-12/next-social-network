@@ -8,14 +8,15 @@ import unauthRedirect from "../utilsServer/unauthRedirect";
 import CommentNotification from "../components/notifications/CommentNotification";
 import FollowerNotification from "../components/notifications/FollowerNotification";
 import LikeNotification from "../components/notifications/LikeNotification";
-import {UserContext} from "../context/UserContext";
+import {NotificationsContext} from "../context/NotificationsContext";
 
 // Token de cancelación de requests de axios
 const CancelToken = axios.CancelToken;
 
 const NotificationsPage = (props) => {
   const cancellerRef = useRef();
-  const userContext = useContext(UserContext);
+  const {setUnreadNotifications} = useContext(NotificationsContext);
+  setUnreadNotifications(props.notifications.length);
   
   // State de las notificaciones
   const [notifications, setNotifications] = useState(props.notifications);
@@ -39,25 +40,53 @@ const NotificationsPage = (props) => {
     setLoading(true);
     setErrorMsg(false);
     
-    axios({
-      method: "PATCH",
-      url: "/api/notifications"
-    })
-    .then(res => {
-      const {user, isUpdated} = res.data.data;
-      isUpdated && userContext.setCurrentUser(user);
-      setLoading(false);
-    })
-    .catch(error => {
-      let message = error.message;
-      if(error.response) {
-        message = error.response.data.message;
+    // Extraer las ids de las notificaciones sin leer
+    let notSeen = [];
+    notifications.forEach(el => {
+      if(!el.seen) {
+        notSeen.push(el._id)
       }
-      setLoading(false);
-      setErrorMsg(message)
     });
+    
+    if(notSeen.length > 0) {
+      axios({
+        method: "PATCH",
+        url: "/api/notifications",
+        data: {notificationsIds: notSeen},
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      .then(res => {
+        const {updatedNotifications} = res.data.data;
+  
+        // Actualizar el state de las notificaciones vistas
+        setNotifications(prev => {
+          const current = [...prev];
+          updatedNotifications.forEach(el => {
+            const index = current.findIndex(item => item._id.toString() === el.toString());
+            let currentItem = current[index];
+            current.splice(index, 1, {...currentItem, seen: true});
+          });  
+          return current;
+        });
+        
+        setLoading(false);
+      })
+      .catch(error => {
+        let message = error.message;
+        if(error.response) {
+          message = error.response.data.message;
+        }
+        setLoading(false);
+        setErrorMsg(message)
+      });
 
-  }, []);
+    } else {
+      return null;
+    }
+
+  }, [notifications]);
 
 
   /*---------------------------*/
@@ -244,7 +273,6 @@ const NotificationsPage = (props) => {
 export async function getServerSideProps(context) {
   try {
     const {token} = parseCookies(context);
-    const {req} = context;
 
     // Verificar el token
     jwt.verify(token, process.env.JWT_SECRET);  
@@ -254,7 +282,7 @@ export async function getServerSideProps(context) {
 
     const res = await axios({
       method: "GET",
-      url: `${req.protocol}://${req.get("host")}/api/notifications?page=1`
+      url: `${process.env.BASE_URL}/api/notifications?page=1`
     });
 
     return {
