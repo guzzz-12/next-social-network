@@ -38,22 +38,15 @@ router.get("/", authMiddleware, async (req, res) => {
 // Marcar las notificaciones como leídas
 router.patch("/", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select("-password");
-    let isUpdated = null;
+    const {notificationsIds} = req.body;
 
-    if(user.unreadNotification) {
-      user.unreadNotification = false;
-      await user.save();
-      isUpdated = true;
-    } else {
-      isUpdated = false;
-    }
-
+    await Notification
+    .updateMany({_id: {$in: notificationsIds}}, {seen: true});
     
     res.json({
       status: "success",
-      data: {user, isUpdated}
-    })
+      data: {updatedNotifications: notificationsIds}
+    });
 
   } catch (error) {
     res.status(500).json({

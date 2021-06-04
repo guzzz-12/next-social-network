@@ -107,7 +107,21 @@ io.on("connection", (socket) => {
     if(recipient && recipient !== seenById.toString()) {
       io.to(recipient.socketId).emit("readMessages", updatedMessages);
     }
+  });
+
+
+  // Notificar al usuario si tiene notificación de comentario, like o nuevo seguidor
+  socket.on("notificationReceived", (data) => {
+    const {userToNotify} = data;
+
+    console.log("notificationReceived", userToNotify);
+
+    const recipient = users.find(el => el.userId.toString() === userToNotify.toString());
+    if(recipient) {
+      io.to(recipient.socketId).emit("receivedNotification");
+    }
   })
+
 });
 
 
