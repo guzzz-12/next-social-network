@@ -181,7 +181,7 @@ const Login = () => {
           error
           style={{marginTop: "1rem"}}
           header="Oops!"
-          content={backendError}
+          content={backendError?.includes("MongoDB") ? "Network error, check your intenet conection" : backendError}
           onDismiss={() => setBackendError(null)}
         />
         <Segment>
@@ -255,11 +255,9 @@ export async function getServerSideProps(context) {
     }
 
   } catch (error) {
-    destroyCookie(context, "token");
     return {
-      redirect: {
-        destination: "/login",
-        permanent: false
+      props: {
+        error: error.message
       }
     }
   }

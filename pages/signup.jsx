@@ -320,7 +320,7 @@ const Signup = () => {
           error
           style={{marginTop: "1rem"}}
           header="Oops!"
-          content={backendError}
+          content={backendError?.includes("MongoDB") ? "Network error, check your intenet conection" : backendError}
           onDismiss={() => setBackendError(null)}
         />
         <Segment>

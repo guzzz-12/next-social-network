@@ -6,29 +6,43 @@ import Link from "next/link";
 export const HeaderMessage = () => {
   const router = useRouter();
 
-  const [signupRoute, setSignupRoute] = useState(false);
+  // const [signupRoute, setSignupRoute] = useState(false);
+  const [currentRoute, setCurrentRoute] = useState(null);
 
+  // Verificar la ruta actual
   useEffect(() => {
-    if(router.pathname === "/signup") {
-      setSignupRoute(true)
-    } else {
-      setSignupRoute(false);
-    }
+    setCurrentRoute(router.pathname)
   }, [router.pathname]);
 
   return (
     <Message
       color="teal"
       attached="top"
-      header={signupRoute ? "Get Started" : "Welcome Back"}
-      icon={signupRoute ? "settings" : "privacy"}
-      content={signupRoute ? "Create new account" : "Login with email and password"}
+      header={
+        currentRoute === "/signup" ? "Get Started" :
+        currentRoute === "/login" ? "Welcome Back" :
+        currentRoute === "/forgot-password" ? "Reset your password" :
+        currentRoute === "/reset-password" ? "Reset your password" :
+        ""
+      }
+      icon={currentRoute !== "/login" ? "settings" : "privacy"}
+      content={
+        currentRoute === "/signup" ? "Create new account" :
+        currentRoute === "/login" ? "Login with email and password" :
+        currentRoute === "/forgot-password" ? "We'll send you an email with instructions to reset your password" :
+        currentRoute === "/reset-password" ? "Type your new password" :
+        ""
+      }
     />
   )
 }
 
 export const FooterMessage = () => {
   const router = useRouter();
+
+  if(router.pathname !== "/signup" && router.pathname !== "/login") {
+    return null
+  }
 
   const [signupRoute, setSignupRoute] = useState(false);
 
@@ -59,7 +73,7 @@ export const FooterMessage = () => {
           <Message info attached="bottom" >
             <Icon name="lock" />
             {" "}
-            <Link href="/reset">Forgot password?</Link>
+            <Link href="/forgot-password">Forgot password?</Link>
           </Message>
 
           <Message warning attached="bottom" >

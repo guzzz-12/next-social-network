@@ -36,8 +36,6 @@ const Layout = (props) => {
 
       const user = JSON.parse(localStorage.getItem("user"))
       userContext.setCurrentUser(user);
-    } else {
-      userContext.logOut();
     }
   }, []);
   

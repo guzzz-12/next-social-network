@@ -32,8 +32,8 @@ export const NoPosts = () => (
   <Message
     info
     icon="meh"
-    header="Hey!"
-    content="No Posts. Make sure you have followed someone."
+    header="Nothing to show here."
+    content="Start following other users to see their posts!"
   />
 );
 

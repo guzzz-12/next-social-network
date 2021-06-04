@@ -100,13 +100,13 @@ const SideMenu = () => {
           >
             <div className={styles["side-menu__icon-wrapper"]}>
               <Icon
-                name={unreadNotifications.length > 0 ? "bell" : "bell outline"}
+                name={unreadNotifications?.length > 0 ? "bell" : "bell outline"}
                 size="large"
                 color={activeRoute === "/notifications" ? "teal" : "grey"}
               />
-              {unreadNotifications.length > 0 &&
+              {unreadNotifications?.length > 0 &&
                 <div className={styles["side-menu__icon-badge"]}>
-                  {unreadNotifications.length > 99 ? "99+" : unreadNotifications.length}
+                  {unreadNotifications?.length > 99 ? "99+" : unreadNotifications?.length > 0 ? unreadNotifications.length : ""}
                 </div>
               }
             </div>

@@ -22,7 +22,7 @@ const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
   const cancellerRef = useRef();
 
   const [title, setTitle] = useState("");
-  const [postsData, setPostsData] = useState(posts);
+  const [postsData, setPostsData] = useState(posts || []);
   const [showToastr, setShowToastr] = useState(false);
   
   const [loadMore, setLoadMore] = useState(false);
@@ -211,12 +211,12 @@ export async function getServerSideProps(context) {
       message = error.response.data.message
     }
 
+    console.log(`Error fetching user profile: ${message}`);
+
     // Redirigir a login si hay error de autenticación o no está autenticado
     if(message.includes("jwt") || message.includes("signature")) {
       return unauthRedirect(message, context);
     }
-
-    console.log(`Error fetching user profile: ${message}`);
 
     return {
       props: {

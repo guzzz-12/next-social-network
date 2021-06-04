@@ -2,7 +2,7 @@ import {useState, useEffect, useRef} from "react";
 import {Grid, Visibility, Segment, Loader} from "semantic-ui-react";
 import axios from "axios";
 import jwt from "jsonwebtoken";
-import {parseCookies} from "nookies";
+import {parseCookies, destroyCookie} from "nookies";
 import unauthRedirect from "../utilsServer/unauthRedirect";
 import ProfileMenuTabs from "../components/profile/ProfileMenuTabs";
 import ProfileHeader from "../components/profile/ProfileHeader";
@@ -225,6 +225,8 @@ export async function getServerSideProps(context) {
         Cookie: `token=${token}`
       }
     });
+
+    console.log({res: res.data.data})
   
     return {
       props: {
@@ -243,16 +245,19 @@ export async function getServerSideProps(context) {
       message = error.response.data.message;
     }    
     
+    console.log(`Error fetching user profile: ${message}`);
+
     // Redirigir al login si hay error de token
     if(message.includes("jwt") || message.includes("signature")) {
       return unauthRedirect(message, context)
     }
-
-    console.log(`Error fetching user profile: ${message}`);
+    
+    destroyCookie(context, "token");
 
     return {
-      props: {
-        error: message
+      redirect: {
+        destination: "/login",
+        permanent: false
       }
     }
   }
