@@ -2,17 +2,12 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
-const sendgridTransport = require("nodemailer-sendgrid-transport");
+const sendGrid = require("@sendgrid/mail");
 const {check, validationResult} = require("express-validator");
 const User = require("../models/UserModel");
 
-// Inicializar el transport de nodemailer para enviar el email
-const transport = nodemailer.createTransport(sendgridTransport({
-  auth: {
-    api_key: process.env.SENDGRID_SECRET
-  }
-}));
+// Inicializar Sendgrid
+sendGrid.setApiKey(process.env.SENDGRID_SECRET);
 
 // Enviar el correo de reseteo de contraseña
 router.post("/", [
@@ -38,7 +33,7 @@ router.post("/", [
     if(!user) {
       return res.status(404).json({
         status: "failed",
-        message: "User not found"
+        message: "There is no user associated to the specified email address."
       })
     }
 
@@ -47,9 +42,12 @@ router.post("/", [
     const resetHref = `${process.env.BASE_URL}/reset-password?token=${token}`
 
     // Opciones del correo a enviar
-    const mailOptions = {
+    const mailContent = {
       to: email,
-      from: process.env.SENDGRID_FROM,
+      from: {
+        name: "Social Network App",
+        email: process.env.SENDGRID_FROM
+      },
       subject: "Reset your password",
       // text: "",
       html: `
@@ -60,7 +58,7 @@ router.post("/", [
     }
 
     // Enviar el correo y responder al frontend
-    const sendResponse = await transport.sendMail(mailOptions);
+    const sendResponse = await sendGrid.send(mailContent);
 
     req.resetUserEmail = email;
 
