@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const sendGrid = require("@sendgrid/mail");
 const {check, validationResult} = require("express-validator");
 const User = require("../models/UserModel");
+const resetPasswordTemplate = require("../emailTemplates/resetPasswordTemplate");
 
 // Inicializar Sendgrid
 sendGrid.setApiKey(process.env.SENDGRID_SECRET);
@@ -49,12 +50,7 @@ router.post("/", [
         email: process.env.SENDGRID_FROM
       },
       subject: "Reset your password",
-      // text: "",
-      html: `
-        <p>Hello ${user.name.toString()}, click on <a href=${resetHref}>this link</a> to reset your password.</p>
-        <p>This link will expire in 15 minutes.</p>
-        <p>You can ignore this email if this is a mistake.</p>
-      `
+      html: resetPasswordTemplate(user.name, resetHref)
     }
 
     // Enviar el correo y responder al frontend
@@ -140,7 +136,7 @@ router.post("/create-password", [
     if(!isPasswordCorrect) {
       return res.status(401).json({
         status: "failed",
-        message: "Invalid password"
+        message: "Wrong password"
       })
     }
 
