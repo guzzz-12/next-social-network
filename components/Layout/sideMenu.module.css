@@ -1,14 +1,15 @@
 .side-menu__list-item {
   display: flex !important;
-  justify-content: flex-start !important;
   align-items: center !important;
   padding: 10px !important;
-  margin-bottom: 10px !important
+}
+
+.ui.big.horizontal .item:first-child {
+  padding-left: 10px !important;
 }
 
 .side-menu__icon-wrapper {
   position: relative;
-  margin-right: 1rem
 }
 
 .side-menu__icon-wrapper i {

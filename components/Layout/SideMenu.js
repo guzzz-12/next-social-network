@@ -8,10 +8,10 @@ import {NotificationsContext} from "../../context/NotificationsContext";
 import {SocketContext} from "../../context/SocketProvider";
 import styles from "./sideMenu.module.css";
 
-const SideMenu = () => {
+const SideMenu = ({isDesktop, isPhone}) => {
   const userContext = useContext(UserContext);
   const {setUnreadMessages, unreadMessages} = useContext(UnreadMessagesContext);
-  const {unreadNotifications, setUnreadNotifications} = useContext(NotificationsContext)
+  const {unreadNotifications, setUnreadNotifications} = useContext(NotificationsContext);
   const {socket} = useContext(SocketContext);
 
   const router = useRouter();
@@ -41,109 +41,146 @@ const SideMenu = () => {
   }, [router.pathname]);
 
   return (
-    <>
-      <List
-        style={{paddingTop: "1rem"}}
-        size="big"
-        verticalAlign="middle"
-        selection
-      >
-        <Link href="/">
-          <List.Item
-            style={{padding: "10px", marginBottom: "10px"}}
-            active={activeRoute === "/"}
-            onClick={() => setActiveRoute("/")}
-          >
-            <Icon
-              name="home"
-              size="large"
-              color={activeRoute === "/" ? "teal" : "grey"}
-            />
+    <List
+      style={{
+        display: isPhone ? "flex" : "inline-block",
+        justifyContent: "space-between",
+        width: isPhone ? "100%" : "auto",
+        marginTop: isPhone ? "10px" : 0,
+        marginBottom : isPhone ? 0 : "1rem",
+        paddingTop: "1rem"
+      }}
+      size="big"
+      verticalAlign="middle"
+      selection
+      horizontal={isPhone}
+    >
+      <Link href="/">
+        <List.Item
+          style={{
+            marginBottom: isPhone ? 0 : "10px",
+            justifyContent: isDesktop ? "flex-start" : "center"
+          }}
+          className={styles["side-menu__list-item"]}
+          active={activeRoute === "/"}
+          onClick={() => setActiveRoute("/")}
+        >
+          <Icon
+            name="home"
+            size="large"
+            color={activeRoute === "/" ? "teal" : "grey"}
+          />
+          {/* Mostrar el texto del item sólo en desktop */}
+          {isDesktop &&
             <List.Content>
               <List.Header content="Home" />
             </List.Content>
-          </List.Item>
-        </Link>
+          }
+        </List.Item>
+      </Link>
 
-        <Link href="/messages">
-          <List.Item
-            className={styles["side-menu__list-item"]}
-            active={activeRoute === "/messages"}
-            onClick={() => setActiveRoute("/messages")}
-          >
-            <div className={styles["side-menu__icon-wrapper"]}>
-              <Icon
-                name={unreadMessages > 0 ? "mail" : "mail outline"}
-                size="large"
-                color={activeRoute === "/messages" ? "teal" : "grey"}
-              />
-              {unreadMessages > 0 &&
-                <div className={styles["side-menu__icon-badge"]}>
-                  {unreadMessages > 99 ? "99+" : unreadMessages}
-                </div>
-              }
-            </div>
-            <List.Content>
+      <Link href="/messages">
+        <List.Item
+          style={{
+            marginBottom: isPhone ? 0 : "10px",
+            justifyContent: isDesktop ? "flex-start" : "center"
+          }}
+          className={styles["side-menu__list-item"]}
+          active={activeRoute === "/messages"}
+          onClick={() => setActiveRoute("/messages")}
+        >
+          <div className={styles["side-menu__icon-wrapper"]}>
+            <Icon
+              name={unreadMessages > 0 ? "mail" : "mail outline"}
+              size="large"
+              color={activeRoute === "/messages" ? "teal" : "grey"}
+            />
+            {unreadMessages > 0 &&
+              <div className={styles["side-menu__icon-badge"]}>
+                {unreadMessages > 99 ? "99+" : unreadMessages}
+              </div>
+            }
+          </div>
+          {/* Mostrar el texto del item sólo en desktop */}
+          {isDesktop &&
+            <List.Content style={{marginLeft: "1rem"}}>
               <List.Header content="Messages" />
             </List.Content>
-          </List.Item>
-        </Link>
+          }
+        </List.Item>
+      </Link>
 
-        <Link href="/notifications">
-          <List.Item
-            className={styles["side-menu__list-item"]}
-            active={activeRoute === "/notifications"}
-            onClick={() => {
-              setActiveRoute("/notifications");
-              setUnreadNotifications(0)
-            }}
-          >
-            <div className={styles["side-menu__icon-wrapper"]}>
-              <Icon
-                name={unreadNotifications?.length > 0 ? "bell" : "bell outline"}
-                size="large"
-                color={activeRoute === "/notifications" ? "teal" : "grey"}
-              />
-              {unreadNotifications?.length > 0 &&
-                <div className={styles["side-menu__icon-badge"]}>
-                  {unreadNotifications?.length > 99 ? "99+" : unreadNotifications?.length > 0 ? unreadNotifications.length : ""}
-                </div>
-              }
-            </div>
-            <List.Content>
+      <Link href="/notifications">
+        <List.Item
+          style={{
+            marginBottom: isPhone ? 0 : "10px",
+            justifyContent: isDesktop ? "flex-start" : "center"
+          }}
+          className={styles["side-menu__list-item"]}
+          active={activeRoute === "/notifications"}
+          onClick={() => {
+            setActiveRoute("/notifications");
+            setUnreadNotifications(0)
+          }}
+        >
+          <div className={styles["side-menu__icon-wrapper"]}>
+            <Icon
+              name={unreadNotifications?.length > 0 ? "bell" : "bell outline"}
+              size="large"
+              color={activeRoute === "/notifications" ? "teal" : "grey"}
+            />
+            {unreadNotifications?.length > 0 &&
+              <div className={styles["side-menu__icon-badge"]}>
+                {unreadNotifications?.length > 99 ? "99+" : unreadNotifications?.length > 0 ? unreadNotifications.length : ""}
+              </div>
+            }
+          </div>
+          {/* Mostrar el texto del item sólo en desktop */}
+          {isDesktop &&
+            <List.Content style={{marginLeft: "1rem"}}>
               <List.Header content="Notifications" />
             </List.Content>
-          </List.Item>
-        </Link>
+          }
+        </List.Item>
+      </Link>
 
-        <Link href={`/profile`}>
-          <List.Item
-            style={{padding: "10px", marginBottom: "10px"}}
-            active={activeRoute === `/profile`}
-            onClick={() => setActiveRoute(`/profile`)}
-          >
-            <Icon
-              name="user outline"
-              size="large"
-              color={activeRoute === `/profile` ? "teal" : "grey"}
-            />
+      <Link href={`/profile`}>
+        <List.Item
+          style={{
+            marginBottom: isPhone ? 0 : "10px",
+            justifyContent: isDesktop ? "flex-start" : "center"
+          }}
+          className={styles["side-menu__list-item"]}
+          active={activeRoute === `/profile`}
+          onClick={() => setActiveRoute(`/profile`)}
+        >
+          <Icon
+            name="user outline"
+            size="large"
+            color={activeRoute === `/profile` ? "teal" : "grey"}
+          />
+          {/* Mostrar el texto del item sólo en desktop */}
+          {isDesktop &&
             <List.Content>
               <List.Header content="Account" />
             </List.Content>
-          </List.Item>
-        </Link>
+          }
+        </List.Item>
+      </Link>
 
-        <List.Item
-          style={{padding: "10px"}}
-          onClick={() => userContext.logOut()}
-        >
-          <Icon name="log out" size="large" />
+      <List.Item
+        style={{padding: "10px", textAlign: isDesktop ? "left" : "center"}}
+        onClick={() => userContext.logOut()}
+      >
+        <Icon name="log out" size="large" />
+        {/* Mostrar el texto del item sólo en desktop */}
+        {isDesktop &&
           <List.Content>
             <List.Header content="Logout" />
           </List.Content>
-        </List.Item>
-      </List>
-    </>
+        }
+      </List.Item>
+    </List>
   )
 }
 

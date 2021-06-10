@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, createRef} from "react";
+import React, {useContext, useEffect, createRef, useState} from "react";
 import Router, {useRouter} from "next/router";
 import {Container, Visibility, Grid, Sticky, Ref, Segment} from "semantic-ui-react";
 import nprogress from "nprogress";
@@ -22,6 +22,11 @@ const Layout = (props) => {
   const router = useRouter();
   const userContext = useContext(UserContext);
   const timerContext = useContext(SessionTimerContext);
+
+  const [windowWidth, setWindowWidth] = useState();
+  const [isDesktop, setIsDesktop] = useState(true);
+  const [isTablet, setIsTablet] = useState(false);
+  const [isPhone, setIsPhone] = useState(false);
   
   /*-----------------------------------------------------------------*/
   // Inicializar el timer de expiración de sesión al refrescar la app
@@ -51,16 +56,42 @@ const Layout = (props) => {
     }
   }, [timerContext.sessionExpired]);
 
+  /*----------------------------------*/
+  // Listener del ancho de la pantalla
+  /*----------------------------------*/
+  const windowWidthListener = (e) => {
+    setWindowWidth(e.target.innerWidth);
+  }
 
   /*------------------------------------------*/
-  // Mostrar el tiempo restante en la consola
+  // Actualizar el state del ancho de pantalla
   /*------------------------------------------*/
-  // useEffect(() => {
-  //   if(timerContext.counter > 0) {
-  //     console.clear();
-  //     console.log({timeRemaining: timerContext.counter})
-  //   }
-  // }, [timerContext.counter]);
+  useEffect(() => {
+    setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", windowWidthListener);
+
+    // Desmontar el listener del window al salir del layout
+    return () => window.removeEventListener("resize", windowWidthListener);
+  }, []);
+
+  /*---------------------------------*/
+  // Especificar si es tamaño desktop
+  /*---------------------------------*/
+  useEffect(() => {
+    if(windowWidth > 900) {
+      setIsDesktop(true);
+      setIsTablet(false);
+      setIsPhone(false);
+    } else if(windowWidth <= 900 && windowWidth > 500) {
+      setIsDesktop(false);
+      setIsTablet(true);
+      setIsPhone(false);
+    } else {
+      setIsDesktop(false);
+      setIsTablet(false);
+      setIsPhone(true);
+    }
+  }, [windowWidth]);
 
   return (
     <>
@@ -70,24 +101,35 @@ const Layout = (props) => {
         <div style={{marginLeft: "1rem", marginRight: "1rem"}}>
           <Ref innerRef={contextRef}>
             <Grid>
-              {/* Contenido no scrolleable */}
-              {router.pathname !== "/messages" &&
-                <Grid.Column floated="left" width={3}>
+              {/* Sidebar izquierdo para tablet y superior (No scrolleable) */}
+              {router.pathname !== "/messages" && !isPhone &&
+                <Grid.Column
+                  style={{paddingRight: 0}}
+                  floated="left"
+                  width={isDesktop ? 3 : 2}
+                >
                   <Sticky context={contextRef}>
-                    <SideMenu user={userContext.currentUser}/>
+                    <SideMenu isDesktop={isDesktop} isPhone={isPhone}/>
                   </Sticky>
                 </Grid.Column>
               }
 
+              {/* Menú superior para tamaño mobile e inferior */}
+              {router.pathname !== "/messages" && isPhone &&
+                <SideMenu isDesktop={isDesktop} isPhone={isPhone}/>
+              }
+
               {/* Contenido scrolleable (contenido de las páginas) */}
-              <Grid.Column width={router.pathname === "/messages" ? 16 : 9}>
+              <Grid.Column
+                width={router.pathname === "/messages" ? 16 : isDesktop ? 9 : isTablet ? 14 : 16}
+              >
                 <Visibility context={contextRef}>
                   {props.children}
                 </Visibility>
               </Grid.Column>
 
               {/* Contenido no scrolleable */}
-              {router.pathname !== "/messages" &&
+              {router.pathname !== "/messages" && isDesktop &&
                 <Grid.Column floated="right" width={4}>
                   <Sticky context={contextRef}>
                     <Segment basic>
