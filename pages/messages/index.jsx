@@ -1,17 +1,17 @@
 import {useState, useContext, useEffect, useRef} from "react";
-import {Segment, Header, List, Button, Icon, Form, TextArea, Comment, Ref} from "semantic-ui-react";
+import {Segment, Header, Sidebar, Button, Icon, Form, TextArea, Comment, Ref} from "semantic-ui-react";
 import {useRouter} from "next/router";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import {parseCookies, destroyCookie} from "nookies";
 
-import Search from "../../components/Layout/Search";
-import ChatItem from "../../components/messages/ChatItem";
 import SingleMessage from "../../components/messages/SingleMessage";
 import {UserContext} from "../../context/UserContext";
 import {UnreadMessagesContext} from "../../context/UnreadMessagesContext";
 import {SocketContext} from "../../context/SocketProvider";
 import styles from "./messages.module.css";
+import ChatsList from "./ChatsList";
+import { useWindowWidth } from "../../utils/customHooks";
 
 
 const MessagesPage = (props) => {
@@ -38,9 +38,13 @@ const MessagesPage = (props) => {
   const [sending, setSending] = useState(false);
 
   const [disablingChat, setDisablingChat] = useState(false);
+  
+  const [openChatsSidebar, setOpenChatsSidebar] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const windowWidth = useWindowWidth();
 
   /*---------------------------------------------------*/
   // Resetear el contador de mensajes al entrar al chat
@@ -404,7 +408,7 @@ const MessagesPage = (props) => {
         Go back
       </Button>
 
-      <Header style={{paddingBottom: "1rem"}} as="h3" textAlign="center">
+      <Header style={{paddingBottom: "2rem"}} as="h3" textAlign="center">
         <Icon
           style={{display: "block", margin: "0 auto"}}
           name="comments outline"
@@ -414,63 +418,71 @@ const MessagesPage = (props) => {
 
       <div className={styles["messages__grid"]}>
         {/* Coluna izquierda: Sección de listas de chats */}
-        <div className={styles["messages__chats-list-column"]}>
-          <Segment className={styles["messages__chat-list"]}>
-            <div className={styles["messages__chat-list-header"]}>
-              <h4 style={{marginBottom: "10px"}}>
-                Chats
-              </h4>
-              <Search type="chat" onClickHandler={createChateHandler} />
-            </div>
-            
-            <div className={styles["messages__chat-list-wrapper"]}>
-              {/* Mensaje si el usuario no ha creado chats */}
-              {chats.length === 0 &&
-                <Header
-                  as="h3"
-                  color="grey"
-                  className={styles["messages__chat-list-empty"]}
-                >
-                  <Header.Content>
-                    <Icon name="meh outline" />
-                    Aún no tienes chats
-                    <Header.Subheader>
-                      Selecciona un usuario en el buscador
-                    </Header.Subheader>
-                  </Header.Content>
-                </Header>
-              }
+        {windowWidth >= 750 &&
+          <ChatsList
+            chats={chats}
+            onClickHandler={createChateHandler}
+            onlineUsers={onlineUsers}
+            currentUser={currentUser}
+            selectedChat={selectedChat}
+            disablingChat={disablingChat}
+            disableChatHandler={disableChatHandler}
+            chatItemClickHandler={chatItemClickHandler}
+          />
+        }
 
-              {/* Items de la lisla de chats */}
-              {chats.length > 0 &&
-                <List
-                  className={styles["messages__chat-list-items"]}
-                  divided
-                  selection
-                  verticalAlign="middle"
-                >
-                  {chats.map(item => {
-                    return (
-                      <ChatItem
-                        key={item._id}
-                        item={item}
-                        onlineUsers={onlineUsers}
-                        currentUser={currentUser}
-                        selectedChat={selectedChat}
-                        disablingChat={disablingChat}
-                        disableChatHandler={disableChatHandler}
-                        chatItemClickHandler={chatItemClickHandler}
-                      />
-                    )
-                  })}
-                </List>
-              }
-            </div>
-          </Segment>
-        </div>
+        {windowWidth < 750 &&
+          <Sidebar.Pushable
+            className={styles["messages__chat-list-sidebar-wrapper"]}
+          >
+            <Sidebar
+              className={styles["messages__chat-list-sidebar"]}
+              as="menu"
+              // width="wide"
+              animation="overlay"
+              vertical
+              visible={openChatsSidebar}
+              onHide={() => setOpenChatsSidebar(false)}
+            >
+              <ChatsList
+                chats={chats}
+                onClickHandler={createChateHandler}
+                onlineUsers={onlineUsers}
+                currentUser={currentUser}
+                selectedChat={selectedChat}
+                disablingChat={disablingChat}
+                disableChatHandler={disableChatHandler}
+                chatItemClickHandler={chatItemClickHandler}
+                setOpenChatsSidebar={setOpenChatsSidebar}
+              />
+            </Sidebar>
+
+            <Sidebar.Pusher dimmed={openChatsSidebar}/>
+          </Sidebar.Pushable>
+        }
 
         {/* Columna derecha: Bandeja de mensajes del chat seleccionado */}
-        <div className={styles["messages__inbox-column"]}>
+        <div
+          className={styles["messages__inbox-column"]}
+          style={{zIndex: openChatsSidebar ? 1 : 3}}
+        >
+          {windowWidth < 750 &&
+            <Button
+              className={styles["messages__sidebar-btn"]}
+              onClick={() => setOpenChatsSidebar(prev => !prev)}
+              compact
+            >
+              <div style={{display: "flex"}}>
+                <Icon
+                  style={{order: openChatsSidebar ? 0 : 1}}
+                  name={openChatsSidebar ? "chevron left" : "chevron right"}
+                />
+                <span style={{order: openChatsSidebar ? 1 : 0}}>
+                  {openChatsSidebar ? "Close list" : " Select chat"}
+                </span>
+              </div>
+            </Button>
+          }
           <Ref innerRef={inboxRef}>
             <Segment
               style={{background: selectedChat.status === "inactive" ? "ghostwhite" : "white"}}

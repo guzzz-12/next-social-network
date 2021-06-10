@@ -5,7 +5,7 @@ import OnlineIndicator from "./OnlineIndicator";
 import {SocketContext} from "../../context/SocketProvider";
 import styles from "../../pages/messages/messages.module.css";
 
-const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disableChatHandler, disablingChat}) => {
+const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disableChatHandler, disablingChat, setOpenChatsSidebar}) => {
 
   if(!currentUser) {
     return null;
@@ -25,7 +25,10 @@ const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disabl
         position: "relative",
         backgroundColor: item._id === selectedChat._id && "rgba(0,0,0,.06)"}}
       key={item._id}
-      onClick={() => chatItemClickHandler(item)}
+      onClick={() => {
+        chatItemClickHandler(item);
+        setOpenChatsSidebar && setOpenChatsSidebar(false)
+      }}
     >
 
       {/* Popup para deshabilitar el chat */}

@@ -19,3 +19,10 @@
 .message__seen-info small {
   margin-right: 5px;
 }
+
+@media screen and (max-width: 750px) {
+  .message {
+    max-width: 95% !important;
+    padding: 0.5rem 0.8rem !important
+  }
+}

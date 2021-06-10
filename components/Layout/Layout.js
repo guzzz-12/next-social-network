@@ -11,6 +11,7 @@ import Search from "./Search";
 import {SessionTimerContext} from "../../context/SessionTimerContext";
 import {UserContext} from "../../context/UserContext";
 import {sessionRemainingSecs} from "../../utils/sessionRemainingSecs";
+import { useWindowWidth } from "../../utils/customHooks";
 
 const Layout = (props) => {
   const contextRef = createRef();
@@ -22,8 +23,8 @@ const Layout = (props) => {
   const router = useRouter();
   const userContext = useContext(UserContext);
   const timerContext = useContext(SessionTimerContext);
-
-  const [windowWidth, setWindowWidth] = useState();
+  
+  const windowWidth = useWindowWidth();
   const [isDesktop, setIsDesktop] = useState(true);
   const [isTablet, setIsTablet] = useState(false);
   const [isPhone, setIsPhone] = useState(false);
@@ -55,24 +56,6 @@ const Layout = (props) => {
       router.push("/login");
     }
   }, [timerContext.sessionExpired]);
-
-  /*----------------------------------*/
-  // Listener del ancho de la pantalla
-  /*----------------------------------*/
-  const windowWidthListener = (e) => {
-    setWindowWidth(e.target.innerWidth);
-  }
-
-  /*------------------------------------------*/
-  // Actualizar el state del ancho de pantalla
-  /*------------------------------------------*/
-  useEffect(() => {
-    setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", windowWidthListener);
-
-    // Desmontar el listener del window al salir del layout
-    return () => window.removeEventListener("resize", windowWidthListener);
-  }, []);
 
   /*---------------------------------*/
   // Especificar si es tamaño desktop
