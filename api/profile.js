@@ -11,6 +11,9 @@ const Profile = require("../models/ProfileModel");
 const Post = require("../models/PostModel");
 const Follower = require("../models/FollowerModel");
 const Like = require("../models/LikeModel");
+const Comment = require("../models/CommentModel");
+const Notification = require("../models/NotificationModel.js");
+const Message = require("../models/MessageModel");
 const authMiddleware = require("../middleware/authMiddleware");
 const {newFollowerNotification, removeNotification} = require("../utilsServer/notificationActions");
 const changeEmailTemplate = require("../emailTemplates/changeEmailTemplate");
@@ -55,6 +58,85 @@ router.get("/me", authMiddleware, async (req, res) => {
     res.status(500).json({
       status: "failed",
       message: `Internal server error: ${error.message}`
+    })
+  }
+});
+
+
+/*---------------------------*/
+// Eliminar cuenta de usuario
+/*---------------------------*/
+router.delete("/me", authMiddleware, async (req, res) => {
+  try {
+    const {userId} = req;
+    const {password} = req.body;
+
+    if(!password || password.length === 0) {
+      return res.status(400).json({
+        status: "failed",
+        message: "The password is required"
+      })
+    }
+
+    // Buscar la data del usuario y verificar si existe
+    const user = await User.findById(userId);
+
+    if(!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found or already deleted"
+      })
+    }
+
+    // Verificar si la contraseña es correcta
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if(!isPasswordCorrect) {
+      return res.status(401).json({
+        status: "failed",
+        message: "Wrong password"
+      })
+    }
+
+    // Buscar y borrar todos sus posts, comentarios, likes y notificaciones
+    const posts = await Post.deleteMany({user: userId});
+    const comments = await Comment.deleteMany({author: userId});
+    const likes = await Like.deleteMany({author: userId});
+    const notifications = await Notification.deleteMany({userNotifier: userId});
+
+    // Buscar todos los mensajes donde el usuario sea sender y cambiar el status del sender a inactive
+    await Message.updateMany({sender: userId}, {senderStatus: "deleted"});
+
+    // Eliminar el avatar del usuario (si lo tiene)
+    if(user.avatarId) {
+      await cloudinary.uploader.destroy(user.avatarId, {invalidate: true});
+    }
+
+    // Desactivar el usuario el usuario y eliminar el perfil
+    user.status = "deleted";
+    user.name = "Deleted user";
+    user.username = `DeletedUser-${user._id}`;
+    user.email = `deleted-${user._id}`;
+    user.avatar = "https://res.cloudinary.com/dzytlqnoi/image/upload/v1615203395/default-user-img_t3xpfj.jpg";
+    user.avatarId = "";
+    await user.save();
+    await Profile.findOneAndDelete({user: userId});
+
+    res.json({
+      status: "success",
+      data: {
+        deletedUser: user,
+        deletedPosts: posts.deletedCount,
+        deletedComments: comments.deletedCount,
+        deletedLikes: likes.deletedCount,
+        deletedNotifications: notifications.deletedCount
+      }
+    })
+    
+  } catch (error) {
+    console.log(`Error deleting user account: ${error.message}`);
+    res.status(500).json({
+      status: "failed",
+      message: `Error deleting user account: ${error.message}`
     })
   }
 });
@@ -272,7 +354,7 @@ router.patch("/me/update-password", authMiddleware, [
 
 
 /*-----------------------------------------------------------*/
-// Enviar enail de cambio de dirección de email de un usuario
+// Enviar email de cambio de dirección de email de un usuario
 /*-----------------------------------------------------------*/
 router.patch("/me/update-email", authMiddleware, [
   check("newEmail", "Invalid email address").isEmail(),
@@ -538,7 +620,7 @@ router.get("/followers/:username", authMiddleware, async (req, res) => {
     const userFollowers = await Follower.findOne({user: user._id})
     .populate({
       path: "followers.user",
-      select: "_id name username email avatar role"
+      select: "_id name username email avatar role status"
     });
 
     userFollowers.following = undefined;
@@ -577,7 +659,7 @@ router.get("/following/:username", authMiddleware, async (req, res) => {
     const userFollowing = await Follower.findOne({user: user._id})
     .populate({
       path: "following.user",
-      select: "_id name username email avatar role"
+      select: "_id name username email avatar role status"
     });
 
     userFollowing.followers = undefined;

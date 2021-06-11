@@ -18,12 +18,12 @@ router.post("/:messagesWithId", authMiddleware, async (req, res) => {
     const user = await User
     .findById({_id: req.userId})
     .lean()
-    .select("_id name username avatar email role");
+    .select("_id name username avatar email role status");
 
     const messagesWith = await User
     .findById(messagesWithId)
     .lean()
-    .select("_id name username avatar email role")
+    .select("_id name username avatar email role status")
 
     if(!user || !messagesWith) {
       return res.status(404).json({
@@ -105,11 +105,11 @@ router.patch("/disable-chat/:chatId", authMiddleware, async (req, res) => {
     .findById(req.params.chatId)
     .populate({
       path: "user",
-      select: "_id name username email avatar role"
+      select: "_id name username email avatar role status"
     })
     .populate({
       path: "messagesWith",
-      select: "_id name username email avatar role"
+      select: "_id name username email avatar role status"
     });
 
     // Verificar si el usuario es participante del chat
@@ -170,11 +170,11 @@ router.get("/", authMiddleware, async (req, res) => {
     .sort({lastMessageDate: -1})
     .populate({
       path: "user",
-      select: "_id name username email avatar role"
+      select: "_id name username email avatar role status"
     })
     .populate({
       path: "messagesWith",
-      select: "_id name username email avatar role"
+      select: "_id name username email avatar role status"
     });
 
     // Verificar si es la última página de chats
@@ -233,12 +233,12 @@ router.post("/:chatId/message/:messagesWithId", authMiddleware, async (req, res)
     const sender = await User
     .findById(req.userId)
     .lean()
-    .select("_id name username avatar email role");
+    .select("_id name username avatar email role status");
 
     const recipient = await User
     .findById(messagesWithId)
     .lean()
-    .select("_id name username avatar email role");
+    .select("_id name username avatar email role status");
 
     // Chequear si los usuarios existen
     if(!sender || !recipient) {
@@ -255,7 +255,8 @@ router.post("/:chatId/message/:messagesWithId", authMiddleware, async (req, res)
       username: sender.username,
       avatar: sender.avatar,
       email: sender.email,
-      role: sender.role
+      role: sender.role,
+      status: sender.status
     }
 
     const recipientData = {
@@ -264,7 +265,8 @@ router.post("/:chatId/message/:messagesWithId", authMiddleware, async (req, res)
       username: recipient.username,
       avatar: recipient.avatar,
       email: recipient.email,
-      role: recipient.role
+      role: recipient.role,
+      status: recipient.status
     }
 
     // Crear el mensaje
@@ -329,11 +331,11 @@ router.get("/:chatId/messages", authMiddleware, async (req, res) => {
     .sort({createdAt: -1})
     .populate({
       path: "sender",
-      select: "_id name username avatar email role"
+      select: "_id name username avatar email role status"
     })
     .populate({
       path: "recipient",
-      select: "_id name username avatar email role"
+      select: "_id name username avatar email role status"
     });
 
     // Verificar si es la última página de mensajes

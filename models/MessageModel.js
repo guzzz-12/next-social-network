@@ -9,6 +9,12 @@ const messageSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
   },
+  // Indicar si el usuario que envía está activo o eliminó su cuenta
+  senderStatus: {
+    type: String,
+    default: "active",
+    enum: ["active", "deleted"]
+  },
   recipient: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"

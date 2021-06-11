@@ -49,6 +49,11 @@ const userSchema = new mongoose.Schema({
   },
   expiredToken: {
     type: Date
+  },
+  status: {
+    type: String,
+    default: "active",
+    enum: ["active", "inactive", "deleted"]
   }
 }, {timestamps: true});
 
