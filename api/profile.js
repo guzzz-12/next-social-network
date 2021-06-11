@@ -4,13 +4,16 @@ const {validationResult, check} = require("express-validator");
 const formidable = require("formidable");
 const cloudinary = require("cloudinary").v2;
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const sendgrid = require("@sendgrid/mail");
 const User = require("../models/UserModel");
 const Profile = require("../models/ProfileModel");
 const Post = require("../models/PostModel");
 const Follower = require("../models/FollowerModel");
 const Like = require("../models/LikeModel");
 const authMiddleware = require("../middleware/authMiddleware");
-const {newFollowerNotification, removeNotification} = require("../utilsServer/notificationActions")
+const {newFollowerNotification, removeNotification} = require("../utilsServer/notificationActions");
+const changeEmailTemplate = require("../emailTemplates/changeEmailTemplate");
 
 /*---------------------------------------*/
 // Consultar el perfil del usuario actual
@@ -263,6 +266,128 @@ router.patch("/me/update-password", authMiddleware, [
     res.status(500).json({
       status: "failed",
       message: `Internal server error: ${error.message}`
+    })
+  }
+});
+
+
+/*-----------------------------------------------------------*/
+// Enviar enail de cambio de dirección de email de un usuario
+/*-----------------------------------------------------------*/
+router.patch("/me/update-email", authMiddleware, [
+  check("newEmail", "Invalid email address").isEmail(),
+  check("newEmail", "The email is required").exists(),
+  check("password", "The password is required").exists()
+], async (req, res) => {
+  /*--------------------------------*/
+  // Chequear errores de validación
+  /*--------------------------------*/
+  const errors = validationResult(req);
+  if(!errors.isEmpty()) {
+    const errorsArray = errors.array();
+    const errorsArrayStrings = errorsArray.map(error => {
+      return error.msg;
+    });
+
+    return res.status(400).json({
+      status: "failed",
+      message: errorsArrayStrings.join(". ")
+    });
+  }
+
+  try {
+    const {newEmail, password} = req.body;
+
+    console.log({newEmail})
+
+    // Verificar si el email está disponible
+    const userExists = await User.exists({email: newEmail});
+    if(userExists) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Email already used by another account"
+      })
+    }
+
+    // Buscar el usuario actual
+    const user = await User.findById(req.userId);
+
+    if(!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found or deleted"
+      })
+    }
+
+    // Verificar la contraseña
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+    if(!isPasswordCorrect) {
+      return res.status(401).json({
+        status: "failed",
+        message: "Wrong password"
+      })
+    }
+
+    // Generar el token y la url
+    const token = jwt.sign({userId: user._id, newEmail}, process.env.JWT_SECRET, {expiresIn: 900});
+    const resetHref = `${process.env.BASE_URL}/email-confirmation?token=${token}`;
+
+    // Opciones del correo a enviar
+    const mailContent = {
+      to: newEmail,
+      from: {
+        name: "Social Network App",
+        email: process.env.SENDGRID_FROM
+      },
+      subject: "Email address update",
+      html: changeEmailTemplate(user.name, resetHref)
+    }
+
+    // Enviar el correo y responder al frontend
+    const sendResponse = await sendgrid.send(mailContent);
+
+    res.json({
+      status: "success",
+      data: {sendResponse}
+    })
+    
+  } catch (error) {
+    console.log(`Error updating user email: ${error.message}`);
+
+    res.status(500).json({
+      status: "failed",
+      message: `Error updating user email: ${error.message}`
+    })
+  }
+});
+
+
+/*--------------------------------------------------------*/
+// Confirmar el cambio de dirección de email de un usuario
+/*--------------------------------------------------------*/
+router.get("/me/confirmation-email", authMiddleware, async (req, res) => {
+  try {
+    const {token} = req.query;
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+    const {userId, newEmail} = decoded;
+
+    // Buscar el usuario correspondiente
+    const user = await User.findById(userId);
+
+    // Actualizar el email del usuario
+    user.email = newEmail;
+    await user.save();
+
+    res.json({
+      status: "success",
+      data: user
+    })
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Error verifying confirmation token: ${error.message}`
     })
   }
 })

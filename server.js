@@ -7,6 +7,7 @@ const nextApp = next({dev});
 const handle = nextApp.getRequestHandler();
 const cookieParser = require("cookie-parser");
 const cloudinary = require("cloudinary").v2;
+const sendgrid = require("@sendgrid/mail");
 const io = require("socket.io")(server);
 require("dotenv").config();
 
@@ -33,6 +34,11 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
+
+/*---------------------*/
+// Inicializar Sendgrid
+/*---------------------*/
+sendgrid.setApiKey(process.env.SENDGRID_SECRET);
 
 
 /*-----------------------*/

@@ -7,9 +7,6 @@ const {check, validationResult} = require("express-validator");
 const User = require("../models/UserModel");
 const resetPasswordTemplate = require("../emailTemplates/resetPasswordTemplate");
 
-// Inicializar Sendgrid
-sendGrid.setApiKey(process.env.SENDGRID_SECRET);
-
 // Enviar el correo de reseteo de contraseña
 router.post("/", [
   check("email", "Invalid email address").isEmail(),
