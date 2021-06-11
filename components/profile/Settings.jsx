@@ -3,6 +3,7 @@ import {Header, Icon, Checkbox, Divider, Segment} from "semantic-ui-react";
 import axios from "axios";
 import ChangePasswordForm from "./settings-forms/ChangePasswordForm";
 import ChangeEmailForm from "./settings-forms/ChangeEmailForm";
+import DeleteAccountForm from "./settings-forms/DeleteAccountForm";
 import {UserContext} from "../../context/UserContext";
 
 const Settings = ({newMessagePopup}) => {
@@ -62,6 +63,11 @@ const Settings = ({newMessagePopup}) => {
 
       {/* Formulario de cambio de email */}
       <ChangeEmailForm />
+
+      <Divider />
+
+      {/* Formulario de eliminación de cuenta de usuario */}
+      <DeleteAccountForm />
 
       <Divider />
 
