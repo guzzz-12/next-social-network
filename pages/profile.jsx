@@ -1,5 +1,6 @@
-import {useState, useEffect, useRef} from "react";
-import {Grid, Visibility, Segment, Loader} from "semantic-ui-react";
+import {useState, useEffect, useRef, useContext} from "react";
+import {useRouter} from "next/router";
+import {Grid, Visibility, Segment, Message, Loader} from "semantic-ui-react";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import {parseCookies, destroyCookie} from "nookies";
@@ -13,12 +14,19 @@ import UpdateProfile from "../components/profile/UpdateProfile";
 import Settings from "../components/profile/Settings";
 import {NoProfile, NoProfilePosts} from "../components/Layout/NoData";
 import {PlaceHolderPosts} from "../components/Layout/PlaceHolderGroup";
+import {UserContext} from "../context/UserContext";
 
 // Token de cancelación de requests de axios
 const CancelToken = axios.CancelToken;
 
 const ProfilePage = (props) => {
+  const userContext = useContext(UserContext);
+  const newEmailRef = useRef();
+  const emailErrorRef = useRef();
+
   const cancellerRef = useRef();
+  const router = useRouter();
+  const {updatedEmail, errorUpdatingEmail} = router.query;
   const {profile, user: currentUser, error} = props;
 
   const [posts, setPosts] = useState([]);
@@ -36,6 +44,9 @@ const ProfilePage = (props) => {
   const [followers, setFollowers] = useState(props.followers);
   const [following, setFollowing] = useState(props.following);
 
+  const [isEmailUpdatedSuccess, setIsEmailUpdatedSuccess] = useState(null);
+  const [isEmailUpdateError, setIsEmailUpdateError] = useState(null);
+
 
   /*---------------------------*/
   // Click handler de los tabs
@@ -46,6 +57,37 @@ const ProfilePage = (props) => {
     setEndOfPosts(false);
     setCurrentPage(1)
   }
+
+
+  /*------------------------------------------------------------------*/
+  // Verificar si viene de actualizar el email y si es exitoso o error
+  /*------------------------------------------------------------------*/
+  useEffect(() => {
+    if(updatedEmail && userContext.currentUser) {
+      newEmailRef.current = updatedEmail;
+      setIsEmailUpdatedSuccess(updatedEmail);
+    }
+
+    if(errorUpdatingEmail){
+      emailErrorRef.current = errorUpdatingEmail;
+      setIsEmailUpdateError(errorUpdatingEmail);
+      router.push("/profile");
+    }
+  }, [updatedEmail, errorUpdatingEmail, userContext]);
+
+
+  /*------------------------------------------------------------*/
+  // Actualizar el email en la data del usuario del state global
+  /*------------------------------------------------------------*/
+  useEffect(() => {
+    if(newEmailRef.current) {
+      setIsEmailUpdatedSuccess(null);
+      const currentUser = {...userContext.currentUser};
+      currentUser.email = newEmailRef.current;
+      userContext.setCurrentUser(currentUser);
+      router.push("/profile");
+    }
+  }, [newEmailRef.current]);
 
 
   /*--------------------------------*/
@@ -127,6 +169,36 @@ const ProfilePage = (props) => {
           </Grid.Column>
         </Grid.Row>
 
+        {(newEmailRef.current || emailErrorRef.current) &&
+          <div style={{width: "100%"}}>
+            {/* Mostrar mensaje de email actualizado exitosamente */}
+            {newEmailRef.current &&
+              <Message
+                success
+                header="Email updated succesfully"
+                content={`Your email address was successfully changed to ${newEmailRef.current}`}
+                onDismiss={() => {
+                  setIsEmailUpdatedSuccess(null);
+                  newEmailRef.current = null
+                }}
+              />
+            }
+
+            {/* Mostrar mensaje de error al actualizar el email */}
+            {emailErrorRef.current &&
+              <Message
+                error
+                header="There was a problem updating your email address"
+                content={emailErrorRef.current}
+                onDismiss={() => {
+                  setIsEmailUpdateError(null);
+                  emailErrorRef.current = null;
+                }}
+              />
+            }
+          </div>
+        }
+
         <Grid.Row>
           <Grid.Column>
             {activeTab === "profile" &&
@@ -150,6 +222,7 @@ const ProfilePage = (props) => {
                         user={currentUser}
                         post={post}
                         setPosts={setPosts}
+                        noPadding
                       />
                     )
                   })
@@ -189,7 +262,7 @@ const ProfilePage = (props) => {
 
       {/* Loader para indicar la carga de los siguientes posts */}
       {isLoadingMore && activeTab === "profile" ?
-        <div style={{width: "100%", minHeight: "50px", marginBottom: "1rem"}}>
+        <div style={{width: "100%", minHeight: "50px", margin: "1rem 0"}}>
           <Loader active inline="centered">Loading...</Loader>
         </div>
         :
@@ -225,8 +298,6 @@ export async function getServerSideProps(context) {
         Cookie: `token=${token}`
       }
     });
-
-    console.log({res: res.data.data})
   
     return {
       props: {

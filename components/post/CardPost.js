@@ -12,7 +12,7 @@ import NoImageModal from "./NoImageModal";
 import {SocketContext} from "../../context/SocketProvider";
 import classes from "./cardPost.module.css";
 
-const CardPost = ({user, post, setPosts}) => {
+const CardPost = ({user, post, setPosts, noPadding}) => {
   const {socket} = useContext(SocketContext);
 
   const [comments, setComments] = useState([]);
@@ -220,7 +220,14 @@ const CardPost = ({user, post, setPosts}) => {
         autoClose={3000}
         hideProgressBar={true}
       />
-      <Segment basic>
+      <Segment
+        style={{
+          padding: noPadding ? 0 : "1rem",
+          boxShadow: "0 0 5px rgba(0,0,0,0.25)",
+          borderRadius: "5px"
+        }}
+        basic
+      >
         <Card
           style={{opacity: loading && (deleting === post._id.toString()) ? 0.5 : 1 }}
           color="teal"

@@ -165,6 +165,7 @@ const ProfilePage = (props) => {
                         key={post._id}
                         user={userContext.currentUser}
                         post={post}
+                        noPadding
                         setPosts={setPosts}
                       />
                     )
