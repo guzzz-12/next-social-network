@@ -8,6 +8,20 @@
   /* background-color: lightcyan !important; */
 }
 
+.message__avatar {
+  display: block !important;
+  width: 35px !important;
+  height: 35px !important;
+}
+
+.message__avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  border-radius: 50% !important;
+}
+
 .message__seen-info {
   position: absolute;
   bottom: -16px;

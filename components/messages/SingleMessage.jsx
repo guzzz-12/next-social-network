@@ -108,9 +108,17 @@ const SingleMessage = ({message, setMessages, currentUser}) => {
         null
       }
       {/* Cuerpo del mensaje */}
-      <Comment.Avatar src={user.avatar} as="a" href={`/user/${user.username}`} />
+      <Comment.Avatar
+        className={styles["message__avatar"]}
+        src={user.avatar}
+        as={message.senderStatus === "active" ? "a" : "span"}
+        href={message.senderStatus === "active" ? `/user/${user.username}` : ""}
+      />
       <Comment.Content>
-        <Comment.Author as="a" href={`/user/${user.username}`}>
+        <Comment.Author
+          as={message.senderStatus === "active" ? "a" : "span"}
+          href={message.senderStatus === "active" ? `/user/${user.username}` : ""}
+        >
           {user.name}
         </Comment.Author>
         <Comment.Metadata>

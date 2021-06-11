@@ -160,11 +160,14 @@ const Following = ({username, isProfileOwner, setOwnerFollowing}) => {
           >
             <Image src={el.user.avatar} avatar />
             <List.Content>
-              <List.Header as="a" href={`/user/${el.user.username}`}>
+              <List.Header
+                as={el.user.status === "active" ? "a" : "span"}
+                href={el.user.status === "active" ?`/user/${el.user.username}` : ""}
+              >
                 {el.user.name}
               </List.Header>
               <List.Description>
-                @{el.user.username}
+                {el.user.status === "active" ? `@${el.user.username}` : ""}
               </List.Description>
             </List.Content>
 
@@ -175,9 +178,9 @@ const Following = ({username, isProfileOwner, setOwnerFollowing}) => {
                   color={checkIfFollowing(el.user._id) ? "instagram" : "twitter"}
                   content={checkIfFollowing(el.user._id) ? "Unfollow" : "Follow"}
                   icon={checkIfFollowing(el.user._id) ? "check" : "add user"}
-                  disabled={loadingFollowing || !!processingFollow}
+                  disabled={loadingFollowing || !!processingFollow || el.user.status !== "active"}
                   loading={loadingFollowing || processingFollow === el.user.username}
-                  onClick={() => followHandler(el.user.username)}
+                  onClick={() => el.user.status === "active" ? followHandler(el.user.username) : null}
                 />
               </List.Content>
             }
