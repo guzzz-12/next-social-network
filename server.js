@@ -60,10 +60,10 @@ io.on("connection", (socket) => {
 
 
   // Enviar el mensaje recibido al usuario recipiente
-  socket.on("newMessage", (msg) => {
-    const recipient = users.find(el => el.userId.toString() === msg.recipient._id.toString());
+  socket.on("newMessage", ({newMsg, chatId}) => {
+    const recipient = users.find(el => el.userId.toString() === newMsg.recipient._id.toString());
     if(recipient) {
-      io.to(recipient.socketId).emit("newMessageReceived", msg);
+      io.to(recipient.socketId).emit("newMessageReceived", {newMsg, chatId});
     }
   });
 

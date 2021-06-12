@@ -24,6 +24,11 @@ const chatSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  // Número de mensajes sin leer
+  unreadMessages: {
+    type: Number,
+    default: 0
+  },
   // Status del chat. El usuario puede desactivarlo si no desea recibir más mensajes
   // en este chat pero el chat permanecerá visible para ambos usuarios
   status: {

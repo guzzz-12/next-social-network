@@ -167,7 +167,7 @@ router.get("/", authMiddleware, async (req, res) => {
     .lean()
     .limit(amount)
     .skip(amount * (page - 1))
-    .sort({lastMessageDate: -1})
+    .sort({"latestMessage.date": -1})
     .populate({
       path: "user",
       select: "_id name username email avatar role status"
@@ -192,6 +192,44 @@ router.get("/", authMiddleware, async (req, res) => {
     })
   }
 });
+
+
+/*------------------*/
+// Consultar un chat
+/*------------------*/
+router.get("/chat/:chatId", authMiddleware, async (req, res) => {
+  try {
+    const chat = await Chat
+    .findById(req.params.chatId)
+    .lean()
+    .populate({
+      path: "user",
+      select: "_id name username email avatar role status"
+    })
+    .populate({
+      path: "messagesWith",
+      select: "_id name username email avatar role status"
+    });
+
+    if(!chat) {
+      return res.status(404).json({
+        status: "failed",
+        message: "Chat not found"
+      })
+    }
+    
+    res.json({
+      status: "success",
+      data: chat
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Error getting chat: ${error.message}`
+    })
+  }
+})
 
 
 /*--------------------------*/
@@ -290,6 +328,7 @@ router.post("/:chatId/message/:messagesWithId", authMiddleware, async (req, res)
 
     // Especificar que el chat no está vacío y actualizar el último mensaje recibido
     chatExists.isEmpty = false;
+    chatExists.unreadMessages = chatExists.unreadMessages + 1;
     chatExists.latestMessage = {
       messageId: messageData._id.toString(),
       text: message.text,
@@ -320,9 +359,11 @@ router.get("/:chatId/messages", authMiddleware, async (req, res) => {
     const {chatId} = req.params;
     const {page} = req.query;
     const amount = 5;
+    
+    // Restablecer el contador de mensajes sin leer del chat
+    await Chat.findByIdAndUpdate(chatId, {unreadMessages: 0});
 
-    // const totalMessagesCount = await Message.countDocuments();
-
+    // Buscar los mensajes del chat
     const messages = await Message
     .find({chat: chatId})
     .lean()
