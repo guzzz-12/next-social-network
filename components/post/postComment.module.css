@@ -1,0 +1,14 @@
+.comment__avatar {
+  display: block !important;
+  width: 35px !important;
+  height: 35px !important;
+}
+
+.comment__avatar img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  border-radius: 50% !important;
+}

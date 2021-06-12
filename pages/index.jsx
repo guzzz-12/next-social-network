@@ -105,10 +105,6 @@ const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
     }    
   }, [userContext.currentUser]);
 
-  if(postsData.length === 0) {
-    return <NoPosts />
-  }
-
   return (
     <>
       <Head>
@@ -122,7 +118,7 @@ const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
             }
             
             {/* Lista de todos los posts disponibles */}
-            {postsData.map(post => {
+            {postsData.length > 0 && postsData.map(post => {
               return (
                 <CardPost
                   key={post._id}
@@ -133,6 +129,12 @@ const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
                 />
               )
             })}
+
+            {/* Mostrar mensaje si no hay posts para mostrar */}
+            {postsData.length === 0 &&
+              <NoPosts />
+            }
+
           </Segment>
 
           {/* Loader para indicar la carga de los siguientes posts */}

@@ -114,6 +114,30 @@ const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disabl
           </>
         }
       </List.Content>
+
+      {!isChatCreator && item.unreadMessages > 0 &&
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            right: "1rem",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            width: "18px",
+            height: "18px",
+            transform: "translateY(-50%)",
+            textAlign: "center",
+            fontSize: "12px",
+            borderRadius: "50%",
+            color: "white",
+            background: "red",
+          }}
+        >
+          {item.unreadMessages}
+        </div>
+      }
+
     </List.Item>
   )
 }

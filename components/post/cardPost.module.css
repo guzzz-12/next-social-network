@@ -9,6 +9,14 @@
   margin: 0 auto !important
 }
 
+.post-card__user-avatar {
+  display: inline-block !important;
+  width: 35px !important;
+  height: 35px !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+}
+
 .post-card__link {
   text-decoration: none;
   cursor: pointer;

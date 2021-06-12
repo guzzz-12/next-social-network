@@ -4,6 +4,7 @@ import {Comment, Form, Icon, Popup, Header, Button} from "semantic-ui-react";
 import axios from "axios";
 import moment from "moment";
 import CommentHistory from "./CommentHistory";
+import styles from "./postComment.module.css";
 
 const PostComment = ({comment, user, setComments, setCommentsCount}) => {
   const [editMode, setEditMode] = useState(false);
@@ -145,7 +146,10 @@ const PostComment = ({comment, user, setComments, setCommentsCount}) => {
             borderBottom: "1px solid lightgray",
             opacity: deleting && deleting.toString() === comment._id.toString() ? 0.5 : 1
           }}>
-            <Comment.Avatar src={comment.author.avatar} />
+            <Comment.Avatar
+              className={styles["comment__avatar"]}
+              src={comment.author.avatar}
+            />
             <Comment.Content>
               <Comment.Author as={Link} href={`/user/${comment.author.username}`}>
                 {comment.author.name}

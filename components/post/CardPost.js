@@ -253,6 +253,7 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
           <Card.Content>
             {/* Avatar del usuario y botón de borrar */}
             <Image
+              className={classes["post-card__user-avatar"]}
               floated="left"
               src={post.user.avatar}
               avatar circular

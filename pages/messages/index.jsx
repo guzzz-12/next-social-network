@@ -59,24 +59,58 @@ const MessagesPage = (props) => {
   useEffect(() => {
     if(socket && currentUser) {
       // Actualizar la bandeja con el nuevo mensaje recibido en el recipiente
-      socket.on("newMessageReceived", (data) => {
-        setSelectedChatMessages(prev => {          
-          // Filtrar mensajes duplicados
-          const filteredDuplicates = [...prev, data].reduce((acc, item) => {
-            const x = acc.find(el => el._id === item._id);
-            if(!x) {
-              return acc.concat(item)
-            } else {
-              return acc
-            }
-          },[]);
+      socket.on("newMessageReceived", async ({newMsg, chatId}) => {
+        // Verificar si el chat existe en la lista
+        // y agregarlo a la lista de chats si no existe
+        // o si existe y estaba vacío
+        const chatExists = chats.find(el => el._id.toString() === chatId.toString());
 
-          return filteredDuplicates
+        if(!chatExists || (chatExists && chatExists.isEmpty)) {
+          const res = await axios.get(`/api/chats/chat/${chatId}`);
+          const newChat = res.data.data;
+          setChats(prev => {
+            const currentChats = [newChat, ...prev];
+            const filteredDuplicates = currentChats.reduce((acc, item) => {
+              const x = acc.find(el => el._id === item._id);
+              if(!x) {
+                return acc.concat(item)
+              } else {
+                return acc
+              }
+            }, []);
+            return filteredDuplicates;
+          });
+        }
+
+        // Actualizar el contador de mensajes sin leer del chat al que pertenece el mensaje recibido
+        setChats(prev => {
+          const current = [...prev];
+          const index = current.findIndex(el => el._id.toString() === chatId.toString());
+          const updatedChat = {...current[index], unreadMessages: current[index].unreadMessages + 1};
+          current.splice(index, 1, updatedChat);
+          return current;
         });
-        
-        // Scrollear al fondo de la bandeja al recibir el nuevo mensaje
-        if(router.pathname === "/messages" && inboxRef.current) {
-          inboxRef.current.scrollTop = inboxRef.current.scrollHeight;
+
+        // Actualizar el state de los mensajes con el nuevo mensaje entrante
+        if(chatId.toString() === selectedChat._id.toString()) {
+          setSelectedChatMessages(prev => {          
+            // Filtrar mensajes duplicados
+            const filteredDuplicates = [...prev, newMsg].reduce((acc, item) => {
+              const x = acc.find(el => el._id === item._id);
+              if(!x) {
+                return acc.concat(item)
+              } else {
+                return acc
+              }
+            },[]);
+  
+            return filteredDuplicates
+          });
+          
+          // Scrollear al fondo de la bandeja al recibir el nuevo mensaje
+          if(router.pathname === "/messages" && inboxRef.current) {
+            inboxRef.current.scrollTop = inboxRef.current.scrollHeight;
+          }
         }
       });
 
@@ -313,6 +347,12 @@ const MessagesPage = (props) => {
   /*--------------------------------------------------------------------------*/
   const chatItemClickHandler = (item) => {
     setSelectedChat(item);
+    setChats(prev => {
+      const index = prev.findIndex(el => el._id.toString() === item._id.toString());
+      const updated = [...prev];
+      updated.splice(index, 1, {...prev[index], unreadMessages: 0});
+      return updated;
+    });
     setSelectedChatMessages([]);
     setLoadMore(true);
     setLoadingMore(true);
@@ -368,7 +408,7 @@ const MessagesPage = (props) => {
       const newMessage = res.data.data;
       
       // Emitir el nuevo mensaje enviado al recipiente
-      socket.emit("newMessage", newMessage);
+      socket.emit("newMessage", {newMsg: newMessage, chatId: selectedChat._id});
 
       setSelectedChatMessages(prev => [...prev, newMessage]);
       setSending(false);
@@ -483,6 +523,7 @@ const MessagesPage = (props) => {
               </div>
             </Button>
           }
+          
           <Ref innerRef={inboxRef}>
             <Segment
               style={{background: selectedChat.status === "inactive" ? "ghostwhite" : "white"}}
@@ -561,7 +602,7 @@ export async function getServerSideProps(context) {
     // Consultar los chats del usuario
     const res = await axios({
       method: "GET",
-      url: `${req.protocol}://${req.get("host")}/api/chats`
+      url: `${process.env.BASE_URL}/api/chats`
     });
 
     return {
