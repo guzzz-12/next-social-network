@@ -23,7 +23,10 @@ const commentsRoutes = require("./api/comments");
 const likesRoutes = require("./api/likes");
 const resetPassword = require("./api/reset-password");
 const errorsHandler = require("./middleware/errorsHandler");
-const {addUser, removeUser, users} = require("./utilsServer/socketActions");
+const {addUser, removeUser} = require("./utilsServer/socketActions");
+const {onNewMessage, onDeletedMessage, onMessagesRead} = require("./socket-backend/messagesEvents");
+const {enabledChat, disabledChat} = require("./socket-backend/chatEvents");
+const {notificationReceived} = require("./socket-backend/notificationsEvents");
 const PORT = process.env.PORT || 5000;
 
 /*-----------------------*/
@@ -56,79 +59,19 @@ io.on("connection", (socket) => {
   socket.on("offline", () => {
     const users = removeUser(socket.id);
     io.emit("onlineUsers", users);
-  })
-
-
-  // Enviar el mensaje recibido al usuario recipiente
-  socket.on("newMessage", ({newMsg, chatId}) => {
-    const recipient = users.find(el => el.userId.toString() === newMsg.recipient._id.toString());
-    if(recipient) {
-      io.to(recipient.socketId).emit("newMessageReceived", {newMsg, chatId});
-    }
   });
+  
+  // Eventos de los mensajes
+  socket.on("newMessage", (data) => onNewMessage(io, data));
+  socket.on("deletedMessage", (data) => onDeletedMessage(io, data));
+  socket.on("messagesRead", (data) => onMessagesRead(io, data));
 
+  // Eventos de los chats
+  socket.on("disabledChat", (chat) => disabledChat(io, chat));
+  socket.on("enabledChat", (data) => enabledChat(io, data));
 
-  // Enviar el mensaje eliminado al usuario recipiente
-  socket.on("deletedMessage", (msg) => {
-    const recipient = users.find(el => el.userId.toString() === msg.recipient._id.toString());
-    if(recipient) {
-      io.to(recipient.socketId).emit("messageDeleted", msg);
-    }
-  });
-
-
-  // Notificar que el chat fue deshabilitado
-  socket.on("disabledChat", (chat) => {
-    const {user, messagesWith, disabledBy} = chat;
-
-    const userToNotify = disabledBy.toString() === user._id.toString() ? messagesWith._id.toString() : user._id.toString();
-
-    const recipient = users.find(el => el.userId.toString() === userToNotify);
-    if(recipient) {
-      io.to(recipient.socketId).emit("chatDisabled", chat);
-    }
-  });
-
-
-  // Notificar que el chat fue habilitado
-  socket.on("enabledChat", (data) => {
-    const {updatedChat, enabledBy} = data;
-
-    const {user, messagesWith} = updatedChat;
-
-    const userToNotify = enabledBy.toString() === user._id.toString() ? messagesWith._id.toString() : user._id.toString();
-
-    const recipient = users.find(el => el.userId.toString() === userToNotify);
-    if(recipient) {
-      io.to(recipient.socketId).emit("chatEnabled", updatedChat);
-    }
-  });
-
-
-  // Notificar al remitente que sus mensajes fueron leídos por el recipiente
-  socket.on("messagesRead", (data) => {
-    const {senderId, seenById, updatedMessages} = data;
-
-    const recipient = users.find(el => el.userId.toString() === senderId.toString());
-    
-    if(recipient && recipient !== seenById.toString()) {
-      io.to(recipient.socketId).emit("readMessages", updatedMessages);
-    }
-  });
-
-
-  // Notificar al usuario si tiene notificación de comentario, like o nuevo seguidor
-  socket.on("notificationReceived", (data) => {
-    const {userToNotify} = data;
-
-    console.log("notificationReceived", userToNotify);
-
-    const recipient = users.find(el => el.userId.toString() === userToNotify.toString());
-    if(recipient) {
-      io.to(recipient.socketId).emit("receivedNotification");
-    }
-  })
-
+  // Eventos de las notificaciones
+  socket.on("notificationReceived", (data) => notificationReceived(io, data));
 });
 
 
