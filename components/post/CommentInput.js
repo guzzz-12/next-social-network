@@ -31,6 +31,9 @@ const CommentInput = ({postId, setComments, setCommentsCount, socket, postAuthor
 
       // Emitir evento de notificación al backend
       socket.emit("notificationReceived", {userToNotify: postAuthor});
+
+      // Emitir el evento de nuevo comentario al backend
+      socket.emit("commentCreated", {postId, comment: res.data.data});
       
     } catch (error) {
       let message = error.message;

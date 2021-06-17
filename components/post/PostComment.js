@@ -6,7 +6,7 @@ import moment from "moment";
 import CommentHistory from "./CommentHistory";
 import styles from "./postComment.module.css";
 
-const PostComment = ({comment, user, setComments, setCommentsCount}) => {
+const PostComment = ({comment, user, setComments, setCommentsCount, socket}) => {
   const [editMode, setEditMode] = useState(false);
   const [text, setText] = useState("");
   const [editing, setEditing] = useState(false);
@@ -40,7 +40,7 @@ const PostComment = ({comment, user, setComments, setCommentsCount}) => {
       setDeleting(commentId.toString());
       setError(null);
 
-      await axios({
+      const res = await axios({
         method: "DELETE",
         url: `/api/comments/${commentId}`
       });
@@ -50,6 +50,9 @@ const PostComment = ({comment, user, setComments, setCommentsCount}) => {
       });
       setCommentsCount(prev => prev - 1);
       setDeleting(null);
+
+      // Emitir el evento de comentario eliminado al backend
+      socket.emit("commentDeleted", {comment: res.data.data});
       
     } catch (error) {
       let message = error.message;

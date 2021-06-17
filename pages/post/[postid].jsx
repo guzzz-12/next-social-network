@@ -12,11 +12,13 @@ import PostComment from "../../components/post/PostComment";
 import CommentInput from "../../components/post/CommentInput";
 import LikesList from "../../components/post/LikesList";
 import {UserContext} from "../../context/UserContext";
+import {SocketContext} from "../../context/SocketProvider";
 
 const PostPage = (props) => {
   const router = useRouter();
   const userContext = useContext(UserContext);
   const user = userContext.currentUser;
+  const {socket} = useContext(SocketContext);
   const {post} = props;
 
   const [likes, setLikes] = useState(post.likes);
@@ -33,6 +35,38 @@ const PostPage = (props) => {
   const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+
+  /*--------------------------------------------------------------*/
+  // Suscribir/desuscribir el usuario al post
+  // Agregar en tiempo real los nuevos comentarios de los usuarios
+  /*--------------------------------------------------------------*/
+  useEffect(() => {
+    let data = {}
+
+    if(socket && user) {
+      data = {
+        postId: post._id.toString(),
+        userId: user._id.toString()
+      }
+      socket.emit("subscribeUserToPost", data)
+    }
+
+    // Agregar en tiempo real los nuevos comentarios de los usuarios
+    socket.on("newComment", (comment) => {
+      setComments(prev => [comment, ...prev])
+    });
+
+    // Eliminar en tiempo real el comentario eliminado por otro usuario
+    socket.on("deletedComment", (commentId) => {
+      setComments(prev => {
+        const filtered = prev.filter(el => el._id.toString() !== commentId);
+        return filtered
+      })
+    });
+
+    return () => socket.emit("unsubscribeUserFromPost", data)
+  }, [socket, user]);
 
 
   /*-----------------------------------*/
@@ -318,6 +352,8 @@ const PostPage = (props) => {
             <CommentInput
               user={user}
               postId={post._id}
+              postAuthor={post.user._id}
+              socket={socket}
               setComments={setComments}
               setCommentsCount={setCommentsCount}
             />
@@ -331,6 +367,7 @@ const PostPage = (props) => {
                     comment={comment}
                     postId={post._id}
                     user={user}
+                    socket={socket}
                     setComments={setComments}
                     setCommentsCount={setCommentsCount}
                   />
