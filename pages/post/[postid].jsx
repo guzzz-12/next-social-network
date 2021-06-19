@@ -57,6 +57,16 @@ const PostPage = (props) => {
       setComments(prev => [comment, ...prev])
     });
 
+    // Aactualizar el comentario editado en tiempo real
+    socket.on("editedComment", (comment) => {
+      setComments(prev => {
+        const updatedComments = [...prev];
+        const index = updatedComments.findIndex(el => el._id.toString() === comment._id.toString());
+        updatedComments.splice(index, 1, comment);
+        return updatedComments;
+      })
+    })
+
     // Eliminar en tiempo real el comentario eliminado por otro usuario
     socket.on("deletedComment", (commentId) => {
       setComments(prev => {

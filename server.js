@@ -27,7 +27,7 @@ const {addUser, removeUser} = require("./utilsServer/socketActions");
 const {onNewMessage, onDeletedMessage, onMessagesRead} = require("./socket-backend/messagesEvents");
 const {enabledChat, disabledChat} = require("./socket-backend/chatEvents");
 const {notificationReceived} = require("./socket-backend/notificationsEvents");
-const {subscribeUser, unsubscribeUser, commentAdded, commentDeleted} = require("./socket-backend/commentsEvents");
+const {subscribeUser, unsubscribeUser, commentAdded, commentEdited, commentDeleted} = require("./socket-backend/commentsEvents");
 const PORT = process.env.PORT || 5000;
 
 /*-----------------------*/
@@ -75,6 +75,7 @@ io.on("connection", (socket) => {
   socket.on("subscribeUserToPost", (data) => subscribeUser(socket.id, data));
   socket.on("unsubscribeUserFromPost", (data) => unsubscribeUser(data));
   socket.on("commentCreated", (data) => commentAdded(io, data));
+  socket.on("commentEdited", (data) => commentEdited(io, data));
   socket.on("commentDeleted", (data) => commentDeleted(io, data));
 
   // Eventos de las notificaciones

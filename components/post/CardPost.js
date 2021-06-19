@@ -385,6 +385,7 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
                     comment={comment}
                     postId={post._id}
                     user={user}
+                    socket={socket}
                     setComments={setComments}
                     setCommentsCount={setCommentsCount}
                   />

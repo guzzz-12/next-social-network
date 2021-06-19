@@ -94,6 +94,9 @@ const PostComment = ({comment, user, setComments, setCommentsCount, socket}) => 
       setEditing(false);
       setEditMode(false);
       setText("");
+
+      // Emitir el evento de comentario editado al backend
+      socket.emit("commentEdited", {comment: res.data.data});
       
     } catch (error) {
       let message = error.message;
