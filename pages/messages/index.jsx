@@ -295,7 +295,7 @@ const MessagesPage = (props) => {
   // Cargar los mensajes del chat seleccionado
   /*------------------------------------------*/
   useEffect(() => {    
-    if(selectedChat && !endResults && loadMore) {
+    if(selectedChat._id && !endResults && loadMore) {
       setError(null);
       setLoadingMore(true);
 
@@ -338,6 +338,9 @@ const MessagesPage = (props) => {
         setLoadingMore(false);
         setError(message);
       })
+    } else {
+      setLoadMore(false);
+      setLoadingMore(false);
     }
 
   }, [selectedChat, endResults, loadMore]);
@@ -526,16 +529,23 @@ const MessagesPage = (props) => {
           
           <Ref innerRef={inboxRef}>
             <Segment
-              style={{background: selectedChat.status === "inactive" ? "ghostwhite" : "white"}}
+              style={{
+                background: selectedChat.status === "inactive" ? "ghostwhite" : "white",
+                backgroundImage: `url(${chats.length === 0 ? "https://res.cloudinary.com/dzytlqnoi/image/upload/e_brightness:80,q_100/v1624138590/chat-app/no-messages_v7o8j7.png" : ""})`,
+                backgroundSize: "contain",
+                backgroundPosition: "center center"
+              }}
               className={styles["messages__inbox"]}
             >
-              <Button
-                className={styles["messages__inbox-load-more-btn"]}
-                content={!endResults ? "Load more messages..." : "No more messages available..."}
-                loading={loadingMore}
-                disabled={loadingMore || endResults}
-                onClick={() => setLoadMore(true)}
-              />
+              {chats.length > 0 &&
+                <Button
+                  className={styles["messages__inbox-load-more-btn"]}
+                  content={!endResults ? "Load more messages..." : "No more messages available..."}
+                  loading={loadingMore}
+                  disabled={loadingMore || endResults || selectedChatMessages.length === 0}
+                  onClick={() => setLoadMore(true)}
+                />
+              }
               <Comment.Group className={styles["messages__inbox-messages-list"]}>
                 {selectedChatMessages.map(msg => {
                   return (

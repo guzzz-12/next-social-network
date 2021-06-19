@@ -16,7 +16,7 @@ const ChatsList = ({onClickHandler, chats, onlineUsers, currentUser, selectedCha
         
         <div className={styles["messages__chat-list-wrapper"]}>
           {/* Mensaje si el usuario no ha creado chats */}
-          {chats.length === 0 &&
+          {chats && chats.length === 0 &&
             <Header
               as="h3"
               color="grey"
