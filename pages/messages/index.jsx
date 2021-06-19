@@ -10,7 +10,7 @@ import {UserContext} from "../../context/UserContext";
 import {UnreadMessagesContext} from "../../context/UnreadMessagesContext";
 import {SocketContext} from "../../context/SocketProvider";
 import styles from "./messages.module.css";
-import ChatsList from "./ChatsList";
+import ChatsList from "../../components/messages/ChatsList";
 import { useWindowWidth } from "../../utils/customHooks";
 
 

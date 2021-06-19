@@ -1,7 +1,7 @@
 import {Segment, Header, Icon, List} from "semantic-ui-react";
-import Search from "../../components/Layout/Search";
-import ChatItem from "../../components/messages/ChatItem";
-import styles from "./messages.module.css";
+import Search from "../Layout/Search";
+import ChatItem from "./ChatItem";
+import styles from "../../pages/messages/messages.module.css";
 
 const ChatsList = ({onClickHandler, chats, onlineUsers, currentUser, selectedChat, disablingChat, disableChatHandler, chatItemClickHandler, setOpenChatsSidebar}) => {
   return (
@@ -16,7 +16,7 @@ const ChatsList = ({onClickHandler, chats, onlineUsers, currentUser, selectedCha
         
         <div className={styles["messages__chat-list-wrapper"]}>
           {/* Mensaje si el usuario no ha creado chats */}
-          {chats && chats.length === 0 &&
+          {chats.length === 0 &&
             <Header
               as="h3"
               color="grey"
