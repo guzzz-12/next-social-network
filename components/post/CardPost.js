@@ -4,6 +4,8 @@ import {Card, Icon, Image, Divider, Segment, Button, Popup, Header, Modal, Loade
 import axios from "axios";
 import moment from "moment";
 import {ToastContainer, toast} from "react-toastify";
+import jsCookie from "js-cookie";
+import jwt from "jsonwebtoken";
 import PostComment from "./PostComment";
 import CommentInput from "./CommentInput";
 import LikesList from "./LikesList";
@@ -12,8 +14,10 @@ import NoImageModal from "./NoImageModal";
 import {SocketContext} from "../../context/SocketProvider";
 import classes from "./cardPost.module.css";
 
+
 const CardPost = ({user, post, setPosts, noPadding}) => {
   const {socket} = useContext(SocketContext);
+  const CURRENT_USER = jwt.decode(jsCookie.get("token"));
 
   const [comments, setComments] = useState([]);
   const [commentsCount, setCommentsCount] = useState(null);
@@ -138,7 +142,10 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
         setLikes(prev => [like, ...prev]);
 
         // Emitir al backend el evento de notificación al likear el post
-        socket.emit("notificationReceived", {userToNotify:post.user._id});
+        // sólo si el autor del like no es el autor del post
+        if(CURRENT_USER.userId.toString() !== post.user._id.toString()) {
+          socket.emit("notificationReceived", {userToNotify: post.user._id});
+        }
 
       } else if(eventType === "disliked") {
         setLikes(prev => {

@@ -1,8 +1,12 @@
 import {useState} from "react";
 import {Form} from "semantic-ui-react";
 import axios from "axios";
+import jsCookie from "js-cookie";
+import jwt from "jsonwebtoken";
 
 const CommentInput = ({postId, setComments, setCommentsCount, socket, postAuthor}) => {
+  const CURRENT_USER = jwt.decode(jsCookie.get("token"));
+
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -30,7 +34,10 @@ const CommentInput = ({postId, setComments, setCommentsCount, socket, postAuthor
       setText("");
 
       // Emitir evento de notificación al backend
-      socket.emit("notificationReceived", {userToNotify: postAuthor});
+      // sólo si el autor del comentario no es el autor del post
+      if(CURRENT_USER.userId.toString() !== postAuthor.toString()) {
+        socket.emit("notificationReceived", {userToNotify: postAuthor});
+      }
 
       // Emitir el evento de nuevo comentario al backend
       socket.emit("commentCreated", {postId, comment: res.data.data});
