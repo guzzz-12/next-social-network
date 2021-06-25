@@ -39,7 +39,7 @@ router.get("/", authMiddleware, async (req, res) => {
 router.get("/unread", authMiddleware, async (req, res) => {
   try {
     const notifications = await Notification
-    .find({seen: false})
+    .find({seen: false, userToNotify: req.userId})
     .lean();
 
     res.json({
