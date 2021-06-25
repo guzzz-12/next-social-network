@@ -23,6 +23,7 @@ export const HeaderMessage = () => {
         currentRoute === "/login" ? "Welcome Back" :
         currentRoute === "/forgot-password" ? "Reset your password" :
         currentRoute === "/reset-password" ? "Reset your password" :
+        currentRoute === "/account-verification" ? "Email address verification" :
         ""
       }
       icon={currentRoute !== "/login" ? "settings" : "privacy"}
@@ -31,6 +32,7 @@ export const HeaderMessage = () => {
         currentRoute === "/login" ? "Login with email and password" :
         currentRoute === "/forgot-password" ? "We'll send you an email with instructions to reset your password" :
         currentRoute === "/reset-password" ? "Type your new password" :
+        currentRoute === "/account-verification" ? "Type the 6-digit confirmation code that you received in your inbox." :
         ""
       }
     />
