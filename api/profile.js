@@ -63,6 +63,29 @@ router.get("/me", authMiddleware, async (req, res) => {
 });
 
 
+/*--------------------------------------------------*/
+// Consultar si el email del usuario está verificado
+/*--------------------------------------------------*/
+router.get("/me/check-verification", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).lean().select("isVerified");
+
+    res.json({
+      status: "success",
+      data: {
+        isVerified: user.isVerified
+      }
+    })
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Internal server error: ${error.message}`
+    })
+  }
+});
+
+
 /*---------------------------*/
 // Eliminar cuenta de usuario
 /*---------------------------*/

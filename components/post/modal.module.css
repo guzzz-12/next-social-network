@@ -10,6 +10,7 @@
 
 .modal__img {
   height: 100% !important;
+  width: 100% !important;
 }
 
 .modal__img img {

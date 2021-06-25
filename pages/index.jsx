@@ -11,6 +11,7 @@ import CardPost from "../components/post/CardPost";
 import {UserContext} from "../context/UserContext";
 import {UnreadMessagesContext} from "../context/UnreadMessagesContext";
 import {NotificationsContext} from "../context/NotificationsContext";
+import {checkVerification} from "../utilsServer/verificationStatus";
 
 // Token de cancelación de requests de axios
 const CancelToken = axios.CancelToken;
@@ -169,18 +170,11 @@ export async function getServerSideProps(context) {
     // Verificar el token
     jwt.verify(token, process.env.JWT_SECRET);
 
-    const userData = await axios({
-      method: "GET",
-      url: `${baseUrl}/api/profile/me`,
-      headers: {
-        Cookie: `token=${token}`
-      },
-    });
-
-    const {user} = userData.data.data.profile;
+    // Chequear si el email del usuario está verificado
+    const isVerified = await checkVerification(token);
 
     // Si no está verificado, redirigir a la página de verificación
-    if(!user.isVerified) {
+    if(isVerified) {
       return {
         redirect: {
           destination: "/account-verification",

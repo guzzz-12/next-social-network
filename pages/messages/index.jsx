@@ -11,6 +11,7 @@ import {UnreadMessagesContext} from "../../context/UnreadMessagesContext";
 import {SocketContext} from "../../context/SocketProvider";
 import styles from "./messages.module.css";
 import ChatsList from "../../components/messages/ChatsList";
+import { checkVerification } from "../../utilsServer/verificationStatus";
 import { useWindowWidth } from "../../utils/customHooks";
 
 
@@ -605,18 +606,11 @@ export async function getServerSideProps(context) {
     // Verificar el token
     jwt.verify(token, process.env.JWT_SECRET);
     
-    const userData = await axios({
-      method: "GET",
-      url: `${process.env.BASE_URL}/api/profile/me`,
-      headers: {
-        Cookie: `token=${token}`
-      },
-    });
-
-    const {user} = userData.data.data.profile;
+    // Chequear si el email del usuario está verificado
+    const isVerified = await checkVerification(token);
 
     // Si no está verificado, redirigir a la página de verificación
-    if(!user.isVerified) {
+    if(isVerified) {
       return {
         redirect: {
           destination: "/account-verification",

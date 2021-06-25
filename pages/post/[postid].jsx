@@ -13,6 +13,8 @@ import CommentInput from "../../components/post/CommentInput";
 import LikesList from "../../components/post/LikesList";
 import {UserContext} from "../../context/UserContext";
 import {SocketContext} from "../../context/SocketProvider";
+import {checkVerification} from "../../utilsServer/verificationStatus";
+import styles from "./post.module.css";
 
 const PostPage = (props) => {
   const router = useRouter();
@@ -245,6 +247,7 @@ const PostPage = (props) => {
         >
           {post.picUrl &&
             <Image
+              className={styles["post__image"]}
               src={post.picUrl}
               floated="left"
               ui={false}
@@ -424,19 +427,11 @@ export async function getServerSideProps(context) {
     // Verificar el token
     jwt.verify(token, process.env.JWT_SECRET);
     
-    // Consultar el perfil del usuario autenticado
-    const userData = await axios({
-      method: "GET",
-      url: `${process.env.BASE_URL}/api/profile/me`,
-      headers: {
-        Cookie: `token=${token}`
-      },
-    });
-
-    const {user} = userData.data.data.profile;
+    // Consultar si el email del usuario está verificado
+    const isVerified = await checkVerification(token);
 
     // Si no está verificado, redirigir a la página de verificación
-    if(!user.isVerified) {
+    if(!isVerified) {
       return {
         redirect: {
           destination: "/account-verification",
