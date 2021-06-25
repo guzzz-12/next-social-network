@@ -1,4 +1,5 @@
 import {useEffect, useState, useContext} from "react";
+import Head from "next/head";
 import Link from "next/link";
 import {useRouter} from "next/router";
 import {Container, Header, Card, Icon, Image, Divider, Segment, Button, Popup, Message, Loader} from "semantic-ui-react";
@@ -238,6 +239,13 @@ const PostPage = (props) => {
         autoClose={3000}
         hideProgressBar={true}
       />
+
+      <Head>
+        <meta property="og:url" content={`${process.env.BASE_URL}/post/${post._id}`} key="ogurl" />
+        <meta property="og:title" content={`${post.user.name.split(" ")[0]}'s post on Next Social Network`} key="ogtitle" />
+        <meta property="og:description" content={post.content} key="ogdesc" />
+        <meta property="og:image" content={post.picUrl} key="ogimage" />
+      </Head>
 
       <Segment basic>
         <Card
