@@ -483,7 +483,7 @@ router.get("/user/:username", authMiddleware, async (req, res) => {
     const {username} = req.params;
 
     // Chequear si el usuario existe en la base de datos
-    const user = await User.findOne({username});
+    const user = await User.findOne({username, isVerified: true});
     if(!user) {
       return res.status(404).json({
         status: "failed",

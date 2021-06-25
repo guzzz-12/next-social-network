@@ -123,7 +123,7 @@ const ProfilePage = (props) => {
   /*----------------------------------------*/
   // Mostrar mensaje si el perfil no existe
   /*----------------------------------------*/
-  if(!profile && !loadingPosts) {
+  if((!profile && !loadingPosts) || props.error) {
     return <NoProfile />
   }
 
