@@ -277,12 +277,32 @@ export async function getServerSideProps(context) {
     // Verificar el token
     jwt.verify(token, process.env.JWT_SECRET);  
 
-    // Setear el token en los cookies del request
-    axios.defaults.headers.get.Cookie = `token=${token}`;
+    const userData = await axios({
+      method: "GET",
+      url: `${process.env.BASE_URL}/api/profile/me`,
+      headers: {
+        Cookie: `token=${token}`
+      },
+    });
+
+    const {user} = userData.data.data.profile;
+
+    // Si no está verificado, redirigir a la página de verificación
+    if(!user.isVerified) {
+      return {
+        redirect: {
+          destination: "/account-verification",
+          permanent: false
+        }
+      }
+    }
 
     const res = await axios({
       method: "GET",
-      url: `${process.env.BASE_URL}/api/notifications?page=1`
+      url: `${process.env.BASE_URL}/api/notifications?page=1`,
+      headers: {
+        Cookie: `token=${token}`
+      },
     });
 
     return {

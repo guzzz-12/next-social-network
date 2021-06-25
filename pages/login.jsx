@@ -69,6 +69,13 @@ const Login = () => {
 
       const remainingSeconds = sessionRemainingSecs(jsCookie.get("token"));
       timerContext.initializeTimer(remainingSeconds);
+
+      // Redirigir a la página de verificación de email si no lo ha verificado aún
+      if(!profile.user.isVerified) {
+        return router.push("/account-verification");
+      }
+
+      // Redirigir al homepage si ya está verificado
       router.push("/");
       
     } catch (error) {

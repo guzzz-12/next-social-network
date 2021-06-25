@@ -168,6 +168,26 @@ export async function getServerSideProps(context) {
 
     // Verificar el token
     jwt.verify(token, process.env.JWT_SECRET);
+
+    const userData = await axios({
+      method: "GET",
+      url: `${baseUrl}/api/profile/me`,
+      headers: {
+        Cookie: `token=${token}`
+      },
+    });
+
+    const {user} = userData.data.data.profile;
+
+    // Si no está verificado, redirigir a la página de verificación
+    if(!user.isVerified) {
+      return {
+        redirect: {
+          destination: "/account-verification",
+          permanent: false
+        }
+      }
+    }
     
     // Consultar la primera página de posts
     const res = await axios({

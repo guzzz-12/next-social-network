@@ -176,7 +176,7 @@ const Signup = () => {
         
         const updatedUser = updatedrUserData.data.data;
         userContext.setCurrentUser(updatedUser);
-        router.push("/");
+        router.push("/account-verification");
         
       } else {
         setIsFormLoading(false);

@@ -284,27 +284,38 @@ const ProfilePage = (props) => {
 
 export async function getServerSideProps(context) {
   const {token} = parseCookies(context);
-  const {req} = context;
   
   try {
     // Verificar el token
     jwt.verify(token, process.env.JWT_SECRET);
 
     // Consultar el perfil del usuario
-    const res = await axios({
+    const userData = await axios({
       method: "GET",
-      url: `${req.protocol}://${req.get("host")}/api/profile/me`,
+      url: `${process.env.BASE_URL}/api/profile/me`,
       headers: {
         Cookie: `token=${token}`
-      }
+      },
     });
+
+    const {user} = userData.data.data.profile;
+
+    // Si no está verificado, redirigir a la página de verificación
+    if(!user.isVerified) {
+      return {
+        redirect: {
+          destination: "/account-verification",
+          permanent: false
+        }
+      }
+    }
   
     return {
       props: {
-        user: res.data.data.profile.user,
-        profile: res.data.data.profile,
-        following: res.data.data.following,
-        followers: res.data.data.followers,
+        user: userData.data.data.profile.user,
+        profile: userData.data.data.profile,
+        following: userData.data.data.following,
+        followers: userData.data.data.followers,
         error: null
       }
     }

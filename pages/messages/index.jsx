@@ -601,18 +601,37 @@ const MessagesPage = (props) => {
 export async function getServerSideProps(context) {
   try {
     const {token} = parseCookies(context);
-    const {req} = context;
 
     // Verificar el token
-    jwt.verify(token, process.env.JWT_SECRET);  
+    jwt.verify(token, process.env.JWT_SECRET);
+    
+    const userData = await axios({
+      method: "GET",
+      url: `${process.env.BASE_URL}/api/profile/me`,
+      headers: {
+        Cookie: `token=${token}`
+      },
+    });
 
-    // Setear el token en los cookies del request
-    axios.defaults.headers.get.Cookie = `token=${token}`;
+    const {user} = userData.data.data.profile;
+
+    // Si no está verificado, redirigir a la página de verificación
+    if(!user.isVerified) {
+      return {
+        redirect: {
+          destination: "/account-verification",
+          permanent: false
+        }
+      }
+    }
 
     // Consultar los chats del usuario
     const res = await axios({
       method: "GET",
-      url: `${process.env.BASE_URL}/api/chats`
+      url: `${process.env.BASE_URL}/api/chats`,
+      headers: {
+        Cookie: `token=${token}`
+      }
     });
 
     return {
