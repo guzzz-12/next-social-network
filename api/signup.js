@@ -5,10 +5,13 @@ const bcrypt = require("bcryptjs");
 const {check, validationResult} = require("express-validator");
 const cloudinary = require("cloudinary").v2;
 const formidable = require("formidable");
+const sendGrid = require("@sendgrid/mail");
 
 const User = require("../models/UserModel");
 const Profile = require("../models/ProfileModel");
 const Follower = require("../models/FollowerModel");
+const authMiddleware = require("../middleware/authMiddleware");
+const emailConfirmationTemplate = require("../emailTemplates/emailConfirmTemplate");
 
 const regexUserName = /^(?!.*\.\.)(?!.*\.$)[^\W][\w.]{0,29}$/;
 
@@ -110,7 +113,28 @@ router.post("/", [
     const hashedPassword = await bcrypt.hash(password, salt);
     
     // Generar el nuevo usuario
-    const newUser = await User.create({name, username, email, password: hashedPassword});
+    const verificationCode = Math.floor(1000000 + Math.random() * 900000);
+    const newUser = await User.create({
+      name,
+      username,
+      email,
+      password: hashedPassword,
+      verificationCode: verificationCode.toString()
+    });
+
+    // Opciones del correo a enviar
+    const mailContent = {
+      to: email,
+      from: {
+        name: "Social Network App",
+        email: process.env.SENDGRID_FROM
+      },
+      subject: "Reset your password",
+      html: emailConfirmationTemplate(name, verificationCode)
+    }
+
+    // Enviar el correo con el código de verificación
+    await sendGrid.send(mailContent);
 
     // Generar el perfil del nuevo usuario
     const profileSocialLinks = {};
@@ -138,12 +162,109 @@ router.post("/", [
     res.cookie("token", token, {maxAge: 24*3600*1000});
     
     newUser.password = undefined;
+    newUser.verificationCode = undefined;
+
     res.json({
       status: "success",
       data: {
         profile: {...newUserProfile, user: newUser}
       }
     });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: error.message
+    })
+  }
+});
+
+
+/*-------------------------------------------------------*/
+// Ruta para verificar el código de confirmación de email
+/*-------------------------------------------------------*/
+router.post("/email-verification", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+
+    if(!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found"
+      })
+    }
+
+    // Verificar si el código es correcto
+    const requestedCode = req.body.code;
+    const verificationCode = user.verificationCode;
+    
+    if(requestedCode !== verificationCode) {
+      return res.status(401).json({
+        status: "failed",
+        message: "Invalid verification code."
+      })
+    }
+
+    // Cambiar el status del usuario a verificado en la DB
+    user.verificationCode = "";
+    user.isVerified = true;
+    await user.save();
+
+    user.verificationCode = undefined;
+    
+    res.json({
+      status: "success",
+      data: user
+    })
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: error.message
+    })
+  }
+});
+
+
+/*-----------------------------------------------------------*/
+// Ruta para generar un nuevo código de verificación de email
+/*-----------------------------------------------------------*/
+router.get("/email-verification/new-code", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+
+    if(!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: "User not found"
+      })
+    }
+
+    // Generar el nuevo código
+    const verificationCode = Math.floor(1000000 + Math.random() * 900000);
+
+    // Opciones del correo a enviar
+    const mailContent = {
+      to: user.email,
+      from: {
+        name: "Social Network App",
+        email: process.env.SENDGRID_FROM
+      },
+      subject: "Confirm your email",
+      html: emailConfirmationTemplate(user.name, verificationCode)
+    }
+
+    // Enviar el correo con el código de verificación
+    await sendGrid.send(mailContent);
+
+    // Actualizar el código en la DB
+    user.verificationCode = verificationCode.toString();
+    await user.save();
+
+    res.json({
+      status: "success",
+      data: "Verification code sent successfully"
+    })
     
   } catch (error) {
     res.status(500).json({
