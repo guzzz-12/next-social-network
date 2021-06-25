@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {Feed, Popup, Header, Button, Icon} from "semantic-ui-react";
 import moment from "moment";
 import styles from "./notification.module.css";
@@ -45,32 +46,44 @@ const LikeNotification = ({notification, deleteNotificationHandler, deleting}) =
     <Feed.Event
       className={styles[`${notification.seen ? "notification--seen" : "notification--not-seen"}`]}
     >
-      <Feed.Label
-        as="a"
-        href={`/user/${user.username}`}
-        image={user.avatar}
-      />
+      <Link href={`/user/${user.username}`} passHref>
+        <Feed.Label image={user.avatar}/>
+      </Link>
+
       <Feed.Content style={{marginTop: 0}}>
         {DeletePopup()}
+        
         <Feed.Summary>
-          <Feed.User as="a" href={`/user/${user.username}`}>
-            {user.name}
-          </Feed.User>
+          <Link href={`/user/${user.username}`} passHref>
+            <Feed.User>
+              {user.name}
+            </Feed.User>
+          </Link>
+
           {" "}
-          liked your
+
+          <span>liked your</span>
           {" "}
-          {notification.post && <a href={`/post/${notification.post._id}`}>post</a>}
-          {!notification.post && <span>post (deleted)</span>}
+
+          {notification.post &&
+            <Link href={`/post/${notification.post._id}`}>
+              <a>post</a>
+            </Link>
+          }
+
+          {!notification.post &&
+            <span>post (deleted)</span>
+          }
 
           <Feed.Date>{moment(notification.createdAt).calendar()}</Feed.Date>
         </Feed.Summary>
 
         {notification.post && notification.post.picUrl &&
-          <Feed.Extra images>
-            <a href={`/post/${notification.post._id}`}>
+          <Link href={`/post/${notification.post._id}`} passHref>
+            <Feed.Extra images>
               <img src={notification.post.picUrl} alt="" />
-            </a>
-          </Feed.Extra>
+            </Feed.Extra>
+          </Link>
         }
 
         {notification.post && !notification.post.picUrl &&

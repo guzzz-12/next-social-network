@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {Feed, Popup, Header, Button, Icon} from "semantic-ui-react";
 import moment from "moment";
 import styles from "./notification.module.css";
@@ -45,18 +46,20 @@ const FollowerNotification = ({notification, deleteNotificationHandler, deleting
     <Feed.Event
       className={styles[`${notification.seen ? "notification--seen" : "notification--not-seen"}`]}
     >
-      <Feed.Label
-        style={{display: "flex", alignItems: "center"}}
-        as="a"
-        href={`/user/${user.username}`}
-        image={user.avatar}
-      />
+      <Link href={`/user/${user.username}`} passHref>
+        <Feed.Label
+          style={{display: "flex", alignItems: "center"}}
+          image={user.avatar}
+        />
+      </Link>
       <Feed.Content>
         {DeletePopup()}
         <Feed.Summary>
-          <Feed.User as="a" href={`/user/${user.username}`}>
-            {user.name}
-          </Feed.User>
+          <Link href={`/user/${user.username}`} passHref>
+            <Feed.User>
+              {user.name}
+            </Feed.User>
+          </Link>
           {" "}
           started following you
           {" "}
