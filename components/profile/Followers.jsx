@@ -1,4 +1,5 @@
 import {useContext, useState, useEffect} from "react";
+import Link from "next/link";
 import {List, Button, Image, Loader, Message} from "semantic-ui-react";
 import axios from "axios";
 import {UserContext} from "../../context/UserContext";
@@ -150,33 +151,44 @@ const Followers = ({username, isProfileOwner, setOwnerFollowing}) => {
   return (
     <List divided verticalAlign="middle">
       {followers.map(el => {
+        const {_id, name, username, avatar, status} = el.user;
         return (
           <List.Item
             key={el._id}
             style={{paddingTop: "10px", paddingBottom: "10px"}}
           >
-            <Image src={el.user.avatar} avatar />
+            {/* Avatar del usuario */}
+            <Image src={avatar} avatar />
+
+            {/* Nombre y username del usuario */}
             <List.Content>
-              <List.Header
-                as={el.user.status === "active" ? "a" : "span"}
-                href={el.user.status === "active" ?`/user/${el.user.username}` : ""}
-              >
-                {el.user.name}
-              </List.Header>
+              {status === "active" ?
+                <Link href={`/user/${username}`} passHref>
+                  <List.Header>
+                    {name}
+                  </List.Header>
+                </Link>
+                :
+                <List.Header as="span">
+                  {name}
+                </List.Header>
+              }
+              
               <List.Description>
-                {el.user.status === "active" ? `@${el.user.username}` : ""}
+                {status === "active" ? `@${username}` : ""}
               </List.Description>
             </List.Content>
+
             {/* Mostrar botón de follow/unfollow si no es el usuario actual */}
-            {currentUser.username !== el.user.username &&
+            {currentUser.username !== username &&
               <List.Content floated="right">
                 <Button
-                  color={checkIfFollowing(el.user._id) ? "instagram" : "twitter"}
-                  content={checkIfFollowing(el.user._id) ? "Unfollow" : "Follow"}
-                  icon={checkIfFollowing(el.user._id) ? "check" : "add user"}
-                  disabled={loadingFollowers || !!processingFollow || el.user.status !== "active"}
-                  loading={loadingFollowers || processingFollow === el.user.username}
-                  onClick={() => el.user.status === "active" ? followHandler(el.user.username) : null}
+                  color={checkIfFollowing(_id) ? "instagram" : "twitter"}
+                  content={checkIfFollowing(_id) ? "Unfollow" : "Follow"}
+                  icon={checkIfFollowing(_id) ? "check" : "add user"}
+                  disabled={loadingFollowers || !!processingFollow || status !== "active"}
+                  loading={loadingFollowers || processingFollow === username}
+                  onClick={() => status === "active" ? followHandler(username) : null}
                 />
               </List.Content>
             }
