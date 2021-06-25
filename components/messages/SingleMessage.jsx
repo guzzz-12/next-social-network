@@ -1,4 +1,5 @@
 import {useState, useEffect, useContext} from "react";
+import Link from "next/link";
 import {Comment, Popup, Button, Icon, Header} from "semantic-ui-react";
 import moment from "moment";
 import axios from "axios";
@@ -107,23 +108,39 @@ const SingleMessage = ({message, setMessages, currentUser}) => {
         :
         null
       }
+
       {/* Cuerpo del mensaje */}
-      <Comment.Avatar
-        className={styles["message__avatar"]}
-        src={user.avatar}
-        as={message.senderStatus === "active" ? "a" : "span"}
-        href={message.senderStatus === "active" ? `/user/${user.username}` : ""}
-      />
+      {message.senderStatus === "active" ?
+        <Link href={`/user/${user.username}`} passHref>
+          <Comment.Avatar
+            className={styles["message__avatar"]}
+            src={user.avatar}
+          />
+        </Link>
+        :
+        <Comment.Avatar
+          className={styles["message__avatar"]}
+          src={user.avatar}
+          as="span"
+        />
+      }
       <Comment.Content>
-        <Comment.Author
-          as={message.senderStatus === "active" ? "a" : "span"}
-          href={message.senderStatus === "active" ? `/user/${user.username}` : ""}
-        >
-          {user.name}
-        </Comment.Author>
+        {message.senderStatus === "active" ?
+          <Link href={`/user/${user.username}`} passHref>
+            <Comment.Author>
+              {user.name}
+            </Comment.Author>
+          </Link>
+          :
+          <Comment.Author as="span">
+            {user.name}
+          </Comment.Author>
+        }
+        
         <Comment.Metadata>
           {moment(message.createdAt).calendar()}
         </Comment.Metadata>
+        
         <Comment.Text>
           <span
             style={{
