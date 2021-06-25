@@ -302,13 +302,22 @@ export async function getServerSideProps(context) {
         }
       }
     }
+
+    // Consultar el perfil del usuario
+    const res = await axios({
+      method: "GET",
+      url: `${process.env.BASE_URL}/api/profile/me`,
+      headers: {
+        Cookie: `token=${token}`
+      }
+    })
   
     return {
       props: {
-        user: userData.data.data.profile.user,
-        profile: userData.data.data.profile,
-        following: userData.data.data.following,
-        followers: userData.data.data.followers,
+        user: res.data.data.profile.user,
+        profile: res.data.data.profile,
+        following: res.data.data.following,
+        followers: res.data.data.followers,
         error: null
       }
     }
