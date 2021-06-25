@@ -174,7 +174,7 @@ export async function getServerSideProps(context) {
     const isVerified = await checkVerification(token);
 
     // Si no está verificado, redirigir a la página de verificación
-    if(isVerified) {
+    if(!isVerified) {
       return {
         redirect: {
           destination: "/account-verification",
