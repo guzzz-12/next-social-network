@@ -95,7 +95,6 @@ router.get("/", async (req, res) => {
 
 // Generar la nueva contraseña
 router.post("/create-password", [
-  check("password", "The current password is required").exists(),
   check("newPassword", "The new password is required").exists(),
   check("newPassword", "The password must be min. 6 characters and max. 30 characters").isLength({min: 6, max: 30})
 ], async (req, res) => {
@@ -115,7 +114,7 @@ router.post("/create-password", [
       });
     }
 
-    const {password, newPassword} = req.body;
+    const {newPassword} = req.body;
     const {token} = req.query;
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findOne({email: decoded.userEmail});
@@ -125,15 +124,6 @@ router.post("/create-password", [
       return res.status(404).json({
         status: "failed",
         message: "User not found or deleted"
-      })
-    }
-
-    // Verificar la contraseña actual del usuario
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if(!isPasswordCorrect) {
-      return res.status(401).json({
-        status: "failed",
-        message: "Wrong password"
       })
     }
 

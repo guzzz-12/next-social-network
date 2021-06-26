@@ -11,23 +11,21 @@ const ResetPasswordPage = () => {
   const query = router.query;
 
   const [values, setValues] = useState({
-    password: "",
     newPassword: "",
     passwordConfirm: ""
   });
 
   const [validationErrors, setValidationErrors] = useState({
-    password: null,
     newPassword: null,
     passwordConfirm: null
   });
 
   const [isVisited, setIsVisited] = useState({
-    password: false,
     newPassword: false,
     passwordConfirm: false
   });
 
+  const [isValid, setIsvalid] = useState(false);
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const [backendError, setBackendError] = useState(null);
@@ -38,17 +36,12 @@ const ResetPasswordPage = () => {
   /*--------------------------------------*/
   const formValidator = (fields = values) => {
     setValidationErrors({
-      password: null,
       newPassword: null,
       passwordConfirm: null
     });
 
     const errors = {}
     let formIsValid = true;
-
-    if(fields.password.length === 0) {
-      errors.password = "The password is required"
-    }
 
     if(fields.newPassword.length > 0 && fields.newPassword.length < 6) {
       errors.newPassword = "The password must be at least 6 characters"
@@ -68,13 +61,14 @@ const ResetPasswordPage = () => {
 
     if(Object.keys(errors).length > 0) {
       setValidationErrors(errors);
+      setIsvalid(false);
       formIsValid = false;
     } else {
       setValidationErrors({
-        password: null,
         newPassword: null,
         passwordConfirm: null
       });
+      setIsvalid(true);
       formIsValid = true;
     }
 
@@ -125,7 +119,6 @@ const ResetPasswordPage = () => {
     setBackendError(null);
 
     setValidationErrors({
-      password: null,
       newPassword: null,
       passwordConfirm: null
     })
@@ -135,7 +128,6 @@ const ResetPasswordPage = () => {
     if(!isValid) {
       setLoading(false);
       return setIsVisited({
-        password: true,
         newPassword: true,
         passwordConfirm: true
       });
@@ -146,7 +138,6 @@ const ResetPasswordPage = () => {
         method: "POST",
         url: `/api/reset-password/create-password?token=${query.token}`,
         data: {
-          password: values.password,
           newPassword: values.newPassword
         },
         headers: {
@@ -157,7 +148,6 @@ const ResetPasswordPage = () => {
       setLoading(false);
       setSuccess(true);
       setValues({
-        password: "",
         newPassword: "",
         passwordConfirm: ""
       })
@@ -274,21 +264,6 @@ const ResetPasswordPage = () => {
           <Form.Input
             fluid
             type="password"
-            name="password"
-            label="Current Password"
-            placeholder="Current Password"
-            error={validationErrors.password && isVisited.password}
-            value={values.password}
-            onChange={onChangeHandler}
-            onBlur={onBlurHandler}
-          />
-          {validationErrors.password && isVisited.password &&
-            <ValidationErrorMessage message={validationErrors.password} />
-          }
-
-          <Form.Input
-            fluid
-            type="password"
             name="newPassword"
             label="New password"
             placeholder="Your new password"
@@ -305,8 +280,8 @@ const ResetPasswordPage = () => {
             fluid
             type="password"
             name="passwordConfirm"
-            label="New password"
-            placeholder="Your new password"
+            label="New password confirm"
+            placeholder="Confirm your new password"
             error={validationErrors.passwordConfirm && isVisited.passwordConfirm}
             value={values.passwordConfirm}
             onChange={onChangeHandler}
@@ -321,7 +296,7 @@ const ResetPasswordPage = () => {
           content="Confirm"
           type="submit"
           color="orange"
-          disabled={loading}
+          disabled={loading || !isValid}
         />
 
       </Form>
