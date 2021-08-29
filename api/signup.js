@@ -129,7 +129,7 @@ router.post("/", [
         name: "Social Network App",
         email: process.env.SENDGRID_FROM
       },
-      subject: "Reset your password",
+      subject: "Confirm account creation",
       html: emailConfirmationTemplate(name, verificationCode)
     }
 
