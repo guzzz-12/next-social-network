@@ -1,10 +1,11 @@
 import {useState, useRef} from "react";
-import {Form, Button, Image, Divider, Segment, Header, Message, Icon} from "semantic-ui-react";
+import {Form, Button, Image, Divider, Segment, Header, Message, Icon, Ref} from "semantic-ui-react";
 import axios from "axios";
 import classes from "./createPost.module.css";
 
 const CreatePost = ({user, setPosts}) => {
   const imgInputRef = useRef();
+  const imageRef = useRef();
 
   const [values, setValues] = useState({
     content: "",
@@ -158,8 +159,24 @@ const CreatePost = ({user, setPosts}) => {
         </div>
 
         <Segment className={classes["post__image-picker-wrapper"]}>
-          <Header>Drag and drop or click to select an image</Header>
+          <Header className={classes["post__image-picker__header-wrapper"]}>
+            <div className={classes["post__image-picker__header"]}>
+              <span>Drag and drop or click to select an image</span>
+              {image &&
+                <div
+                  className={classes["post__image-picker__close-icon"]}
+                  onClick={() => setImage(null)}
+                >
+                  <Icon name="close"/>
+                </div>
+              }
+            </div>
+          </Header>
           <div
+            style={{
+              height: !image ? "auto" : imageRef.current?.clientHeight,
+              maxHeight: "350px"
+            }}
             className={classes["post__image-picker"]}
             onClick={() =>imgInputRef.current.click()}
             onDragOver={(e) => {
@@ -181,14 +198,18 @@ const CreatePost = ({user, setPosts}) => {
             }}
           >
             {!image ?
-              <Icon name="file image outline" size="huge" />
+              <span style={{opacity: 0.6}}>
+                <Icon name="file image outline" size="huge" />
+              </span>
               :
-              <Image
-                className={classes["post__image-preview"]}
-                src={imagePreview}
-                alt="Post image"
-                size="medium"
-              />
+              <Ref innerRef={imageRef}>
+                <Image
+                  className={classes["post__image-preview"]}
+                  src={imagePreview}
+                  alt="Post image"
+                  size="medium"
+                />
+              </Ref>
             }
           </div>
         </Segment>
