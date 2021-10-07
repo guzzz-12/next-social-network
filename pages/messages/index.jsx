@@ -117,69 +117,64 @@ const MessagesPage = (props) => {
 
       // Actualizar la bandeja con el mensaje eliminado en el recipiente
       socket.on("messageDeleted", (data) => {
-        console.log({MensajeEliminado: data})
-
         setSelectedChatMessages(prev => {
           const updatedMsgs = [...prev];
           const msgIndex = updatedMsgs.findIndex(el => el._id.toString() === data._id.toString());
           updatedMsgs.splice(msgIndex, 1, data);
           return updatedMsgs;
         })
-      })
+      });
+
+      // Actualizar el chat en el otro usuario al deshabilitarlo
+      socket.on("chatDisabled", (data) => {
+        const chatId = data._id.toString();
+  
+        // Si el chat seleccionado fue deshabilitado, actualizarlo
+        if(chatId === selectedChat._id.toString()) {
+          setSelectedChat(data);
+        }
+  
+        // Actualizar el status del chat en la lista de chats
+        setChats(prev => {
+          const updatedChats = [...prev];
+          const chatIndex = updatedChats.findIndex(el => el._id.toString() === chatId);
+          updatedChats.splice(chatIndex, 1, data);
+          return updatedChats;
+        })
+      });
+  
+      // Actualizar el chat en el otro usuario al habilitarlo
+      socket.on("chatEnabled", (data) => {
+        const chatId = data._id.toString();
+  
+        // Si el chat seleccionado fue habilitado, actualizarlo
+        if(chatId === selectedChat._id.toString()) {
+          setSelectedChat(data);
+        }
+  
+        // Actualizar el status del chat en la lista de chats
+        setChats(prev => {
+          const updatedChats = [...prev];
+          const chatIndex = updatedChats.findIndex(el => el._id.toString() === chatId);
+          updatedChats.splice(chatIndex, 1, data);
+          return updatedChats;
+        })
+      });
+  
+      // Actualizar el status de los mensajes vistos
+      socket.on("readMessages", (update) => {
+        setSelectedChatMessages(prev => {
+          const currentMessages = [...prev];
+  
+          update.forEach(updatedItem => {
+            const index = currentMessages.findIndex(el => el._id.toString() === updatedItem._id.toString());
+            currentMessages.splice(index, 1, updatedItem);
+          });
+  
+          return currentMessages;
+        })
+      });
     }
-
-    // Actualizar el chat en el otro usuario al deshabilitarlo
-    socket.on("chatDisabled", (data) => {
-      const chatId = data._id.toString();
-
-      // Si el chat seleccionado fue deshabilitado, actualizarlo
-      if(chatId === selectedChat._id.toString()) {
-        setSelectedChat(data);
-      }
-
-      // Actualizar el status del chat en la lista de chats
-      setChats(prev => {
-        const updatedChats = [...prev];
-        const chatIndex = updatedChats.findIndex(el => el._id.toString() === chatId);
-        updatedChats.splice(chatIndex, 1, data);
-        return updatedChats;
-      })
-    });
-
-    // Actualizar el chat en el otro usuario al habilitarlo
-    socket.on("chatEnabled", (data) => {
-      const chatId = data._id.toString();
-
-      // Si el chat seleccionado fue habilitado, actualizarlo
-      if(chatId === selectedChat._id.toString()) {
-        setSelectedChat(data);
-      }
-
-      // Actualizar el status del chat en la lista de chats
-      setChats(prev => {
-        const updatedChats = [...prev];
-        const chatIndex = updatedChats.findIndex(el => el._id.toString() === chatId);
-        updatedChats.splice(chatIndex, 1, data);
-        return updatedChats;
-      })
-    });
-
-    // Actualizar el status de los mensajes vistos
-    socket.on("readMessages", (update) => {
-      setSelectedChatMessages(prev => {
-        const currentMessages = [...prev];
-
-        update.forEach(updatedItem => {
-          const index = currentMessages.findIndex(el => el._id.toString() === updatedItem._id.toString());
-          currentMessages.splice(index, 1, updatedItem);
-        });
-
-        return currentMessages;
-      })
-    });
-
-    // Poner el status offline al salir del chat
-    // return () => socket.current.emit("offline");
 
   }, [socket, currentUser, inboxRef.current]);
 

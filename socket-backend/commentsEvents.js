@@ -1,4 +1,4 @@
-const {postsAndSubscribedUsers, subscribeUserToPost, unsubscribeUserFromPost} = require("../utilsServer/socketActions");
+const {subscribeUserToPost, unsubscribeUserFromPost} = require("../utilsServer/socketActions");
 
 
 /*-----------------------------*/
@@ -6,7 +6,8 @@ const {postsAndSubscribedUsers, subscribeUserToPost, unsubscribeUserFromPost} = 
 /*-----------------------------*/
 const subscribeUser = (socketId, data) => {
   const {postId, userId} = data;
-  subscribeUserToPost(postId, userId, socketId);
+  const subscribedUsers = subscribeUserToPost(postId, userId, socketId);
+  return subscribedUsers;
 }
 
 
@@ -22,12 +23,14 @@ const unsubscribeUser = (data) => {
 /*------------------------------------------------------------------------*/
 // Emitir el evento de nuevo comentario a los usuarios suscritos a un post
 /*------------------------------------------------------------------------*/
-const commentAdded = (io, data) => {
+const commentAdded = (io, data, socketId) => {
   const {postId, comment} = data;
   const commentAuthor = comment.author._id.toString();
 
+  const subscribedUsersUpdated = subscribeUserToPost(postId, commentAuthor, socketId);
+
   // Buscar los usuarios suscritos al post y filtrar al autor del comentario
-  const posts = postsAndSubscribedUsers.filter(item => item.postId === postId && item.user.userId !== commentAuthor);
+  const posts = subscribedUsersUpdated.filter(item => item.postId === postId && item.user.userId !== commentAuthor);
 
   // Extraer los sockets id de los usuarios sucritos al post y emitirles el evento
   const usersSockets = posts.map(el => el.user.socketId);
@@ -46,7 +49,7 @@ const commentEdited = (io, data) => {
   const commentAuthor = comment.author.toString();
   
   // Buscar los usuarios suscritos al post y filtrar al autor del comentario
-  const posts = postsAndSubscribedUsers.filter(item => item.postId === postId && item.user.userId !== commentAuthor);
+  const posts = global.postsAndSubscribedUsers.filter(item => item.postId === postId && item.user.userId !== commentAuthor);
 
   // Extraer los socket id de los usuarios suscritos al post y emitirles el evento de comentario editado
   const usersSockets = posts.map(el => el.user.socketId);
@@ -66,7 +69,7 @@ const commentDeleted = (io, data) => {
   const commentAuthor = comment.author.toString();
   
   // Buscar los usuarios suscritos al post y filtrar al autor del comentario
-  const posts = postsAndSubscribedUsers.filter(item => item.postId === postId && item.user.userId !== commentAuthor);
+  const posts = global.postsAndSubscribedUsers.filter(item => item.postId === postId && item.user.userId !== commentAuthor);
 
   // Extraer los socket id de los usuarios suscritos al post y emitirles el evento de comentario eliminado
   const usersSockets = posts.map(el => el.user.socketId);

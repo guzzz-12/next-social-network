@@ -1,24 +1,13 @@
-const users = [];
-const postsAndSubscribedUsers = [
-  {
-    postId: null,
-    user: {
-      userId: null,
-      socketId: null
-    }
-  }
-];
-
 /*----------------------------*/
 // Agregar un usuario a socket
 /*----------------------------*/
 const addUser = (userId, socketId) => {
   // Verificar si ya el usuario está agregado
-  const user = users.find(el => el.userId.toString() === userId.toString());
+  const user = global.users.find(el => el.userId.toString() === userId.toString());
 
   // Si ya está agregado, retornar
   if(user && user.socketId === socketId) {
-    return users;
+    return global.users;
   }
 
   // Si ya el usuario está agregado pero con otro socketId, removerlo
@@ -28,19 +17,30 @@ const addUser = (userId, socketId) => {
   
   // Si no está agregado, agregarlo y retornar el array actualizado
   const newUser = {userId, socketId}
-  users.push(newUser);
+  global.users.push(newUser);
   
-  return users;
+  return global.users;
+}
+
+
+/*-----------------------------------*/
+// Actualizar el socket de un usuario
+/*-----------------------------------*/
+const updateUserSocket = (userId, socketId) => {
+  const updated = [...global.users.filter(el => el.userId.toString() !== userId.toString())];
+  updated.push({userId, socketId});
+  global.users = updated;
+  return updated;
 }
 
 
 /*-----------------------------*/
 // Remover un usuario de socket
 /*-----------------------------*/
-const removeUser = (socketId) => {
-  const userIndex = users.findIndex(el => el.socketId === socketId);
-  users.splice(userIndex, 1);
-  return users;
+const removeUser = (userId) => {
+  const filtered = [...global.users.filter(el => el.userId.toString() !== userId.toString())];
+  global.users = filtered;
+  return filtered;
 }
 
 
@@ -48,14 +48,14 @@ const removeUser = (socketId) => {
 // Suscribir un usuario a un post
 /*-------------------------------*/
 const subscribeUserToPost = (postId, userId, socketId) => {
-  const isSubscribed = postsAndSubscribedUsers.find(el => (el.postId === postId) && (el.user.userId === userId) && (el.user.socketId === socketId));
+  const isSubscribed = global.postsAndSubscribedUsers.find(el => (el.postId === postId) && (el.user.userId === userId) && (el.user.socketId === socketId));
 
   // No agregar al usuario si ya está suscrito
   if(isSubscribed) {
-    return postsAndSubscribedUsers
+    return global.postsAndSubscribedUsers
   }
 
-  postsAndSubscribedUsers.push({
+  global.postsAndSubscribedUsers.push({
     postId,
     user: {
       userId,
@@ -63,7 +63,7 @@ const subscribeUserToPost = (postId, userId, socketId) => {
     }
   });
 
-  return postsAndSubscribedUsers;
+  return global.postsAndSubscribedUsers;
 }
 
 
@@ -71,17 +71,16 @@ const subscribeUserToPost = (postId, userId, socketId) => {
 // Desuscribir un usuario de un post
 /*----------------------------------*/
 const unsubscribeUserFromPost = (postId, userId) => {
-  const index = postsAndSubscribedUsers.findIndex(el => (el.postId === postId) && (el.user.userId === userId));
-  postsAndSubscribedUsers.splice(index, 1);
-  return postsAndSubscribedUsers;
+  const index = global.postsAndSubscribedUsers.findIndex(el => (el.postId === postId) && (el.user.userId === userId));
+  global.postsAndSubscribedUsers.splice(index, 1);
+  return global.postsAndSubscribedUsers;
 }
 
 
 module.exports = {
-  users,
   addUser,
+  updateUserSocket,
   removeUser,
-  postsAndSubscribedUsers,
   subscribeUserToPost,
   unsubscribeUserFromPost
 }

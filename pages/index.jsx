@@ -11,6 +11,7 @@ import CardPost from "../components/post/CardPost";
 import {UserContext} from "../context/UserContext";
 import {UnreadMessagesContext} from "../context/UnreadMessagesContext";
 import {NotificationsContext} from "../context/NotificationsContext";
+import {SocketContext} from "../context/SocketProvider";
 import {checkVerification} from "../utilsServer/verificationStatus";
 
 // Token de cancelación de requests de axios
@@ -20,6 +21,7 @@ const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
   const userContext = useContext(UserContext);
   const {setUnreadMessages} = useContext(UnreadMessagesContext);
   const {setUnreadNotifications} = useContext(NotificationsContext);
+  const {socket} = useContext(SocketContext);
   const cancellerRef = useRef();
 
   const [title, setTitle] = useState("");
@@ -127,6 +129,7 @@ const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
                   user={userContext.currentUser}
                   setPosts={setPostsData}
                   setShowToastr={setShowToastr}
+                  socket={socket}
                 />
               )
             })}

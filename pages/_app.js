@@ -1,6 +1,5 @@
 import axios from "axios";
 import Layout from "../components/Layout/Layout";
-import SessionTimerProvider from "../context/SessionTimerContext";
 import UserContextProvider from "../context/UserContext";
 import UnreadMsgsProvider from "../context/UnreadMessagesContext";
 import SocketProvider from "../context/SocketProvider";
@@ -16,11 +15,9 @@ const MyApp = ({Component, pageProps}) => {
       <UserContextProvider>
         <SocketProvider>
           <UnreadMsgsProvider>
-            <SessionTimerProvider>
-              <Layout {...pageProps}>
-                <Component {...pageProps} />
-              </Layout>
-            </SessionTimerProvider>
+            <Layout {...pageProps}>
+              <Component {...pageProps} />
+            </Layout>
           </UnreadMsgsProvider>
         </SocketProvider>
       </UserContextProvider>

@@ -23,7 +23,7 @@ const commentsRoutes = require("./api/comments");
 const likesRoutes = require("./api/likes");
 const resetPassword = require("./api/reset-password");
 const errorsHandler = require("./middleware/errorsHandler");
-const {addUser, removeUser} = require("./utilsServer/socketActions");
+const {addUser, removeUser, updateUserSocket} = require("./utilsServer/socketActions");
 const {onNewMessage, onDeletedMessage, onMessagesRead} = require("./socket-backend/messagesEvents");
 const {enabledChat, disabledChat} = require("./socket-backend/chatEvents");
 const {notificationReceived} = require("./socket-backend/notificationsEvents");
@@ -45,6 +45,20 @@ cloudinary.config({
 sendgrid.setApiKey(process.env.SENDGRID_SECRET);
 
 
+/*------------------------------------------------------------*/
+// Variables globales para almacenar los usuarios de Socket.io
+/*------------------------------------------------------------*/
+global.users = [];
+global.postsAndSubscribedUsers = [
+  {
+    postId: null,
+    user: {
+      userId: null,
+      socketId: null
+    }
+  }
+];
+
 /*-----------------------*/
 // Inicializar socket.io
 /*-----------------------*/
@@ -52,14 +66,20 @@ io.on("connection", (socket) => {
   // Emitir los usuarios actualmente conectados a la app
   socket.on("join", (data) => {
     const users = addUser(data.userId, socket.id);
-    io.emit("onlineUsers", users)
+    io.emit("onlineUsers", users);
   });
-  
+
+  // Actualizar el usuario
+  socket.on("updateUser", (data) => {
+    const users = updateUserSocket(data.userId, socket.id);
+    io.emit("updatedOnlineUsers", users);
+  });  
 
   // Remover el usuario de los conectados al salir del chat
-  socket.on("offline", () => {
-    const users = removeUser(socket.id);
-    io.emit("onlineUsers", users);
+  socket.on("offline", (data) => {
+    console.log({UserWentOffline: data});
+    const users = removeUser(data.userId);
+    io.emit("updatedOnlineUsers", users);
   });
   
   // Eventos de los mensajes
@@ -74,7 +94,7 @@ io.on("connection", (socket) => {
   // Eventos de los comentarios
   socket.on("subscribeUserToPost", (data) => subscribeUser(socket.id, data));
   socket.on("unsubscribeUserFromPost", (data) => unsubscribeUser(data));
-  socket.on("commentCreated", (data) => commentAdded(io, data));
+  socket.on("commentCreated", (data) => commentAdded(io, data, socket.id));
   socket.on("commentEdited", (data) => commentEdited(io, data));
   socket.on("commentDeleted", (data) => commentDeleted(io, data));
 

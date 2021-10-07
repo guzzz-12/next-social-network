@@ -1,4 +1,3 @@
-const {users} = require("../utilsServer/socketActions");
 
 // Notificar al usuario si tiene notificación de comentario, like o nuevo seguidor
 const notificationReceived = (io, data) => {
@@ -6,7 +5,7 @@ const notificationReceived = (io, data) => {
 
   console.log("notificationReceived", userToNotify);
 
-  const recipient = users.find(el => el.userId.toString() === userToNotify.toString());
+  const recipient = global.users.find(el => el.userId.toString() === userToNotify.toString());
   if(recipient) {
     io.to(recipient.socketId).emit("receivedNotification");
   }

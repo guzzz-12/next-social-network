@@ -8,20 +8,19 @@ import {NotificationsContext} from "../../context/NotificationsContext";
 import {SocketContext} from "../../context/SocketProvider";
 import styles from "./sideMenu.module.css";
 
+
 const SideMenu = ({isDesktop, isPhone}) => {
   const userContext = useContext(UserContext);
   const {setUnreadMessages, unreadMessages} = useContext(UnreadMessagesContext);
   const {unreadNotifications, setUnreadNotifications} = useContext(NotificationsContext);
   const {socket} = useContext(SocketContext);
-
   const router = useRouter();
-
   const [activeRoute, setActiveRoute] = useState(null);
 
   // Actualizar el contador de mensajes al recibir un nuevo mensaje
   // y el contador de notificaciones al recibir una nueva notificación
   useEffect(() => {
-    if(socket && router.pathname !== "/messages") {
+    if(socket && activeRoute !== "/messages") {
       socket.on("newMessageReceived", () => {
         setUnreadMessages(prev => prev + 1)
       })
@@ -30,11 +29,11 @@ const SideMenu = ({isDesktop, isPhone}) => {
     if(socket) {
       socket.on("receivedNotification", () => {
         console.log("receivedNotification")
-        setUnreadNotifications(prev => prev + 1)
+        setUnreadNotifications(unreadNotifications + 1)
       })
     }
 
-  }, [socket]);
+  }, [socket, activeRoute]);
   
   useEffect(() => {
     setActiveRoute(router.pathname);
@@ -170,7 +169,13 @@ const SideMenu = ({isDesktop, isPhone}) => {
 
       <List.Item
         style={{padding: "10px", textAlign: isDesktop ? "left" : "center"}}
-        onClick={() => userContext.logOut()}
+        onClick={() => {
+          // Eliminar el usuario de los clientes de socket en el servidor
+          // El evento cambia el status a offline en la lista del chat
+          socket.emit("offline", {userId: userContext.currentUser._id});
+          // Cerrar sesión
+          userContext.logOut();
+        }}
       >
         <Icon name="log out" size="large" />
         {/* Mostrar el texto del item sólo en desktop */}

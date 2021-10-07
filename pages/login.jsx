@@ -60,7 +60,6 @@ const Login = () => {
         }
       });
 
-      console.log({loginRes: res.data});
       setIsFormLoading(false);
 
       const {profile} = res.data.data;
@@ -79,7 +78,6 @@ const Login = () => {
       router.push("/");
       
     } catch (error) {
-      console.log({errorSubmitting: error.message});
       let message = error.message;
       if(error.response) {
         message = error.response.data.message

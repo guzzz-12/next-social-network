@@ -8,7 +8,6 @@ import HeadTags from "./HeadTags";
 import Navbar from "./Navbar";
 import SideMenu from "./SideMenu";
 import Search from "./Search";
-import {SessionTimerContext} from "../../context/SessionTimerContext";
 import {UserContext} from "../../context/UserContext";
 import {sessionRemainingSecs} from "../../utils/sessionRemainingSecs";
 import { useWindowWidth } from "../../utils/customHooks";
@@ -20,9 +19,8 @@ const Layout = (props) => {
   Router.onRouteChangeComplete = () => nprogress.done();
   Router.onRouteChangeError = () => nprogress.done();
 
-  const router = useRouter();
+  const router = useRouter();  
   const userContext = useContext(UserContext);
-  const timerContext = useContext(SessionTimerContext);
   
   const windowWidth = useWindowWidth();
   const [isDesktop, setIsDesktop] = useState(true);
@@ -37,9 +35,6 @@ const Layout = (props) => {
     console.log({tokenCookie: token});
     
     if(token) {
-      const remainingSeconds = sessionRemainingSecs(token);
-      timerContext.initializeTimer(remainingSeconds);
-
       const user = JSON.parse(localStorage.getItem("user"))
       userContext.setCurrentUser(user);
     }
@@ -49,13 +44,17 @@ const Layout = (props) => {
   // Cerrar la sesión cuando el token expire
   /*----------------------------------------*/
   useEffect(() => {
-    if(timerContext.sessionExpired === true) {
-      timerContext.setSessionExpired(null);
-      userContext.logOut();
-      
-      router.push("/login");
+    const token = jsCookie.get("token");
+
+    if(token) {
+      const remainingMinutes = Math.floor(sessionRemainingSecs(token)/60);
+  
+      if(remainingMinutes <= 0) {
+        userContext.logOut();
+        router.push("/login");
+      }
     }
-  }, [timerContext.sessionExpired]);
+  }, [router.route]);
 
   /*---------------------------------*/
   // Especificar si es tamaño desktop

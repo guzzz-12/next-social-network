@@ -13,22 +13,31 @@ const SocketContextProvider = ({children}) => {
 
   const [onlineUsers, setOnlineUsers] = useState([]);
   
+  // Inicializar el socket del usuario en el servidor
+  // y actualizarlo al actualizar la página
   useEffect(() => {
     if(!socketRef.current) {
       socketRef.current = ioClient(process.env.BASE_URL)
     }
 
-    if(socketRef.current && currentUser) {
-      socketRef.current.emit("join", {userId: currentUser._id});
-
-      // Actualizar el state de los usuarios online
-      socketRef.current.on("onlineUsers", (onlineUsers) => {
-        const filtered = onlineUsers.filter(el => el.userId.toString() !== currentUser._id.toString());
-        setOnlineUsers(filtered);
-      });
+    if(currentUser) {
+      socketRef.current.emit("updateUser", {userId: currentUser._id});
     }
 
   }, [socketRef.current, currentUser]);
+
+
+  // Actualizar los sockets de los usuarios en el frontend
+  // cuando actualicen las páginas en sus navegadores y generen un nuevo socket.id
+  // Filtrar al usuario actual
+  useEffect(() => {
+    if(currentUser) {
+      socketRef.current?.on("updatedOnlineUsers", (updatedUsers) => {
+        const filtered = [...updatedUsers].filter(el => el.userId.toString() !== currentUser._id.toString());
+        setOnlineUsers(filtered);
+      });
+    }
+  }, [currentUser]);
 
   return (
     <SocketContext.Provider

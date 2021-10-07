@@ -1,4 +1,4 @@
-import {useState, useEffect, useContext} from "react";
+import {useState, useEffect} from "react";
 import Link from "next/link";
 import {Card, Icon, Image, Divider, Segment, Button, Popup, Header, Modal, Loader} from "semantic-ui-react";
 import axios from "axios";
@@ -11,12 +11,10 @@ import CommentInput from "./CommentInput";
 import LikesList from "./LikesList";
 import ImageModal from "./ImageModal";
 import NoImageModal from "./NoImageModal";
-import {SocketContext} from "../../context/SocketProvider";
 import classes from "./cardPost.module.css";
 
 
-const CardPost = ({user, post, setPosts, noPadding}) => {
-  const {socket} = useContext(SocketContext);
+const CardPost = ({user, post, setPosts, noPadding, socket}) => {
   const CURRENT_USER = jwt.decode(jsCookie.get("token"));
 
   const [comments, setComments] = useState([]);
@@ -222,11 +220,13 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
         :
         null
       }
+
       <ToastContainer
         position="bottom-center"
         autoClose={3000}
         hideProgressBar={true}
       />
+
       <Segment
         style={{
           padding: noPadding ? 0 : "1rem",
@@ -256,7 +256,6 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
               onClick={() => setIsModalOpen(true)}
             />
           }
-
           <Card.Content>
             {/* Avatar del usuario y botón de borrar */}
             <Image
@@ -265,7 +264,6 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
               src={post.user.avatar}
               avatar circular
             />
-
             {/* Popup para eliminar el post */}
             {user.role === "admin" || (user._id.toString() === post.user._id.toString()) ?
               <div style={{position: "relative"}}>
@@ -297,12 +295,11 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
                     content="Delete"
                     onClick={() => deletePostHandler(post._id)}
                   />
-                </Popup>               
+                </Popup>
               </div>
               :
               null
             }
-
             {/* Nombre completo del usuario */}
             <Card.Header>
               <Link href={`/user/${post.user.username}`}>
@@ -317,7 +314,6 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
                 {moment(post.createdAt).calendar()}
               </div>
             </Card.Meta>
-
             {/* Location del post (si se especifica) */}
             {post.location ?
               <Card.Meta>
@@ -328,7 +324,6 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
               :
               null
             }
-
             {/* Contenido de texto del post */}
             <Card.Description
               style={{
@@ -340,7 +335,6 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
               {post.content}
             </Card.Description>
           </Card.Content>
-
           {/* Sección de likes y comentarios */}
           <Card.Content extra>
             {/* Likes */}
@@ -350,7 +344,6 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
               color="red"
               onClick={() => !loading && likesHandler(post._id)}
             />
-
             {/* Popup con la lista de likes */}
             <LikesList
               postId={post._id}
@@ -363,7 +356,6 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
                 </span>
               }
             />
-
             {/* Comentarios */}
             <Icon
               style={{marginLeft: "7px"}}
@@ -371,9 +363,7 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
               color="blue"
             />
             <span>{commentsCount} comments</span>
-
             <Divider />
-
             {/* Campo para agregar comentarios */}
             <CommentInput
               user={user}
@@ -383,7 +373,6 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
               setComments={setComments}
               setCommentsCount={setCommentsCount}
             />
-
             {comments.length > 0 &&
               comments.map(comment => {
                 return (
@@ -399,14 +388,12 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
                 )
               })
             }
-
             {/* Loader indicador de carga de comentarios */}
             {loadingComments &&
               <div style={{marginTop: "10px"}}>
                 <Loader active inline="centered" />
               </div>
             }
-
             {/* Botón para cargar más comentarios */}
             {commentsCount > 0 &&
               <div style={{display: "flex", justifyContent: "center", marginTop: "10px"}}>
@@ -418,7 +405,6 @@ const CardPost = ({user, post, setPosts, noPadding}) => {
                 />
               </div>
             }
-
             {/* Mensaje de post sin comentarios */}
             {!loadingComments && commentsCount === 0 &&
               <>
