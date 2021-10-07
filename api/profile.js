@@ -120,8 +120,15 @@ router.delete("/me", authMiddleware, async (req, res) => {
       })
     }
 
-    // Buscar y borrar todos sus posts, comentarios, likes y notificaciones
-    const posts = await Post.deleteMany({user: userId});
+    // Buscar y borrar todos los posts del usuario y las imágenes
+    const posts = await Post.find({user: userId}).select("picPublicId");
+    const postsPicsPublicIds = posts.map(post => post.picPublicId);
+    await Post.deleteMany({user: userId});
+    if(postsPicsPublicIds.length > 0) {
+      await cloudinary.api.delete_resources(postsPicsPublicIds, {invalidate: true});
+    }
+
+    // Buscar y borrar todos los comentarios, likes y notificaciones del usuario
     const comments = await Comment.deleteMany({author: userId});
     const likes = await Like.deleteMany({author: userId});
     const notifications = await Notification.deleteMany({userNotifier: userId});
@@ -165,7 +172,7 @@ router.delete("/me", authMiddleware, async (req, res) => {
 });
 
 
-//*------------------------------------*/
+/*-------------------------------------*/
 // Actualizar perfil del usuario actual
 /*-------------------------------------*/
 router.patch("/me", authMiddleware, [
