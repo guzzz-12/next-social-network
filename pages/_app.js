@@ -1,5 +1,6 @@
 import axios from "axios";
 import Layout from "../components/Layout/Layout";
+import NotificationsEventListener from "../components/NotificationsEventListener";
 import UserContextProvider from "../context/UserContext";
 import UnreadMsgsProvider from "../context/UnreadMessagesContext";
 import SocketProvider from "../context/SocketProvider";
@@ -15,6 +16,7 @@ const MyApp = ({Component, pageProps}) => {
       <UserContextProvider>
         <SocketProvider>
           <UnreadMsgsProvider>
+            <NotificationsEventListener />
             <Layout {...pageProps}>
               <Component {...pageProps} />
             </Layout>

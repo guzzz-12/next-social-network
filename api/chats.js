@@ -159,7 +159,7 @@ router.patch("/disable-chat/:chatId", authMiddleware, async (req, res) => {
 /*----------------------------------*/
 router.get("/", authMiddleware, async (req, res) => {
   const {page} = req.query;
-  const amount = 10;
+  const amount = 50;
 
   try {
     const userChats = await Chat

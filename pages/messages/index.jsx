@@ -47,6 +47,13 @@ const MessagesPage = (props) => {
 
   const windowWidth = useWindowWidth();
 
+  // Seleccionar el primer chat al entrar a la página de mensajes
+  useEffect(() => {
+    if(props.chats.length > 0) {
+      chatItemClickHandler(props.chats[0])
+    }
+  }, [props.chats]);
+
   /*---------------------------------------------------*/
   // Resetear el contador de mensajes al entrar al chat
   /*---------------------------------------------------*/
@@ -58,13 +65,14 @@ const MessagesPage = (props) => {
   // Incializar cliente de Socket.io y actualizar mensajes entrantes en tiempo real
   /*-------------------------------------------------------------------------------*/
   useEffect(() => {
-    if(socket && currentUser) {
+    if(socket && currentUser && router.pathname.includes("messages") && Object.keys(selectedChat).length > 0) {
       // Actualizar la bandeja con el nuevo mensaje recibido en el recipiente
       socket.on("newMessageReceived", async ({newMsg, chatId}) => {
         // Verificar si el chat existe en la lista
         // y agregarlo a la lista de chats si no existe
         // o si existe y estaba vacío
         const chatExists = chats.find(el => el._id.toString() === chatId.toString());
+        const selectedChatId = selectedChat._id;
 
         if(!chatExists || (chatExists && chatExists.isEmpty)) {
           const res = await axios.get(`/api/chats/chat/${chatId}`);
@@ -84,16 +92,17 @@ const MessagesPage = (props) => {
         }
 
         // Actualizar el contador de mensajes sin leer del chat al que pertenece el mensaje recibido
+        // y poner el item del chat de primero en la lista
         setChats(prev => {
           const current = [...prev];
           const index = current.findIndex(el => el._id.toString() === chatId.toString());
           const updatedChat = {...current[index], unreadMessages: current[index].unreadMessages + 1};
-          current.splice(index, 1, updatedChat);
-          return current;
+          current.splice(index, 1);
+          return [updatedChat, ...current];
         });
 
         // Actualizar el state de los mensajes con el nuevo mensaje entrante
-        if(chatId.toString() === selectedChat._id.toString()) {
+        if(chatId.toString() === selectedChatId?.toString()) {
           setSelectedChatMessages(prev => {          
             // Filtrar mensajes duplicados
             const filteredDuplicates = [...prev, newMsg].reduce((acc, item) => {
@@ -128,10 +137,11 @@ const MessagesPage = (props) => {
       // Actualizar el chat en el otro usuario al deshabilitarlo
       socket.on("chatDisabled", (data) => {
         const chatId = data._id.toString();
+        const selectedChatId = selectedChat._id;
   
         // Si el chat seleccionado fue deshabilitado, actualizarlo
-        if(chatId === selectedChat._id.toString()) {
-          setSelectedChat(data);
+        if(chatId === selectedChatId?.toString()) {
+          chatItemClickHandler(data);
         }
   
         // Actualizar el status del chat en la lista de chats
@@ -146,9 +156,10 @@ const MessagesPage = (props) => {
       // Actualizar el chat en el otro usuario al habilitarlo
       socket.on("chatEnabled", (data) => {
         const chatId = data._id.toString();
+        const selectedChatId = selectedChat._id;
   
         // Si el chat seleccionado fue habilitado, actualizarlo
-        if(chatId === selectedChat._id.toString()) {
+        if(chatId === selectedChatId?.toString()) {
           setSelectedChat(data);
         }
   
@@ -176,7 +187,7 @@ const MessagesPage = (props) => {
       });
     }
 
-  }, [socket, currentUser, inboxRef.current]);
+  }, [socket, currentUser, inboxRef.current, router.pathname, selectedChat]);
 
   /*---------------------------------------------------------------*/
   // Almacenar el último mensaje cargado para mantenerlo en el view
@@ -375,8 +386,9 @@ const MessagesPage = (props) => {
       });
 
       const newChat = res.data.data;
-      setChats(prev => [...prev, newChat]);
+      setChats(prev => [newChat, ...prev]);
       setLoading(false);
+      chatItemClickHandler(newChat);
       
     } catch (error) {
       let message = error.mesage;

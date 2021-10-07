@@ -16,8 +16,7 @@ const CancelToken = axios.CancelToken;
 
 const NotificationsPage = (props) => {
   const cancellerRef = useRef();
-  const {setUnreadNotifications} = useContext(NotificationsContext);
-  setUnreadNotifications(props.notifications.length);
+  const {resetNotifications} = useContext(NotificationsContext);
   
   // State de las notificaciones
   const [notifications, setNotifications] = useState(props.notifications);
@@ -60,6 +59,8 @@ const NotificationsPage = (props) => {
       })
       .then(res => {
         const {updatedNotifications} = res.data.data;
+
+        resetNotifications();
   
         // Actualizar el state de las notificaciones vistas
         setNotifications(prev => {

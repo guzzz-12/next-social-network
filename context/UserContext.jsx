@@ -17,14 +17,12 @@ const UserContextProvider = ({children}) => {
   const [isAuth, setIsAuth] = useState(false);
 
   const setCurrentUser = (user) => {
-    console.log({user});
     setUser(user);
     setIsAuth(true);
     localStorage.setItem("user", JSON.stringify(user));
   }
 
   const setCurrentProfile = (profile) => {
-    console.log({profile});
     setProfile(profile);
     localStorage.setItem("profile", JSON.stringify(profile));
   }

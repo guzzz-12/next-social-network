@@ -11,29 +11,11 @@ import styles from "./sideMenu.module.css";
 
 const SideMenu = ({isDesktop, isPhone}) => {
   const userContext = useContext(UserContext);
-  const {setUnreadMessages, unreadMessages} = useContext(UnreadMessagesContext);
-  const {unreadNotifications, setUnreadNotifications} = useContext(NotificationsContext);
+  const {unreadMessages} = useContext(UnreadMessagesContext);
+  const {unreadNotifications} = useContext(NotificationsContext);
   const {socket} = useContext(SocketContext);
   const router = useRouter();
   const [activeRoute, setActiveRoute] = useState(null);
-
-  // Actualizar el contador de mensajes al recibir un nuevo mensaje
-  // y el contador de notificaciones al recibir una nueva notificación
-  useEffect(() => {
-    if(socket && activeRoute !== "/messages") {
-      socket.on("newMessageReceived", () => {
-        setUnreadMessages(prev => prev + 1)
-      })
-    }
-
-    if(socket) {
-      socket.on("receivedNotification", () => {
-        console.log("receivedNotification")
-        setUnreadNotifications(unreadNotifications + 1)
-      })
-    }
-
-  }, [socket, activeRoute]);
   
   useEffect(() => {
     setActiveRoute(router.pathname);
@@ -119,18 +101,17 @@ const SideMenu = ({isDesktop, isPhone}) => {
           active={activeRoute === "/notifications"}
           onClick={() => {
             setActiveRoute("/notifications");
-            setUnreadNotifications(0)
           }}
         >
           <div className={styles["side-menu__icon-wrapper"]}>
             <Icon
-              name={unreadNotifications?.length > 0 ? "bell" : "bell outline"}
+              name={unreadNotifications > 0 ? "bell" : "bell outline"}
               size="large"
               color={activeRoute === "/notifications" ? "teal" : "grey"}
             />
-            {unreadNotifications?.length > 0 &&
+            {unreadNotifications > 0 &&
               <div className={styles["side-menu__icon-badge"]}>
-                {unreadNotifications?.length > 99 ? "99+" : unreadNotifications?.length > 0 ? unreadNotifications.length : ""}
+                {unreadNotifications > 99 ? "99+" : unreadNotifications}
               </div>
             }
           </div>
