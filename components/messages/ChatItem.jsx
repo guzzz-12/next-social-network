@@ -117,7 +117,7 @@ const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disabl
         }
       </List.Content>
 
-      {!isChatCreator && item.unreadMessages > 0 &&
+      {item.unreadMessages > 0 &&
         <div
           style={{
             position: "absolute",

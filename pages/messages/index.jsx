@@ -11,8 +11,8 @@ import {UnreadMessagesContext} from "../../context/UnreadMessagesContext";
 import {SocketContext} from "../../context/SocketProvider";
 import styles from "./messages.module.css";
 import ChatsList from "../../components/messages/ChatsList";
-import { checkVerification } from "../../utilsServer/verificationStatus";
-import { useWindowWidth } from "../../utils/customHooks";
+import {checkVerification} from "../../utilsServer/verificationStatus";
+import {useWindowWidth} from "../../utils/customHooks";
 
 
 const MessagesPage = (props) => {
@@ -72,7 +72,7 @@ const MessagesPage = (props) => {
       setChats(prev => {
         const current = [...prev];
         const index = current.findIndex(el => el._id.toString() === chatId.toString());
-        const unreadMessages = current[index].unreadMessages;
+        const unreadMessages = current[index].unreadMessages || 0;
         const updatedChat = {...current[index], unreadMessages: unreadMessages + 1};
         current.splice(index, 1);
         return [updatedChat, ...current];
