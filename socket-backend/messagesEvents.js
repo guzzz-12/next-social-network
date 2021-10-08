@@ -8,6 +8,15 @@ const onNewMessage = (io, data) => {
   }
 }
 
+// Actualizar el contador de mensajes no leídos
+const onUpdateNewMessagesCounter = (io, data) => {
+  const {chatId, recipientId} = data;
+  const recipient = global.users.find(el => el.userId.toString() === recipientId.toString());
+  if(recipient) {
+    io.to(recipient.socketId).emit("newMessagesCounterUpdated", {chatId});
+  }
+}
+
 // Enviar el mensaje eliminado al usuario recipiente
 const onDeletedMessage = (io, msg) => {
   const recipient = global.users.find(el => el.userId.toString() === msg.recipient._id.toString());
@@ -29,6 +38,7 @@ const onMessagesRead = (io, data) => {
 
 module.exports = {
   onNewMessage,
+  onUpdateNewMessagesCounter,
   onDeletedMessage,
   onMessagesRead
 }

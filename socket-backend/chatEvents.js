@@ -1,3 +1,13 @@
+/*---------------------------------------------*/
+// Crear el nuevo chat en el usuario recipiente
+/*---------------------------------------------*/
+const chatCreated = (io, chat) => {
+  const {messagesWith: {_id}} = chat;
+  const recipient = global.users.find(user => user.userId.toString() === _id.toString());
+  if(recipient) {
+    io.to(recipient.socketId).emit("newChatCreated", chat);
+  }
+}
 
 /*---------------------------------------*/
 // Notificar que el chat fue deshabilitado
@@ -30,6 +40,7 @@ const enabledChat = (io, data) => {
 }
 
 module.exports = {
+  chatCreated,
   disabledChat,
   enabledChat
 }

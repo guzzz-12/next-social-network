@@ -13,8 +13,8 @@ router.get("/:searchTerm", authMiddleware, async (req, res) => {
     const termPattern = new RegExp(`^${searchTerm}`);
     const results = await User
     .find({$or: [
-      {username: {$regex: termPattern, $options: "i"}, isVerified: true},
-      {name: {$regex: termPattern, $options: "i"}, isVerified: true}
+      {_id: {$ne: req.userId}, username: {$regex: termPattern, $options: "i"}, isVerified: true},
+      {_id: {$ne: req.userId}, name: {$regex: termPattern, $options: "i"}, isVerified: true}
     ]})
     .select("_id name username email role avatar avatarId");
 

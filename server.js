@@ -24,8 +24,8 @@ const likesRoutes = require("./api/likes");
 const resetPassword = require("./api/reset-password");
 const errorsHandler = require("./middleware/errorsHandler");
 const {addUser, removeUser, updateUserSocket} = require("./utilsServer/socketActions");
-const {onNewMessage, onDeletedMessage, onMessagesRead} = require("./socket-backend/messagesEvents");
-const {enabledChat, disabledChat} = require("./socket-backend/chatEvents");
+const {onNewMessage, onUpdateNewMessagesCounter, onDeletedMessage, onMessagesRead} = require("./socket-backend/messagesEvents");
+const {chatCreated, enabledChat, disabledChat} = require("./socket-backend/chatEvents");
 const {notificationReceived} = require("./socket-backend/notificationsEvents");
 const {subscribeUser, unsubscribeUser, commentAdded, commentEdited, commentDeleted} = require("./socket-backend/commentsEvents");
 const PORT = process.env.PORT || 5000;
@@ -84,10 +84,12 @@ io.on("connection", (socket) => {
   
   // Eventos de los mensajes
   socket.on("newMessage", (data) => onNewMessage(io, data));
+  socket.on("updateNewMessagesCounter", (data) => onUpdateNewMessagesCounter(io, data));
   socket.on("deletedMessage", (data) => onDeletedMessage(io, data));
   socket.on("messagesRead", (data) => onMessagesRead(io, data));
 
   // Eventos de los chats
+  socket.on("chatCreated", (chat) => chatCreated(io, chat));
   socket.on("disabledChat", (chat) => disabledChat(io, chat));
   socket.on("enabledChat", (data) => enabledChat(io, data));
 

@@ -41,15 +41,25 @@ router.post("/:messagesWithId", authMiddleware, async (req, res) => {
     }
 
     // Verificar si el chat ya existe
-    const chatExists = await Chat.exists({$or: [
+    // Si ya existe retornarlo
+    const chatExists = await Chat
+    .findOne({$or: [
       {user: req.userId, messagesWith: messagesWithId},
       {user: messagesWithId, messagesWith: req.userId}
-    ]});
+    ]})
+    .populate({
+      path: "user",
+      select: "_id name username email avatar role status"
+    })
+    .populate({
+      path: "messagesWith",
+      select: "_id name username email avatar role status"
+    });
 
     if(chatExists) {
-      return res.status(400).json({
-        status: "failed",
-        message: "Chat already exists"
+      return res.json({
+        status: "success",
+        data: chatExists
       })
     }
 
@@ -67,6 +77,7 @@ router.post("/:messagesWithId", authMiddleware, async (req, res) => {
         updatedAt: chat.updatedAt,
         isEmpty: chat.isEmpty,
         status: chat.status,
+        unreadMessages: 0,
         user: {
           _id: user._id,
           name: user.name,

@@ -50,7 +50,7 @@ const MessagesPage = (props) => {
   // Seleccionar el primer chat al entrar a la página de mensajes
   useEffect(() => {
     if(props.chats.length > 0) {
-      chatItemClickHandler(props.chats[0])
+      chatItemClickHandler.current(props.chats[0])
     }
   }, [props.chats]);
 
@@ -61,50 +61,130 @@ const MessagesPage = (props) => {
     unreadContext.setUnreadMessages(0)
   }, []);
 
-  /*-------------------------------------------------------------------------------*/
-  // Incializar cliente de Socket.io y actualizar mensajes entrantes en tiempo real
-  /*-------------------------------------------------------------------------------*/
-  useEffect(() => {
-    if(socket && currentUser && router.pathname.includes("messages") && Object.keys(selectedChat).length > 0) {
-      // Actualizar la bandeja con el nuevo mensaje recibido en el recipiente
-      socket.on("newMessageReceived", async ({newMsg, chatId}) => {
-        // Verificar si el chat existe en la lista
-        // y agregarlo a la lista de chats si no existe
-        // o si existe y estaba vacío
-        const chatExists = chats.find(el => el._id.toString() === chatId.toString());
-        const selectedChatId = selectedChat._id;
 
-        if(!chatExists || (chatExists && chatExists.isEmpty)) {
-          const res = await axios.get(`/api/chats/chat/${chatId}`);
-          const newChat = res.data.data;
-          setChats(prev => {
-            const currentChats = [newChat, ...prev];
-            const filteredDuplicates = currentChats.reduce((acc, item) => {
-              const x = acc.find(el => el._id === item._id);
-              if(!x) {
-                return acc.concat(item)
-              } else {
-                return acc
-              }
-            }, []);
-            return filteredDuplicates;
-          });
-        }
+  /*-----------------------------------------------------------*/
+  // Listener del contador de mensajes nuevos del item del chat
+  /*-----------------------------------------------------------*/
+  const newMessagesCounterRef = useRef(() => {
+    return socket.on("newMessagesCounterUpdated", ({chatId}) => {
+      // Actualizar el contador de mensajes sin leer del chat al que pertenece el mensaje recibido
+      // y poner el item del chat de primero en la lista
+      setChats(prev => {
+        const current = [...prev];
+        const index = current.findIndex(el => el._id.toString() === chatId.toString());
+        const unreadMessages = current[index].unreadMessages;
+        const updatedChat = {...current[index], unreadMessages: unreadMessages + 1};
+        current.splice(index, 1);
+        return [updatedChat, ...current];
+      });
+    })
+  });
 
-        // Actualizar el contador de mensajes sin leer del chat al que pertenece el mensaje recibido
-        // y poner el item del chat de primero en la lista
-        setChats(prev => {
-          const current = [...prev];
-          const index = current.findIndex(el => el._id.toString() === chatId.toString());
-          const updatedChat = {...current[index], unreadMessages: current[index].unreadMessages + 1};
-          current.splice(index, 1);
-          return [updatedChat, ...current];
+
+  /*--------------------------------*/
+  // Listener de los mensajes leídos
+  /*--------------------------------*/
+  const messagesReadRef = useRef(() => {
+    return socket.on("readMessages", (update) => {
+      setSelectedChatMessages(prev => {
+        const currentMessages = [...prev];
+
+        update.forEach(updatedItem => {
+          const index = currentMessages.findIndex(el => el._id.toString() === updatedItem._id.toString());
+          currentMessages.splice(index, 1, updatedItem);
         });
 
+        return currentMessages;
+      })
+    });
+  });
+
+
+  /*------------------------------*/
+  // Listener de mensaje eliminado
+  /*------------------------------*/
+  const messageDeletedRef = useRef(() => {
+    return socket.on("messageDeleted", (data) => {
+      setSelectedChatMessages(prev => {
+        const updatedMsgs = [...prev];
+        const msgIndex = updatedMsgs.findIndex(el => el._id.toString() === data._id.toString());
+        updatedMsgs.splice(msgIndex, 1, data);
+        return updatedMsgs;
+      })
+    });
+  });
+
+
+  /*--------------------------------*/
+  // Listener de chat deshabilitado
+  /*--------------------------------*/
+  const chatDisabledRef = useRef(() => {
+    return socket.on("chatDisabled", (data) => {
+      const chatId = data._id.toString();
+      const selectedChatId = selectedChat._id;
+
+      // Si el chat seleccionado fue deshabilitado, actualizarlo
+      if(chatId === selectedChatId?.toString()) {
+        chatItemClickHandler.current(data);
+      }
+
+      // Actualizar el status del chat en la lista de chats
+      setChats(prev => {
+        const updatedChats = [...prev];
+        const chatIndex = updatedChats.findIndex(el => el._id.toString() === chatId);
+        updatedChats.splice(chatIndex, 1, data);
+        return updatedChats;
+      })
+    });
+  });
+
+
+  /*----------------------------*/
+  // Listener de chat habilitado
+  /*----------------------------*/
+  const chatEnabledRef = useRef(() => {
+    return socket.on("chatEnabled", (data) => {
+      const chatId = data._id.toString();
+      const selectedChatId = selectedChat._id;
+
+      // Si el chat seleccionado fue habilitado, actualizarlo
+      if(chatId === selectedChatId?.toString()) {
+        setSelectedChat(data);
+      }
+
+      // Actualizar el status del chat en la lista de chats
+      setChats(prev => {
+        const updatedChats = [...prev];
+        const chatIndex = updatedChats.findIndex(el => el._id.toString() === chatId);
+        updatedChats.splice(chatIndex, 1, data);
+        return updatedChats;
+      })
+    });
+  });
+
+
+  /*------------------------------*/
+  // Listener de nuevo chat creado
+  /*------------------------------*/
+  const newChatCreatedRef = useRef(() => {
+    return socket.on("newChatCreated", (newChat) => {
+      setChats(prev => [newChat, ...prev]);
+    })
+  });
+
+
+  /*------------------------------------------------------------------------------*/
+  // Incializar cliente de Socket.io y procesar las actualizaciones en tiempo real
+  /*------------------------------------------------------------------------------*/
+  useEffect(() => {
+    if(selectedChat._id) {
+      socket.on("newMessageReceived", async ({newMsg, chatId}) => {
+        const selectedChatId = selectedChat._id;
+  
         // Actualizar el state de los mensajes con el nuevo mensaje entrante
-        if(chatId.toString() === selectedChatId?.toString()) {
-          setSelectedChatMessages(prev => {          
-            // Filtrar mensajes duplicados
+        if(selectedChatId && chatId.toString() === selectedChatId.toString()) {
+          setSelectedChatMessages(prev => {
+            // Filtrar los mensajes duplicados
             const filteredDuplicates = [...prev, newMsg].reduce((acc, item) => {
               const x = acc.find(el => el._id === item._id);
               if(!x) {
@@ -124,70 +204,24 @@ const MessagesPage = (props) => {
         }
       });
 
-      // Actualizar la bandeja con el mensaje eliminado en el recipiente
-      socket.on("messageDeleted", (data) => {
-        setSelectedChatMessages(prev => {
-          const updatedMsgs = [...prev];
-          const msgIndex = updatedMsgs.findIndex(el => el._id.toString() === data._id.toString());
-          updatedMsgs.splice(msgIndex, 1, data);
-          return updatedMsgs;
-        })
-      });
-
-      // Actualizar el chat en el otro usuario al deshabilitarlo
-      socket.on("chatDisabled", (data) => {
-        const chatId = data._id.toString();
-        const selectedChatId = selectedChat._id;
-  
-        // Si el chat seleccionado fue deshabilitado, actualizarlo
-        if(chatId === selectedChatId?.toString()) {
-          chatItemClickHandler(data);
-        }
-  
-        // Actualizar el status del chat en la lista de chats
-        setChats(prev => {
-          const updatedChats = [...prev];
-          const chatIndex = updatedChats.findIndex(el => el._id.toString() === chatId);
-          updatedChats.splice(chatIndex, 1, data);
-          return updatedChats;
-        })
-      });
-  
-      // Actualizar el chat en el otro usuario al habilitarlo
-      socket.on("chatEnabled", (data) => {
-        const chatId = data._id.toString();
-        const selectedChatId = selectedChat._id;
-  
-        // Si el chat seleccionado fue habilitado, actualizarlo
-        if(chatId === selectedChatId?.toString()) {
-          setSelectedChat(data);
-        }
-  
-        // Actualizar el status del chat en la lista de chats
-        setChats(prev => {
-          const updatedChats = [...prev];
-          const chatIndex = updatedChats.findIndex(el => el._id.toString() === chatId);
-          updatedChats.splice(chatIndex, 1, data);
-          return updatedChats;
-        })
-      });
-  
-      // Actualizar el status de los mensajes vistos
-      socket.on("readMessages", (update) => {
-        setSelectedChatMessages(prev => {
-          const currentMessages = [...prev];
-  
-          update.forEach(updatedItem => {
-            const index = currentMessages.findIndex(el => el._id.toString() === updatedItem._id.toString());
-            currentMessages.splice(index, 1, updatedItem);
-          });
-  
-          return currentMessages;
-        })
-      });
+      
+      messagesReadRef.current();
+      messageDeletedRef.current();
     }
 
-  }, [socket, currentUser, inboxRef.current, router.pathname, selectedChat]);
+    // Reiniciar el listener de nuevo mensaje recibido al seleccionar otro chat
+    // para inicializarlo con la id del chat seleccionado
+    // y evitar que los mensajes entrantes se agreguen a la bandeja equivocada
+    return () => socket.off("newMessageReceived");
+  }, [selectedChat]);
+
+  useEffect(() => {
+    newMessagesCounterRef.current();
+    chatDisabledRef.current();
+    chatEnabledRef.current();
+    newChatCreatedRef.current();
+  }, []);
+
 
   /*---------------------------------------------------------------*/
   // Almacenar el último mensaje cargado para mantenerlo en el view
@@ -199,6 +233,7 @@ const MessagesPage = (props) => {
       lastMsgRef.current = lastMsg;
     }
   }, [lastLoadedMsg]);
+
 
   /*------------------------------------------*/
   // Cambiar el estado de los mensajes a leído
@@ -245,6 +280,7 @@ const MessagesPage = (props) => {
       })
     }
   }, [selectedChat, loadingMore]);
+
 
   /*----------------------------*/
   // Deshabilitar/habilitar chat
@@ -297,12 +333,13 @@ const MessagesPage = (props) => {
       setError(message);
     }
   }
+  
 
   /*------------------------------------------*/
   // Cargar los mensajes del chat seleccionado
   /*------------------------------------------*/
-  useEffect(() => {    
-    if(selectedChat._id && !endResults && loadMore) {
+  useEffect(() => {
+    if(selectedChat._id && loadMore) {
       setError(null);
       setLoadingMore(true);
 
@@ -315,10 +352,12 @@ const MessagesPage = (props) => {
 
         // Almacenar el mensaje más reciente en la carga inicial
         if(initialMessagesLoad) {
-          setMoreRecentMsg(messages[messages.length - 1])
+          setSelectedChatMessages(messages);
+          setMoreRecentMsg(messages[messages.length - 1]);
+        } else {
+          setSelectedChatMessages(prev => [...messages, ...prev]);
         }
 
-        setSelectedChatMessages(prev => [...messages, ...prev]);
         setCurrentPage(prev => prev + 1);
         setLoadMore(false);
         setLoadingMore(false);
@@ -345,17 +384,22 @@ const MessagesPage = (props) => {
         setLoadingMore(false);
         setError(message);
       })
-    } else {
-      setLoadMore(false);
-      setLoadingMore(false);
     }
 
-  }, [selectedChat, endResults, loadMore]);
+  }, [selectedChat, loadMore]);
 
   /*--------------------------------------------------------------------------*/
   // Seleccionar el chat y reinicializar el state al clickear un item del chat
   /*--------------------------------------------------------------------------*/
-  const chatItemClickHandler = (item) => {
+  const chatItemClickHandler = useRef((item) => {
+    setCurrentPage(1);
+    setSelectedChatMessages([]);
+    setLoadMore(true);
+    setLoadingMore(true);
+    setEndResults(false);
+    setInitialMessagesLoad(true);
+    setLastLoadedMsg(null);
+
     setSelectedChat(item);
     setChats(prev => {
       const index = prev.findIndex(el => el._id.toString() === item._id.toString());
@@ -363,14 +407,7 @@ const MessagesPage = (props) => {
       updated.splice(index, 1, {...prev[index], unreadMessages: 0});
       return updated;
     });
-    setSelectedChatMessages([]);
-    setLoadMore(true);
-    setLoadingMore(true);
-    setCurrentPage(1);
-    setEndResults(false);
-    setInitialMessagesLoad(true);
-    setLastLoadedMsg(null);
-  }
+  });
 
   /*--------------------*/
   // Crear el nuevo chat
@@ -379,6 +416,12 @@ const MessagesPage = (props) => {
     try {
       setError(null);
       setLoading(true);
+      setLoadingMore(true);
+      setCurrentPage(1);
+      setSelectedChat({});
+      setInitialMessagesLoad(false);
+      setEndResults(false);
+      setLastLoadedMsg(null);
       
       const res = await axios({
         method: "POST",
@@ -386,9 +429,37 @@ const MessagesPage = (props) => {
       });
 
       const newChat = res.data.data;
-      setChats(prev => [newChat, ...prev]);
+      
+      // Verificar si el chat ya existe en la lista (en caso de buscar un chat existente)
+      const index = chats.findIndex(chat => chat._id.toString() === newChat._id.toString());
+
+      // Si el chat ya existe y ya hay chats en la lista,
+      // borrar el item anterior y poner el nuevo de primero en la lista
+      if(index !== -1 && chats.length > 0) {
+        setChats(prev => {
+          const current = [...prev];
+          current.splice(index, 1);  
+          return [newChat, ...current];
+        });
+
+      // Si el chat no existe y ya hay chats en lalista
+      // agregar el nuevo chat creado a los chats actuales de primero en la lista
+      // y emitir el evento de nuevo chat creado
+      } else if(index === -1 && chats.length > 0) {
+        setChats(prev => [newChat, ...prev]);
+        socket.emit("chatCreated", newChat);
+      
+      // Si no hay chats en la lista, inicializar la lista con el nuevo chat creado
+      // y emitir el evento de nuevo chat creado
+      } else if(chats.length === 0) {
+        setChats([newChat]);
+        socket.emit("chatCreated", newChat);
+      }
+      
+      setLoadMore(true);
+      setSelectedChatMessages([]);
+      setSelectedChat(newChat);
       setLoading(false);
-      chatItemClickHandler(newChat);
       
     } catch (error) {
       let message = error.mesage;
@@ -403,15 +474,15 @@ const MessagesPage = (props) => {
   /*-------------------------------------*/
   // Enviar mensajes al chat seleccionado
   /*-------------------------------------*/
-  const sendMessageHandler = async () => {
+  const sendMessageHandler = async (chat) => {
     try {
       setSending(true);
 
-      const recipient = currentUser._id === selectedChat.user._id ? selectedChat.messagesWith._id : selectedChat.user._id;
+      const recipient = currentUser._id === chat.user._id ? chat.messagesWith._id : chat.user._id;
 
       const res = await axios({
         method: "POST",
-        url: `/api/chats/${selectedChat._id}/message/${recipient}`,
+        url: `/api/chats/${chat._id}/message/${recipient}`,
         data: {messageText: text}
       });
 
@@ -419,7 +490,11 @@ const MessagesPage = (props) => {
       const newMessage = res.data.data;
       
       // Emitir el nuevo mensaje enviado al recipiente
-      socket.emit("newMessage", {newMsg: newMessage, chatId: selectedChat._id});
+      socket.emit("newMessage", {newMsg: newMessage, chatId: chat._id});
+      socket.emit("updateNewMessagesCounter", {
+        chatId: chat._id,
+        recipientId: newMessage.recipient._id
+      });
 
       setSelectedChatMessages(prev => [...prev, newMessage]);
       setSending(false);
@@ -478,7 +553,7 @@ const MessagesPage = (props) => {
             selectedChat={selectedChat}
             disablingChat={disablingChat}
             disableChatHandler={disableChatHandler}
-            chatItemClickHandler={chatItemClickHandler}
+            chatItemClickHandler={(item) => chatItemClickHandler.current(item)}
           />
         }
 
@@ -503,7 +578,7 @@ const MessagesPage = (props) => {
                 selectedChat={selectedChat}
                 disablingChat={disablingChat}
                 disableChatHandler={disableChatHandler}
-                chatItemClickHandler={chatItemClickHandler}
+                chatItemClickHandler={(item) => chatItemClickHandler.current(item)}
                 setOpenChatsSidebar={setOpenChatsSidebar}
               />
             </Sidebar>
@@ -592,7 +667,7 @@ const MessagesPage = (props) => {
                 icon
                 basic
                 disabled={text.length === 0 || sending || selectedChat.status === "inactive"}
-                onClick={sendMessageHandler}
+                onClick={() => sendMessageHandler(selectedChat)}
               >
                 <Icon name="paper plane outline" size="large" color="grey"/>
               </Button>

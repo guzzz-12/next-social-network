@@ -12,7 +12,8 @@ const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disabl
   const isChatCreator = currentUser._id === item.user._id;
 
   // Retornar null si no hay usuario autenticado o si el chat está vacío y no es el creador
-  if(!currentUser || (item.isEmpty && !isChatCreator)) {
+  // if(!currentUser || (item.isEmpty && !isChatCreator)) {
+  if(!currentUser) {
     return null;
   }
 

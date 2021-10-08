@@ -1,6 +1,6 @@
 import {useState, useRef} from "react";
 import Router from "next/router";
-import {List, Item, Search} from "semantic-ui-react";
+import {Item, Search} from "semantic-ui-react";
 import axios from "axios";
 
 // Token de cancelación de requests de axios
@@ -16,6 +16,7 @@ const SearchComponent = ({type, onClickHandler}) => {
 
   const searchUsers = async (term) => {
     setLoading(true);
+    setResults([]);
 
     // Cancelar el request anterior en caso de repetirlo
     cancellerRef.current && cancellerRef.current();
@@ -39,8 +40,6 @@ const SearchComponent = ({type, onClickHandler}) => {
       if(error.response) {
         message = error.response.data.message;
       }
-
-      console.log({searchError: message});
       setError(message);
       setLoading(false);
     }
