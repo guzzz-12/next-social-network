@@ -20,7 +20,7 @@ const MessagesPage = (props) => {
   const inboxRef = useRef();
   const router = useRouter();
   const {currentUser} = useContext(UserContext);
-  const unreadContext = useContext(UnreadMessagesContext);
+  const {resetUnreadMessages} = useContext(UnreadMessagesContext);
   const {socket, onlineUsers} = useContext(SocketContext);
 
   const [chats, setChats] = useState(props.chats);
@@ -58,7 +58,7 @@ const MessagesPage = (props) => {
   // Resetear el contador de mensajes al entrar al chat
   /*---------------------------------------------------*/
   useEffect(() => {
-    unreadContext.setUnreadMessages(0)
+    resetUnreadMessages();
   }, []);
 
 
@@ -269,7 +269,7 @@ const MessagesPage = (props) => {
           });
         }
 
-        unreadContext.setUnreadMessages(0)
+        resetUnreadMessages();
       })
       .catch(err => {
         let message = err.message;
@@ -367,7 +367,7 @@ const MessagesPage = (props) => {
         lastMsgRef.current && lastMsgRef.current.scrollIntoView({block: "end"});
 
         // Marcar todos como leídos
-        unreadContext.setUnreadMessages(0)
+        resetUnreadMessages();
 
         // Almacenar la id del último mensaje cargado
         setLastLoadedMsg(messages[0]);

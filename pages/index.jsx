@@ -19,7 +19,7 @@ const CancelToken = axios.CancelToken;
 
 const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
   const userContext = useContext(UserContext);
-  const {setUnreadMessages} = useContext(UnreadMessagesContext);
+  const {initializeUnreadMessages} = useContext(UnreadMessagesContext);
   const {initializeUnreadNotifications} = useContext(NotificationsContext);
   const {socket} = useContext(SocketContext);
   const cancellerRef = useRef();
@@ -47,8 +47,10 @@ const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
   // Mostrar el número de mensajes sin leer al entrar a la app
   /*----------------------------------------------------------*/
   useEffect(() => {
-    setUnreadMessages(unreadMessages);
-  }, []);
+    if(unreadMessages > 0) {
+      initializeUnreadMessages(unreadMessages);
+    }
+  }, [unreadMessages]);
 
   /*-----------------------------------------------------------------*/
   // Mostrar el número de notificaciones sin leer al entrar a la app

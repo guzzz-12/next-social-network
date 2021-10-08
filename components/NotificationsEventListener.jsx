@@ -5,7 +5,7 @@ import {NotificationsContext} from "../context/NotificationsContext";
 
 const NotificationsEventListener = () => {
   const {socket} = useContext(SocketContext);
-  const {setUnreadMessages} = useContext(UnreadMessagesContext);
+  const {updateUnreadMessages} = useContext(UnreadMessagesContext);
   const {updateUnreadNotifications} = useContext(NotificationsContext);
   
   // Actualizar el contador de notificaciones al recibir una nueva notificación
@@ -18,8 +18,9 @@ const NotificationsEventListener = () => {
 
   // Actualizar el contador de mensajes sin leer
   const unreadMsgsRef = useRef(() => {
-    return socket.on("newMessageReceived", () => {
-      setUnreadMessages(prev => prev + 1)
+    return socket.on("newMessagesCounterUpdated", () => {
+      console.log("newMessagesCounterUpdated");
+      updateUnreadMessages()
     })
   })
 
