@@ -23,6 +23,11 @@ const MessagesPage = (props) => {
   const {resetUnreadMessages} = useContext(UnreadMessagesContext);
   const {socket, onlineUsers} = useContext(SocketContext);
 
+  // Retornar null mientras no haya usuario o chats
+  if(!currentUser || !props.chats) {
+    return null;
+  }
+
   const [chats, setChats] = useState(props.chats);
   const [selectedChat, setSelectedChat] = useState(props.chats[0] || {});
   const [selectedChatMessages, setSelectedChatMessages] = useState([]);

@@ -8,14 +8,13 @@ import styles from "../../pages/messages/messages.module.css";
 const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disableChatHandler, disablingChat, setOpenChatsSidebar}) => {
   const {onlineUsers} = useContext(SocketContext);
 
-  // Verificar si el usuario es el creador del chat
-  const isChatCreator = currentUser._id === item.user._id;
-
-  // Retornar null si no hay usuario autenticado o si el chat está vacío y no es el creador
-  // if(!currentUser || (item.isEmpty && !isChatCreator)) {
+  // Retornar null si no hay usuario autenticado
   if(!currentUser) {
     return null;
   }
+
+  // Verificar si el usuario es el creador del chat
+  const isChatCreator = currentUser._id === item.user._id;
 
   // Verificar si el otro participante del chat seleccionado está online
   const isOnline = onlineUsers.find(el => el.userId.toString() === item.user._id.toString() || el.userId.toString() === item.messagesWith._id.toString());
