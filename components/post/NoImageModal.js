@@ -22,7 +22,10 @@ const NoImageModal = ({
   deleting,
   deletePostHandler,
   isLiked,
-  loading
+  loading,
+  subscribing,
+  isSubscribed,
+  subscriptionHandler
 }) => {
   return (
     <Modal.Content scrolling>
@@ -65,20 +68,24 @@ const NoImageModal = ({
             :
             null
           }
+
           {/* Avatar del autor del post */}
           <Image  src={post.user.avatar} floated="left" inline avatar />
+
           {/* Nombre completo del usuario */}
           <Card.Header>
             <Link href={`/${post.user.username}`}>
               <a>{post.user.name}</a>
             </Link>
           </Card.Header>
+
           {/* Fecha de creación del post */}
           <Card.Meta>
             <Link href={`/post/${post._id}`}>
               <a>{moment(post.createdAt).calendar()}</a>
             </Link>
           </Card.Meta>
+
           {/* Location del post (si se especifica) */}
           {post.location ?
             <Card.Meta>
@@ -89,14 +96,16 @@ const NoImageModal = ({
             :
             null
           }
+
           {/* Contenido de texto del post */}
           <Card.Description className={classes["modal__description"]}>
             {post.content}
           </Card.Description>
         </Card.Content>
+
         {/* Sección de likes y comentarios (Flex item 2) */}
         <Card.Content extra className={classes["modal__likes-comments"]}>
-          <div style={{display: "flex", }}>
+          <div style={{display: "flex", position: "relative"}}>
             {/* Contador de likes */}
             <div>
               <Icon
@@ -119,6 +128,7 @@ const NoImageModal = ({
                 }
               />
             </div>
+
             {/* Contador de comentarios */}
             <div>
               <Icon
@@ -128,18 +138,51 @@ const NoImageModal = ({
               />
               <span>{comments.length} comments</span>
             </div>
+            
+            {/* Popup para subscribirse/desubscribirse del post */}
+            {/* Mostrar sólo si no es el autor del post */}
+            {post.user._id.toString() !== user?._id.toString() &&
+              <div style={{position: "absolute", right: 0, top: 0, cursor: "pointer"}}>
+                <Popup
+                  on="click"
+                  position="top right"
+                  trigger={
+                    <Icon
+                      name={isSubscribed ? "bell slash" : "bell"}
+                      size="small"
+                      circular
+                    />
+                  }
+                >
+                  <Header
+                    as="h4"
+                    content={isSubscribed ? "Stop notifications?" : "Receive notifications?"}
+                  />
+                  <Button
+                    disabled={(loading && !!deleting) || subscribing}
+                    color="red"
+                    icon="trash"
+                    content={isSubscribed ? "Unsubscribe" : "Subscribe"}
+                    onClick={() => subscriptionHandler(post._id)}
+                  />
+                </Popup>
+              </div>
+            }
           </div>
+
           <Divider />
+
           {/* Input para agregar comentarios */}
           <div className={classes["modal__comment-input"]}>
             <CommentInput
               user={user}
               socket={socket}
               postAuthor={post.user._id}
-              postId={post._id.toString()}
+              post={post}
               setComments={setComments}
             />
           </div>
+
           {/* Lista de comentarios */}
           <div className={classes["modal__comments-list"]}>
             {comments.length > 0 &&
@@ -156,6 +199,7 @@ const NoImageModal = ({
                 )
               })
             }
+
             {/* Botón para cargar más comentarios */}
             {commentsCount > 0 &&
               <div style={{display: "flex", justifyContent: "center", marginTop: "10px"}}>
@@ -168,6 +212,7 @@ const NoImageModal = ({
                 />
               </div>
             }
+
             {/* Mensaje de post sin comentarios */}
             {!loadingComments && commentsCount === 0 &&
               <>

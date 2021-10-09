@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const Notification = require("../models/NotificationModel");
-const User = require("../models/UserModel");
 const authMiddleware = require("../middleware/authMiddleware");
 
 // Consultar las notificaciones del usuario autenticado
@@ -19,7 +18,7 @@ router.get("/", authMiddleware, async (req, res) => {
       path: "userNotifier",
       select: "_id name username email avatar role"
     })
-    .populate("post", "_id content picUrl");
+    .populate("post", "_id user content picUrl");
 
     res.json({
       status: "success",

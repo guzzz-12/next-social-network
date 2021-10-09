@@ -28,6 +28,7 @@ const {onNewMessage, onUpdateNewMessagesCounter, onDeletedMessage, onMessagesRea
 const {chatCreated, enabledChat, disabledChat} = require("./socket-backend/chatEvents");
 const {notificationReceived} = require("./socket-backend/notificationsEvents");
 const {subscribeUser, unsubscribeUser, commentAdded, commentEdited, commentDeleted} = require("./socket-backend/commentsEvents");
+const {notifyToPostFollowers} = require("./socket-backend/postEvents");
 const PORT = process.env.PORT || 5000;
 
 /*-----------------------*/
@@ -99,6 +100,9 @@ io.on("connection", (socket) => {
   socket.on("commentCreated", (data) => commentAdded(io, data, socket.id));
   socket.on("commentEdited", (data) => commentEdited(io, data));
   socket.on("commentDeleted", (data) => commentDeleted(io, data));
+
+  // Eventos de los posts
+  socket.on("notifyToPostFollowers", (data) => notifyToPostFollowers(io, data));
 
   // Eventos de las notificaciones
   socket.on("notificationReceived", (data) => notificationReceived(io, data));

@@ -39,6 +39,26 @@ const PostPage = (props) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
+
+  /*----------------------------------------------------*/
+  // Verificar si el usuario está suscrito al post
+  // Sólo aplica para recibir o dejar de recibir
+  // notificaciones de los comentarios de otros usuarios
+  /*----------------------------------------------------*/
+  useEffect(() => {
+    if(post && user) {
+      const currentUserId = user._id.toString();
+      const subscribedUsers = post.followedBy.map(el => el.toString())
+      if(subscribedUsers.includes(currentUserId)) {
+        setIsSubscribed(true)
+      } else {
+        setIsSubscribed(false)
+      }
+    }
+  }, [post, user]);
+
 
   /*--------------------------------------------------------------*/
   // Suscribir/desuscribir el usuario al post
@@ -207,6 +227,37 @@ const PostPage = (props) => {
 
 
   /*-------------------------------------------*/
+  // Suscribirse/desuscribirse para recibir
+  // o dejar de recibir notificaciones del post
+  /*-------------------------------------------*/
+  const subscriptionHandler = async (postId) => {
+    try {
+      setSubscribing(true);
+
+      const operationType = isSubscribed ? "unsubscribe" : "subscribe";
+
+      await axios({
+        method: "PUT",
+        url: `/api/posts/togglesubscription/${postId}`,
+        params: {
+          operationType
+        }
+      });
+
+      const successMsg = operationType === "subscribe" ? "Subscribed successfully to this post" : "You won't receive future notifications from this post"
+
+      toast.dark(successMsg);
+      setIsSubscribed(prev => !prev);
+      setSubscribing(false);
+      
+    } catch (error) {
+      console.log(error.message);
+      setSubscribing(false);
+    }
+  }
+
+
+  /*-------------------------------------------*/
   // Mostrar mensaje de error al cargar el post
   /*-------------------------------------------*/
   if(props.error) {
@@ -337,41 +388,73 @@ const PostPage = (props) => {
 
           {/* Sección de likes y comentarios */}
           <Card.Content extra>
-            {/* Likes */}
-            <Icon
-              style={{cursor: !loading ? "pointer" : "default"}}
-              name={isLiked ? "heart" : "heart outline"}
-              color="red"
-              onClick={() => !loading && likesHandler(post._id)}
-            />
+            <div style={{position: "relative"}}>
+              {/* Likes */}
+              <Icon
+                style={{cursor: !loading ? "pointer" : "default"}}
+                name={isLiked ? "heart" : "heart outline"}
+                color="red"
+                onClick={() => !loading && likesHandler(post._id)}
+              />
 
-            {/* Popup con la lista de likes */}
-            <LikesList
-              postId={post._id}
-              trigger={
-                <span
-                  style={{cursor: !loading ? "pointer" : "default"}}
-                  onClick={() => !loading && likesHandler(post._id)}
-                >
-                  {likes.length} {likes.length === 1 ? "like" : "likes"}
-                </span>
+              {/* Popup con la lista de likes */}
+              <LikesList
+                postId={post._id}
+                trigger={
+                  <span
+                    style={{cursor: !loading ? "pointer" : "default"}}
+                    onClick={() => !loading && likesHandler(post._id)}
+                  >
+                    {likes.length} {likes.length === 1 ? "like" : "likes"}
+                  </span>
+                }
+              />
+
+              {/* Comentarios */}
+              <Icon
+                style={{marginLeft: "7px"}}
+                name="comment outline"
+                color="blue"
+              />
+              <span>{commentsCount} comments</span>
+
+              {/* Popup para subscribirse/desubscribirse del post */}
+              {/* Mostrar sólo si no es el autor del post */}
+              {post.user._id.toString() !== user?._id.toString() &&
+                <div style={{position: "absolute", right: 0, top: 0, cursor: "pointer"}}>
+                  <Popup
+                    on="click"
+                    position="top right"
+                    trigger={
+                      <Icon
+                        name={isSubscribed ? "bell slash" : "bell"}
+                        size="small"
+                        circular
+                      />
+                    }
+                  >
+                    <Header
+                      as="h4"
+                      content={isSubscribed ? "Stop notifications?" : "Receive notifications?"}
+                    />
+                    <Button
+                      disabled={(loading && !!deleting) || subscribing}
+                      color="red"
+                      icon="trash"
+                      content={isSubscribed ? "Unsubscribe" : "Subscribe"}
+                      onClick={() => subscriptionHandler(post._id)}
+                    />
+                  </Popup>
+                </div>
               }
-            />
-
-            {/* Comentarios */}
-            <Icon
-              style={{marginLeft: "7px"}}
-              name="comment outline"
-              color="blue"
-            />
-
-            <span>{commentsCount} comments</span>
+            </div>
 
             <Divider />
             
             {/* Campo para agregar comentarios */}
             <CommentInput
               user={user}
+              post={post}
               postId={post._id}
               postAuthor={post.user._id}
               socket={socket}

@@ -22,12 +22,22 @@ const NotificationsEventListener = () => {
       console.log("newMessagesCounterUpdated");
       updateUnreadMessages()
     })
+  });
+
+  // Actualizar el contador de notificaciones al recibir
+  // notificaciones de comentarios en posts suscritos
+  const commentNotificationOnSubscribedPost = useRef(() => {
+    return socket.on("commentNotificationToPostFollowers", () => {
+      console.log("commentNotificationToPostFollowers");
+      updateUnreadNotifications();
+    })
   })
 
   useEffect(() => {
     unreadMsgsRef.current();
     unreadNotificationsRef.current();
-  }, [])
+    commentNotificationOnSubscribedPost.current()
+  }, []);
 
   return null;
 }

@@ -318,4 +318,33 @@ router.delete("/:postId", authMiddleware, async (req, res) => {
 });
 
 
+/*---------------------------------*/
+// Dejar de seguir / seguir un post
+/*---------------------------------*/
+router.put("/togglesubscription/:postId", authMiddleware, async (req, res) => {
+  try {
+    const {postId} = req.params;
+    const {operationType} = req.query;
+    const {userId} = req;
+
+    if(operationType === "unsubscribe") {
+      await Post.findOneAndUpdate({_id: postId}, {$pull: {followedBy: userId}});
+
+    } else {
+      await Post.findOneAndUpdate({_id: postId}, {$push: {followedBy: userId}});      
+    }
+
+    return res.json({
+      status: "success",
+      data: `${operationType}d`
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Internal server error: ${error.message}`
+    })
+  }
+})
+
 module.exports = router;

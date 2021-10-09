@@ -3,7 +3,7 @@ import {Feed, Popup, Header, Button, Icon} from "semantic-ui-react";
 import moment from "moment";
 import styles from "./notification.module.css";
 
-const CommentNotification = ({notification, deleteNotificationHandler, deleting}) => {
+const CommentNotification = ({currentUser, notification, deleteNotificationHandler, deleting}) => {
   const user = notification.userNotifier;
 
   // Popup para eliminar notificación
@@ -58,14 +58,31 @@ const CommentNotification = ({notification, deleteNotificationHandler, deleting}
               {user.name}
             </Feed.User>
           </Link>
+
           {" "}
-          commented on your
-          {" "}
-          {notification.post &&
-            <Link href={`/post/${notification.post._id}`}>
-              <a>post</a>
-            </Link>
+
+          {currentUser?._id.toString() === notification.post?.user.toString() &&
+            <span>
+              commented on your
+              {" "}
+              <Link href={`/post/${notification.post._id}`}>
+                <a>post</a>
+              </Link>
+            </span>
           }
+
+          {currentUser?._id.toString() !== notification.post?.user.toString() &&
+            <span>
+              commented on a
+              {" "}
+              <Link href={`/post/${notification.post._id}`}>
+                <a>post</a>
+              </Link>
+              {" "}
+              you are following
+            </span>
+          }
+          
           {!notification.post && <span>post (deleted)</span>}
 
           <Feed.Date>{moment(notification.createdAt).calendar()}</Feed.Date>
@@ -81,11 +98,11 @@ const CommentNotification = ({notification, deleteNotificationHandler, deleting}
         }
 
         {/* Texto del post comentado (si es de tipo texto) */}
-        {notification.post && !notification.post.picUrl &&
+        {/* {notification.post && !notification.post.picUrl &&
           <Feed.Extra style={{maxWidth: "100%"}} text>
             {notification.post.content}
           </Feed.Extra>
-        }
+        } */}
 
         {/* Texto del comentario */}
         <Feed.Extra text>

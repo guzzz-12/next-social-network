@@ -72,12 +72,26 @@ router.post("/:postId", authMiddleware, async (req, res) => {
     }
     
     // Verificar si el post existe
-    const post = await Post.findById(postId);
+    let post = await Post.findById(postId).lean()
     if(!post) {
       return res.status(404).json({
         status: "failed",
         data: "Post not found or deleted"
       })
+    }
+
+    // Verificar si ya el usuario está suscrito al post
+    const currentUsersSubscribed = post.followedBy.map(user => user.toString());
+    const isSubscribed = currentUsersSubscribed.includes(req.userId.toString());
+
+    // Agregar el autor del comentario a los seguidores del post
+    // si no es el autor del post y si no está suscrito
+    if(req.userId !== post.user.toString() && !isSubscribed) {
+      await Post.findOneAndUpdate(
+        {_id: postId},
+        {$push: {followedBy: req.userId}},
+        {new: true}
+      );
     }
 
     // Consultar el usuario autor del post

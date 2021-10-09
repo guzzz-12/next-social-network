@@ -22,7 +22,10 @@ const ImageModal = ({
   deleting,
   deletePostHandler,
   isLiked,
-  loading
+  loading,
+  subscribing,
+  isSubscribed,
+  subscriptionHandler
 }) => {
 
   return (
@@ -114,9 +117,10 @@ const ImageModal = ({
                   {post.content}
                 </Card.Description>
               </Card.Content>
+
               {/* Sección de likes y comentarios (Flex item 2) */}
               <Card.Content extra className={classes["modal__likes-comments"]}>
-                <div style={{display: "flex", }}>
+                <div style={{display: "flex", position: "relative"}}>
                   {/* Contador de likes */}
                   <div>
                     <Icon
@@ -139,6 +143,7 @@ const ImageModal = ({
                       }
                     />
                   </div>
+
                   {/* Contador de comentarios */}
                   <div>
                     <Icon
@@ -148,13 +153,45 @@ const ImageModal = ({
                     />
                     <span>{comments.length} comments</span>
                   </div>
+
+                  {/* Popup para subscribirse/desubscribirse del post */}
+                  {/* Mostrar sólo si no es el autor del post */}
+                  {post.user._id.toString() !== user?._id.toString() &&
+                    <div style={{position: "absolute", right: 0, top: 0, cursor: "pointer"}}>
+                      <Popup
+                        on="click"
+                        position="top right"
+                        trigger={
+                          <Icon
+                            name={isSubscribed ? "bell slash" : "bell"}
+                            size="small"
+                            circular
+                          />
+                        }
+                      >
+                        <Header
+                          as="h4"
+                          content={isSubscribed ? "Stop notifications?" : "Receive notifications?"}
+                        />
+                        <Button
+                          disabled={(loading && !!deleting) || subscribing}
+                          color="red"
+                          icon="trash"
+                          content={isSubscribed ? "Unsubscribe" : "Subscribe"}
+                          onClick={() => subscriptionHandler(post._id)}
+                        />
+                      </Popup>
+                    </div>
+                  }
                 </div>
+
                 <Divider />
+
                 {/* Input para agregar comentarios */}
                 <div className={classes["modal__comment-input"]}>
                   <CommentInput
                     user={user}
-                    postId={post._id.toString()}
+                    post={post}
                     postAuthor={post.user._id}
                     socket={socket}
                     setComments={setComments}

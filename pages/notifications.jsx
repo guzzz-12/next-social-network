@@ -9,6 +9,7 @@ import CommentNotification from "../components/notifications/CommentNotification
 import FollowerNotification from "../components/notifications/FollowerNotification";
 import LikeNotification from "../components/notifications/LikeNotification";
 import {NotificationsContext} from "../context/NotificationsContext";
+import {UserContext} from "../context/UserContext";
 import {checkVerification} from "../utilsServer/verificationStatus";
 
 // Token de cancelación de requests de axios
@@ -17,6 +18,7 @@ const CancelToken = axios.CancelToken;
 const NotificationsPage = (props) => {
   const cancellerRef = useRef();
   const {resetNotifications} = useContext(NotificationsContext);
+  const {currentUser} = useContext(UserContext);
   
   // State de las notificaciones
   const [notifications, setNotifications] = useState(props.notifications);
@@ -219,6 +221,7 @@ const NotificationsPage = (props) => {
                       {el.notificationType === "comment" &&
                         <>
                           <CommentNotification
+                            currentUser={currentUser}
                             notification={el}
                             deleting={deletingNotif}
                             deleteNotificationHandler={deleteNotificationHandler}

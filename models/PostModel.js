@@ -19,7 +19,13 @@ const postSchema = new mongoose.Schema({
   picPublicId: {
     type: String,
     default: null
-  }
+  },
+  followedBy: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }
+  ]
 }, {timestamps: true});
 
 module.exports = mongoose.models.Post || mongoose.model("Post", postSchema);
