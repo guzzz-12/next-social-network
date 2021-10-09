@@ -10,11 +10,12 @@ import styles from "./sideMenu.module.css";
 
 
 const SideMenu = ({isDesktop, isPhone}) => {
-  const userContext = useContext(UserContext);
+  const router = useRouter();
+
+  const {currentUser, logOut} = useContext(UserContext);
   const {unreadMessages} = useContext(UnreadMessagesContext);
   const {unreadNotifications} = useContext(NotificationsContext);
   const {socket} = useContext(SocketContext);
-  const router = useRouter();
   const [activeRoute, setActiveRoute] = useState(null);
   
   useEffect(() => {
@@ -153,9 +154,9 @@ const SideMenu = ({isDesktop, isPhone}) => {
         onClick={() => {
           // Eliminar el usuario de los clientes de socket en el servidor
           // El evento cambia el status a offline en la lista del chat
-          socket.emit("offline", {userId: userContext.currentUser._id});
+          socket.emit("offline", {userId: currentUser._id});
           // Cerrar sesión
-          userContext.logOut();
+          logOut();
         }}
       >
         <Icon name="log out" size="large" />

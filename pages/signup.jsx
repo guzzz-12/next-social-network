@@ -2,7 +2,7 @@ import {useState, useRef, useContext} from "react";
 import {useRouter} from "next/router";
 import {Form, Button, Message, Segment, Divider} from "semantic-ui-react";
 import axios from "axios";
-import {parseCookies, destroyCookie} from "nookies";
+import {parseCookies} from "nookies";
 import jsCookie from "js-cookie";
 import CommonInputs from "../components/common/CommonInputs";
 import ImageDropInput from "../components/common/ImageDropInput";
@@ -10,13 +10,15 @@ import ValidationErrorMessage from "../components/common/ValidationErrorMessage"
 import {HeaderMessage, FooterMessage} from "../components/common/WelcomeMessage";
 import {SessionTimerContext} from "../context/SessionTimerContext";
 import {UserContext} from "../context/UserContext";
+import {PostsSubscribedContext} from "../context/PostsSubscribedContext";
 import {regexUserName} from "../utils/regexUsername";
 import {isEmail} from "../utils/emailValidator";
 import {sessionRemainingSecs} from "../utils/sessionRemainingSecs";
 
 const Signup = () => {
   const router = useRouter();
-  const userContext = useContext(UserContext);
+  const {setCurrentUser, setCurrentProfile, isAuth} = useContext(UserContext);
+  const {initPostsSubscribed} = useContext(PostsSubscribedContext);
   const timerContext = useContext(SessionTimerContext);
   const imgInputRef = useRef();
   const timeoutRef = useRef();
@@ -151,8 +153,9 @@ const Signup = () => {
       });
 
       const {profile} = res.data.data;
-      userContext.setCurrentUser(profile.user);
-      userContext.setCurrentProfile({profile, user: undefined});
+      setCurrentUser(profile.user);
+      setCurrentProfile({profile, user: undefined});
+      initPostsSubscribed(profile.user.postsSubscribed);
 
       const remainingSeconds = sessionRemainingSecs(jsCookie.get("token"));
       timerContext.initializeTimer(remainingSeconds);
@@ -175,7 +178,7 @@ const Signup = () => {
         setIsFormLoading(false);
         
         const updatedUser = updatedrUserData.data.data;
-        userContext.setCurrentUser(updatedUser);
+        setCurrentUser(updatedUser);
         router.push("/account-verification");
         
       } else {
@@ -254,8 +257,6 @@ const Signup = () => {
         method: "GET",
         url: `/api/signup/${username}`
       });
-
-      console.log({usernameAvailableResponse: res.data});
       
       setUsernameLoading(false);
       setIsUsernameAvailable(true);
@@ -300,7 +301,7 @@ const Signup = () => {
   /*------------------------------------------------*/
   // No renderizar el componente si está autenticado
   /*------------------------------------------------*/
-  if(userContext.isAuth) {
+  if(isAuth) {
     return null
   }
 

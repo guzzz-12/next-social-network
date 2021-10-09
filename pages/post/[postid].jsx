@@ -14,14 +14,15 @@ import CommentInput from "../../components/post/CommentInput";
 import LikesList from "../../components/post/LikesList";
 import {UserContext} from "../../context/UserContext";
 import {SocketContext} from "../../context/SocketProvider";
+import {PostsSubscribedContext} from "../../context/PostsSubscribedContext";
 import {checkVerification} from "../../utilsServer/verificationStatus";
 import styles from "./post.module.css";
 
 const PostPage = (props) => {
   const router = useRouter();
-  const userContext = useContext(UserContext);
-  const user = userContext.currentUser;
+  const {currentUser: user} = useContext(UserContext);
   const {socket} = useContext(SocketContext);
+  const {postsSubscribed} = useContext(PostsSubscribedContext);
   const {post} = props;
 
   const [likes, setLikes] = useState(post.likes);
@@ -49,15 +50,13 @@ const PostPage = (props) => {
   /*----------------------------------------------------*/
   useEffect(() => {
     if(post && user) {
-      const currentUserId = user._id.toString();
-      const subscribedUsers = post.followedBy.map(el => el.toString())
-      if(subscribedUsers.includes(currentUserId)) {
+      if(postsSubscribed.includes(post._id.toString())) {
         setIsSubscribed(true)
       } else {
         setIsSubscribed(false)
       }
     }
-  }, [post, user]);
+  }, [post, user, postsSubscribed]);
 
 
   /*--------------------------------------------------------------*/
@@ -149,7 +148,7 @@ const PostPage = (props) => {
   }, [user, likes]);
 
 
-  //*------------*/
+  /*------------*/
   // Borrar post
   /*------------*/
   const deletePostHandler = async (postId) => {
@@ -455,6 +454,7 @@ const PostPage = (props) => {
             <CommentInput
               user={user}
               post={post}
+              isSubscribed={isSubscribed}
               postId={post._id}
               postAuthor={post.user._id}
               socket={socket}

@@ -5,6 +5,7 @@ import UserContextProvider from "../context/UserContext";
 import UnreadMsgsProvider from "../context/UnreadMessagesContext";
 import SocketProvider from "../context/SocketProvider";
 import NotificationsProvider from "../context/NotificationsContext";
+import PostsSubscribedProvider from "../context/PostsSubscribedContext";
 import "react-toastify/dist/ReactToastify.css";
 import "semantic-ui-css/semantic.min.css";
 
@@ -16,10 +17,12 @@ const MyApp = ({Component, pageProps}) => {
       <UserContextProvider>
         <SocketProvider>
           <UnreadMsgsProvider>
-            <NotificationsEventListener />
-            <Layout {...pageProps}>
-              <Component {...pageProps} />
-            </Layout>
+            <PostsSubscribedProvider>
+              <NotificationsEventListener />
+              <Layout {...pageProps}>
+                <Component {...pageProps} />
+              </Layout>
+            </PostsSubscribedProvider>
           </UnreadMsgsProvider>
         </SocketProvider>
       </UserContextProvider>

@@ -7,6 +7,7 @@ import jsCookie from "js-cookie";
 import {FooterMessage, HeaderMessage} from "../components/common/WelcomeMessage";
 import {SessionTimerContext} from "../context/SessionTimerContext";
 import {UserContext} from "../context/UserContext";
+import {PostsSubscribedContext} from "../context/PostsSubscribedContext";
 import ValidationErrorMessage from "../components/common/ValidationErrorMessage";
 import {isEmail} from "../utils/emailValidator";
 import {sessionRemainingSecs} from "../utils/sessionRemainingSecs";
@@ -14,7 +15,8 @@ import {sessionRemainingSecs} from "../utils/sessionRemainingSecs";
 const Login = () => {
   const router = useRouter();
   const timerContext = useContext(SessionTimerContext);
-  const userContext = useContext(UserContext);
+  const {setCurrentProfile, setCurrentUser, isAuth} = useContext(UserContext);
+  const {initPostsSubscribed} = useContext(PostsSubscribedContext);
 
   const [values, setValues] = useState({
     email: "",
@@ -63,8 +65,9 @@ const Login = () => {
       setIsFormLoading(false);
 
       const {profile} = res.data.data;
-      userContext.setCurrentUser(profile.user);
-      userContext.setCurrentProfile(profile);
+      setCurrentUser(profile.user);
+      setCurrentProfile(profile);
+      initPostsSubscribed(profile.user.postsSubscribed);
 
       const remainingSeconds = sessionRemainingSecs(jsCookie.get("token"));
       timerContext.initializeTimer(remainingSeconds);
@@ -167,7 +170,7 @@ const Login = () => {
   /*------------------------------------------------*/
   // No renderizar el componente si está autenticado
   /*------------------------------------------------*/
-  if(userContext.isAuth) {
+  if(isAuth) {
     return null
   }
 

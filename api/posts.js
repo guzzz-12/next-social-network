@@ -329,9 +329,11 @@ router.put("/togglesubscription/:postId", authMiddleware, async (req, res) => {
 
     if(operationType === "unsubscribe") {
       await Post.findOneAndUpdate({_id: postId}, {$pull: {followedBy: userId}});
+      await User.findOneAndUpdate({_id: req.userId}, {$pull: {postsSubscribed: postId}});
 
     } else {
-      await Post.findOneAndUpdate({_id: postId}, {$push: {followedBy: userId}});      
+      await Post.findOneAndUpdate({_id: postId}, {$push: {followedBy: userId}});
+      await User.findOneAndUpdate({_id: req.userId}, {$push: {postsSubscribed: postId}});    
     }
 
     return res.json({

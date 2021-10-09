@@ -3,6 +3,8 @@ import Router, {useRouter} from "next/router";
 import {Container, Visibility, Grid, Sticky, Ref, Segment} from "semantic-ui-react";
 import nprogress from "nprogress";
 import jsCookie from "js-cookie";
+import axios from "axios";
+import {PostsSubscribedContext} from "../../context/PostsSubscribedContext";
 
 import HeadTags from "./HeadTags";
 import Navbar from "./Navbar";
@@ -20,23 +22,32 @@ const Layout = (props) => {
   Router.onRouteChangeError = () => nprogress.done();
 
   const router = useRouter();  
-  const userContext = useContext(UserContext);
+  const {currentUser, setCurrentUser, logOut} = useContext(UserContext);
+  const {initPostsSubscribed} = useContext(PostsSubscribedContext);
   
   const windowWidth = useWindowWidth();
   const [isDesktop, setIsDesktop] = useState(true);
   const [isTablet, setIsTablet] = useState(false);
   const [isPhone, setIsPhone] = useState(false);
   
-  /*-----------------------------------------------------------------*/
-  // Inicializar el timer de expiración de sesión al refrescar la app
-  /*-----------------------------------------------------------------*/
+  /*-------------------------------------------------------*/
+  // Consultar la data del usuario al actualizar la página
+  /*-------------------------------------------------------*/
   useEffect(() => {
     const token = jsCookie.get("token");
-    console.log({tokenCookie: token});
     
     if(token) {
-      const user = JSON.parse(localStorage.getItem("user"))
-      userContext.setCurrentUser(user);
+      axios({
+        method: "GET",
+        url: "/api/profile/me",
+      })
+      .then(res => {
+        const {profile} = res.data.data;
+        const user = profile.user;
+        const postsSubscribed = user.postsSubscribed;
+        setCurrentUser(user);
+        initPostsSubscribed(postsSubscribed);
+      })
     }
   }, []);
   
@@ -50,7 +61,7 @@ const Layout = (props) => {
       const remainingMinutes = Math.floor(sessionRemainingSecs(token)/60);
   
       if(remainingMinutes <= 0) {
-        userContext.logOut();
+        logOut();
         router.push("/login");
       }
     }
@@ -79,7 +90,7 @@ const Layout = (props) => {
     <>
       <HeadTags />
 
-      {userContext.currentUser &&
+      {currentUser &&
         <div style={{marginLeft: "1rem", marginRight: "1rem"}}>
           <Ref innerRef={contextRef}>
             <Grid>
@@ -125,7 +136,7 @@ const Layout = (props) => {
         </div>
       }
 
-      {!userContext.currentUser &&
+      {!currentUser &&
         <>
           <Navbar />
           <Container style={{paddingTop: "1rem"}} text>

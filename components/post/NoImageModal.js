@@ -179,7 +179,9 @@ const NoImageModal = ({
               socket={socket}
               postAuthor={post.user._id}
               post={post}
+              isSubscribed={isSubscribed}
               setComments={setComments}
+              setCommentsCount={setCommentsCount}
             />
           </div>
 

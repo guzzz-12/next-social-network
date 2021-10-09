@@ -1,4 +1,4 @@
-import {useState, useEffect} from "react";
+import {useState, useEffect, useContext} from "react";
 import Link from "next/link";
 import {Card, Icon, Image, Divider, Segment, Button, Popup, Header, Modal, Loader} from "semantic-ui-react";
 import axios from "axios";
@@ -9,10 +9,13 @@ import CommentInput from "./CommentInput";
 import LikesList from "./LikesList";
 import ImageModal from "./ImageModal";
 import NoImageModal from "./NoImageModal";
+import {PostsSubscribedContext} from "../../context/PostsSubscribedContext";
 import classes from "./cardPost.module.css";
 
 
 const CardPost = ({user, post, setPosts, noPadding, socket}) => {
+  const {postsSubscribed, updatePostsSubscribed, removePostSubscribed} = useContext(PostsSubscribedContext);
+
   const [comments, setComments] = useState([]);
   const [commentsCount, setCommentsCount] = useState(null);
   const [loadingComments, setLoadingComments] = useState(true);
@@ -36,15 +39,13 @@ const CardPost = ({user, post, setPosts, noPadding, socket}) => {
   /*-----------------------------------------------*/
   useEffect(() => {
     if(post && user) {
-      const currentUserId = user._id.toString();
-      const subscribedUsers = post.followedBy.map(el => el.toString())
-      if(subscribedUsers.includes(currentUserId)) {
+      if(postsSubscribed.includes(post._id.toString())) {
         setIsSubscribed(true)
       } else {
         setIsSubscribed(false)
       }
     }
-  }, [post, user]);
+  }, [post, user, postsSubscribed]);
 
   /*-----------------------------------*/
   // Consultar los comentarios del post
@@ -196,6 +197,13 @@ const CardPost = ({user, post, setPosts, noPadding, socket}) => {
           operationType
         }
       });
+
+      if(!isSubscribed) {
+        updatePostsSubscribed(postId);
+
+      } else {
+        removePostSubscribed(postId);
+      }
 
       const successMsg = operationType === "subscribe" ? "Subscribed successfully to this post" : "You won't receive future notifications from this post"
 
@@ -456,6 +464,7 @@ const CardPost = ({user, post, setPosts, noPadding, socket}) => {
             <CommentInput
               user={user}
               post={post}
+              isSubscribed={isSubscribed}
               postAuthor={post.user._id}
               socket={socket}
               setComments={setComments}

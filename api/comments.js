@@ -85,6 +85,7 @@ router.post("/:postId", authMiddleware, async (req, res) => {
     const isSubscribed = currentUsersSubscribed.includes(req.userId.toString());
 
     // Agregar el autor del comentario a los seguidores del post
+    // y agregar la id del post al array de suscripciones del usuario
     // si no es el autor del post y si no está suscrito
     if(req.userId !== post.user.toString() && !isSubscribed) {
       await Post.findOneAndUpdate(
@@ -92,6 +93,11 @@ router.post("/:postId", authMiddleware, async (req, res) => {
         {$push: {followedBy: req.userId}},
         {new: true}
       );
+
+      await User.findOneAndUpdate(
+        {_id: req.userId},
+        {$push: {postsSubscribed: postId.toString()}
+      })
     }
 
     // Consultar el usuario autor del post

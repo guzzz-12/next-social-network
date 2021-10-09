@@ -57,6 +57,7 @@ const userSchema = new mongoose.Schema({
   expiredToken: {
     type: Date
   },
+  postsSubscribed: [String],
   status: {
     type: String,
     default: "active",

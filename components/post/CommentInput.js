@@ -1,8 +1,11 @@
-import {useState} from "react";
+import {useState, useContext, useEffect} from "react";
 import {Form} from "semantic-ui-react";
 import axios from "axios";
+import {PostsSubscribedContext} from "../../context/PostsSubscribedContext";
 
-const CommentInput = ({user, post, setComments, setCommentsCount, socket, postAuthor}) => {
+const CommentInput = ({user, post, setComments, setCommentsCount, socket, postAuthor, isSubscribed}) => {
+  const {updatePostsSubscribed} = useContext(PostsSubscribedContext);
+
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -10,14 +13,14 @@ const CommentInput = ({user, post, setComments, setCommentsCount, socket, postAu
   const onChangeHandler = (e) => {
     setText(e.target.value)
   }
+
   
   /*----------------------*/
   // Agregar un comentario
   /*----------------------*/
-  const createCommentHandler = async (postId, commentText) => {
+  const createCommentHandler = async (postId, commentText, isSubscribed) => {
     try {
       setLoading(true);
-      console.log({commentText})
       
       const res = await axios({
         method: "POST",
@@ -34,6 +37,11 @@ const CommentInput = ({user, post, setComments, setCommentsCount, socket, postAu
       setCommentsCount(prev => prev + 1);
       setLoading(false);
       setText("");
+
+      // Agregar el post al state de posts suscritos si no lo está
+      if(!isSubscribed) {
+        updatePostsSubscribed(postId)
+      }
 
       // Emitir evento de notificación al backend
       // sólo si el autor del comentario no es el autor del post
@@ -77,7 +85,7 @@ const CommentInput = ({user, post, setComments, setCommentsCount, socket, postAu
           icon: "edit",
           loading,
           disabled: loading || text.length === 0,
-          onClick: () => createCommentHandler(post._id, text)
+          onClick: () => createCommentHandler(post._id, text, isSubscribed)
         }}
       />
     </Form>

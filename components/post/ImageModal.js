@@ -192,9 +192,11 @@ const ImageModal = ({
                   <CommentInput
                     user={user}
                     post={post}
+                    isSubscribed={isSubscribed}
                     postAuthor={post.user._id}
                     socket={socket}
                     setComments={setComments}
+                    setCommentsCount={setCommentsCount}
                   />
                 </div>
                 {/* Lista de comentarios */}
