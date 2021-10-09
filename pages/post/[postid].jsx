@@ -8,7 +8,7 @@ import axios from "axios";
 import jwt from "jsonwebtoken";
 import {parseCookies} from "nookies";
 import unauthRedirect from "../../utilsServer/unauthRedirect";
-import {ToastContainer, toast} from "react-toastify";
+import {toast} from "react-toastify";
 import PostComment from "../../components/post/PostComment";
 import CommentInput from "../../components/post/CommentInput";
 import LikesList from "../../components/post/LikesList";
@@ -283,13 +283,6 @@ const PostPage = (props) => {
 
   return (
     <Container text>
-      {/* Toast para indicar que el post fue borrado con éxito */}
-      <ToastContainer
-        position="bottom-center"
-        autoClose={3000}
-        hideProgressBar={true}
-      />
-
       <Head>
         <meta property="og:url" content={`${process.env.BASE_URL}/post/${post._id}`} key="ogurl" />
         <meta property="og:title" content={`${post.user.name.split(" ")[0]}'s post on Next Social Network`} key="ogtitle" />

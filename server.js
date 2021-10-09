@@ -72,6 +72,7 @@ io.on("connection", (socket) => {
 
   // Actualizar el usuario
   socket.on("updateUser", (data) => {
+    console.log({UserUpdated: {userId: data.userId, socketId: socket.id}});
     const users = updateUserSocket(data.userId, socket.id);
     io.emit("updatedOnlineUsers", users);
   });  

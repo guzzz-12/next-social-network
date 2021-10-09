@@ -3,7 +3,7 @@ import Link from "next/link";
 import {Card, Icon, Image, Divider, Segment, Button, Popup, Header, Modal, Loader} from "semantic-ui-react";
 import axios from "axios";
 import moment from "moment";
-import {ToastContainer, toast} from "react-toastify";
+import {toast} from "react-toastify";
 import PostComment from "./PostComment";
 import CommentInput from "./CommentInput";
 import LikesList from "./LikesList";
@@ -279,12 +279,6 @@ const CardPost = ({user, post, setPosts, noPadding, socket}) => {
         :
         null
       }
-
-      <ToastContainer
-        position="bottom-center"
-        autoClose={3000}
-        hideProgressBar={true}
-      />
 
       <Segment
         style={{
