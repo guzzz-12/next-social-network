@@ -9,6 +9,7 @@ import GlobalToastNotification from "../components/GlobalToastNotification";
 import PostsSubscribedProvider from "../context/PostsSubscribedContext";
 import "react-toastify/dist/ReactToastify.css";
 import "semantic-ui-css/semantic.min.css";
+import "../styles/styles.css";
 
 axios.defaults.baseURL = process.env.BASE_URL;
 

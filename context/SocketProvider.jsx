@@ -1,6 +1,28 @@
 import {createContext, useState, useEffect, useContext} from "react";
+import {Icon} from "semantic-ui-react";
+import {toast} from "react-toastify";
 import ioClient from "socket.io-client";
 import {UserContext} from "./UserContext";
+
+const io = ioClient(process.env.BASE_URL);
+
+// Contenido del toast de status de conexión
+const ToastContent = ({icon, message}) => {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "flex-start",
+        alignItems: "center"
+      }}
+    >
+      <span style={{marginRight: "10px"}}>
+        <Icon name={icon} size="large" />
+      </span>
+      <span>{message}</span>
+    </div>
+  )
+}
 
 export const SocketContext = createContext({
   socket: null,
@@ -10,7 +32,6 @@ export const SocketContext = createContext({
 
 const SocketContextProvider = ({children}) => {
   const {currentUser} = useContext(UserContext);
-  const io = ioClient(process.env.BASE_URL);
 
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [connectionLost, setConnectionLost] = useState(false);
@@ -19,16 +40,28 @@ const SocketContextProvider = ({children}) => {
   useEffect(() => {    
     if(currentUser) {
       // Actualizar el socket del usuario cuando recupere su conexión
+      // Mostrar toast de conexión exitosa
       window.addEventListener("online", () => {
-        setConnectionLost(false)
         io.emit("updateUser", {userId: currentUser._id});
+        toast.dismiss();
+        toast.success(
+          <ToastContent icon="wifi" message="You are back online."/>,
+          {autoClose: 3000}
+        );
+        setConnectionLost(false);
       });
-
+        
       // Pasar el usuario a offline en el server
       // cuando pierda su conexión
+      // Mostrar toast de error de conexión
       window.addEventListener("offline", () => {
+        io.emit("offline", {userId: currentUser._id});
+        toast.dismiss();
+        toast.error(
+          <ToastContent icon="ban" message="Check your intenet connection!" />,
+          {autoClose: 5000}
+        );
         setConnectionLost(true);
-        io.emit("offline", {userId: currentUser._id})
       });
 
       // Actualizar el socket del usuario actual en el server al actualizar la página

@@ -6,8 +6,10 @@ export const UserContext = createContext({
   isAuth: false,
   currentUser: null,
   currentProfile: null,
+  showNewMessagePopup: false,
   setCurrentUser: () => {},
   setCurrentProfile: () => {},
+  setShowNewMessagePopup: () => {},
   logOut: () => {}
 });
 
@@ -15,10 +17,12 @@ const UserContextProvider = ({children}) => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [isAuth, setIsAuth] = useState(false);
+  const [showNewMessagePopup, setShowNewMessagePopup] = useState(false);
 
   const setCurrentUser = (user) => {
     setUser(user);
     setIsAuth(true);
+    setShowNewMessagePopup(user.newMessagePopup);
     localStorage.setItem("user", JSON.stringify(user));
   }
 
@@ -45,6 +49,8 @@ const UserContextProvider = ({children}) => {
         isAuth,
         currentUser: user,
         currentProfile: profile,
+        showNewMessagePopup,
+        setShowNewMessagePopup,
         setCurrentUser,
         setCurrentProfile,
         logOut

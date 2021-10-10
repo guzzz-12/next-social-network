@@ -7,7 +7,7 @@ import DeleteAccountForm from "./settings-forms/DeleteAccountForm";
 import {UserContext} from "../../context/UserContext";
 
 const Settings = ({newMessagePopup}) => {
-  const userContext = useContext(UserContext);
+  const {currentUser, setCurrentUser, setShowNewMessagePopup} = useContext(UserContext);
 
   // State del ajuste del popup de nuevo mensaje
   const [loadingPopupSetting, setLoadingPopupSetting] = useState(false);
@@ -32,7 +32,8 @@ const Settings = ({newMessagePopup}) => {
       const result = res.data.data.newMessagePopup;
       setPopupSetting(result);
       setLoadingPopupSetting(false);
-      userContext.setCurrentUser({...userContext.currentUser, newMessagePopup: result});
+      setCurrentUser({...currentUser, newMessagePopup: result});
+      setShowNewMessagePopup(result);
       
     } catch (error) {
       console.log({popuSettingError: error.message});

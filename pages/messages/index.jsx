@@ -1,6 +1,6 @@
 import {useState, useContext, useEffect, useRef} from "react";
-import {Segment, Header, Sidebar, Button, Icon, Form, TextArea, Comment, Ref} from "semantic-ui-react";
 import {useRouter} from "next/router";
+import {Segment, Header, Sidebar, Button, Icon, Form, TextArea, Comment, Ref} from "semantic-ui-react";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import {parseCookies, destroyCookie} from "nookies";
@@ -44,7 +44,7 @@ const MessagesPage = (props) => {
   const [sending, setSending] = useState(false);
 
   const [disablingChat, setDisablingChat] = useState(false);
-  
+
   const [openChatsSidebar, setOpenChatsSidebar] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -52,7 +52,9 @@ const MessagesPage = (props) => {
 
   const windowWidth = useWindowWidth();
 
+  /*-------------------------------------------------------------*/
   // Seleccionar el primer chat al entrar a la página de mensajes
+  /*-------------------------------------------------------------*/
   useEffect(() => {
     if(props.chats.length > 0) {
       chatItemClickHandler.current(props.chats[0])
@@ -208,7 +210,6 @@ const MessagesPage = (props) => {
           }
         }
       });
-
       
       messagesReadRef.current();
       messageDeletedRef.current();
@@ -498,7 +499,8 @@ const MessagesPage = (props) => {
       socket.emit("newMessage", {newMsg: newMessage, chatId: chat._id});
       socket.emit("updateNewMessagesCounter", {
         chatId: chat._id,
-        recipientId: newMessage.recipient._id
+        recipientId: newMessage.recipient._id,
+        msg: newMessage
       });
 
       setSelectedChatMessages(prev => [...prev, newMessage]);

@@ -14,16 +14,19 @@ import {PlaceHolderPosts} from "../../components/Layout/PlaceHolderGroup";
 import {NoProfile, NoProfilePosts} from "../../components/Layout/NoData";
 import {checkVerification} from "../../utilsServer/verificationStatus";
 import {UserContext} from "../../context/UserContext";
+import {SocketContext} from "../../context/SocketProvider";
 
 // Token de cancelación de requests de axios
 const CancelToken = axios.CancelToken;
 
 const ProfilePage = (props) => {
-  const cancellerRef = useRef();
-  const {profile, error} = props;
-  const userContext = useContext(UserContext);
   const router = useRouter();
   const {username} = router.query;
+  const cancellerRef = useRef();
+  const {profile, error} = props;
+  
+  const {socket} = useContext(SocketContext);
+  const userContext = useContext(UserContext);
 
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
@@ -164,10 +167,11 @@ const ProfilePage = (props) => {
                     return (
                       <CardPost
                         key={post._id}
-                        user={userContext.currentUser}
                         post={post}
+                        user={userContext.currentUser}
                         noPadding
                         setPosts={setPosts}
+                        socket={socket}
                       />
                     )
                   })

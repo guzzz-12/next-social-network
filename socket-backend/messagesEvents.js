@@ -10,11 +10,11 @@ const onNewMessage = (io, data) => {
 
 // Actualizar el contador de mensajes no leídos
 const onUpdateNewMessagesCounter = (io, data) => {
-  const {chatId, recipientId} = data;
+  const {chatId, recipientId, msg} = data;
   console.log({onUpdateNewMessagesCounter: {chatId, recipientId}})
   const recipient = global.users.find(el => el.userId.toString() === recipientId.toString());
   if(recipient) {
-    io.to(recipient.socketId).emit("newMessagesCounterUpdated", {chatId});
+    io.to(recipient.socketId).emit("newMessagesCounterUpdated", {chatId, msg});
   }
 }
 
