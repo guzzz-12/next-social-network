@@ -194,6 +194,7 @@ const NoImageModal = ({
                     key={comment._id}
                     comment={comment}
                     postId={post._id}
+                    post={post}
                     user={user}
                     setComments={setComments}
                     setCommentsCount={setCommentsCount}

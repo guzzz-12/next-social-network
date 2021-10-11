@@ -463,6 +463,7 @@ const PostPage = (props) => {
                     key={comment._id}
                     comment={comment}
                     postId={post._id}
+                    post={post}
                     user={user}
                     socket={socket}
                     setComments={setComments}

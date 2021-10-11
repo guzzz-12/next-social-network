@@ -6,7 +6,7 @@ import moment from "moment";
 import CommentHistory from "./CommentHistory";
 import styles from "./postComment.module.css";
 
-const PostComment = ({comment, user, setComments, setCommentsCount, socket}) => {
+const PostComment = ({comment, user, post, setComments, setCommentsCount, socket}) => {
   const [editMode, setEditMode] = useState(false);
   const [text, setText] = useState("");
   const [editing, setEditing] = useState(false);
@@ -182,7 +182,7 @@ const PostComment = ({comment, user, setComments, setCommentsCount, socket}) => 
 
               <Comment.Actions style={{position: "absolute", top: 0, right: 0}}>
                 <Comment.Action>
-                  {user.role === "admin" || (comment.author._id.toString() === user._id.toString()) ?
+                  {user.role === "admin" || comment.author._id.toString() === user._id.toString() || post.user._id.toString() === user._id.toString() ?
                     <Popup
                       on="click"
                       position="top right"

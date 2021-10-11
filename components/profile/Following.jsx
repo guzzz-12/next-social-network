@@ -4,12 +4,11 @@ import {List, Button, Image, Loader, Message} from "semantic-ui-react";
 import axios from "axios";
 import {UserContext} from "../../context/UserContext";
 
-const Following = ({username, isProfileOwner, setOwnerFollowing}) => {
+const Following = ({username, following, setFollowing, isProfileOwner, setOwnerFollowing}) => {
   const userContext = useContext(UserContext);
   const currentUser = userContext.currentUser;
 
   // Siguiendo del usuario del perfil visitado
-  const [following, setFollowing] = useState([]);
   const [loadingFollowing, setLoadingFollowing] = useState(true);
   const [errorLoadingFollowing, setErrorLoadingFollowing] = useState(null);
 
@@ -49,7 +48,7 @@ const Following = ({username, isProfileOwner, setOwnerFollowing}) => {
       setErrorLoadingFollowing(message);
       setLoadingFollowing(message);      
     })
-  }, []);
+  }, [username]);
 
 
   /*-------------------------------------------*/

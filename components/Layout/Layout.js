@@ -4,15 +4,16 @@ import {Container, Visibility, Grid, Sticky, Ref, Segment} from "semantic-ui-rea
 import nprogress from "nprogress";
 import jsCookie from "js-cookie";
 import axios from "axios";
-import {PostsSubscribedContext} from "../../context/PostsSubscribedContext";
+import {toast} from "react-toastify";
 
 import HeadTags from "./HeadTags";
 import Navbar from "./Navbar";
 import SideMenu from "./SideMenu";
 import Search from "./Search";
 import {UserContext} from "../../context/UserContext";
+import {PostsSubscribedContext} from "../../context/PostsSubscribedContext";
 import {sessionRemainingSecs} from "../../utils/sessionRemainingSecs";
-import { useWindowWidth } from "../../utils/customHooks";
+import {useWindowWidth} from "../../utils/customHooks";
 
 const Layout = (props) => {
   const contextRef = createRef();
@@ -47,6 +48,21 @@ const Layout = (props) => {
         const postsSubscribed = user.postsSubscribed;
         setCurrentUser(user);
         initPostsSubscribed(postsSubscribed);
+      })
+      .catch(err => {
+        let msg = err.message;
+        
+        if(err.response && err.response.status === 404) {
+          toast.error(err.response.data.message, 5000);
+          return logOut();
+        }
+
+        if(err.response) {
+          console.log(err.response)
+          msg = err.response.data.message
+        }
+
+        toast.error(msg, 5000)
       })
     }
   }, []);

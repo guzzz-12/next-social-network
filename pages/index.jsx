@@ -56,7 +56,7 @@ const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
   // Mostrar el número de notificaciones sin leer al entrar a la app
   /*-----------------------------------------------------------------*/
   useEffect(() => {
-    if(unreadNotifications.length > 0) {
+    if(unreadNotifications?.length > 0) {
       initializeUnreadNotifications(unreadNotifications.length)
     }
   }, [unreadNotifications]);

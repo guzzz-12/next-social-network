@@ -471,6 +471,7 @@ const CardPost = ({user, post, setPosts, noPadding, socket}) => {
                     key={comment._id}
                     comment={comment}
                     postId={post._id}
+                    post={post}
                     user={user}
                     socket={socket}
                     setComments={setComments}

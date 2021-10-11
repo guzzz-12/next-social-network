@@ -23,6 +23,7 @@ const ProfilePage = (props) => {
   const router = useRouter();
   const {username} = router.query;
   const cancellerRef = useRef();
+  const pathUsernameRef = useRef(router.query.username);
   const {profile, error} = props;
   
   const {socket} = useContext(SocketContext);
@@ -64,6 +65,18 @@ const ProfilePage = (props) => {
     setEndOfPosts(false);
     setCurrentPage(1)
   }
+
+
+  // Repetir la consulta al cambiar el username en el path
+  useEffect(() => {
+    if(pathUsernameRef.current !== username) {
+      setPosts([]);
+      setLoadMore(true);
+      setCurrentPage(1);
+      setEndOfPosts(false);
+      pathUsernameRef.current = username;
+    }
+  }, [username]);
 
 
   /*--------------------------------*/
@@ -182,8 +195,20 @@ const ProfilePage = (props) => {
               </>
             }
 
-            {activeTab === "followers" && <Followers username={username}/>}
-            {activeTab === "following" && <Following username={username}/>}
+            {activeTab === "followers" &&
+              <Followers
+                username={username}
+                followers={followers}
+                setFollowers={setFollowers}
+              />
+            }
+            {activeTab === "following" &&
+              <Following
+                username={username}
+                following={following}
+                setFollowing={setFollowing}
+              />
+            }
           </Grid.Column>
         </Grid.Row>
       </Grid>

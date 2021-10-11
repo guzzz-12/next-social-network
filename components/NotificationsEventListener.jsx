@@ -20,7 +20,8 @@ const NewMsgToastContent = ({msg, router}) => {
           {name}
         </strong>
         <span>
-          {msg.text.substring(0, 50)}...
+          {msg.text.length > 50 && msg.text.substring(0, 50) + "..."}
+          {msg.text.length <= 50 && msg.text}
         </span>
       </div>
     </div>
@@ -46,7 +47,8 @@ const NotificationsEventListener = () => {
       toast.dark(
         <NewMsgToastContent msg={newIncomingMsg} router={router} />,
         {
-          onClose: setNewIncomingMsg(null)
+          autoClose: 6000,
+          onClose: () => setNewIncomingMsg(null)
         }
       )
     }

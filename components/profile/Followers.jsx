@@ -4,12 +4,11 @@ import {List, Button, Image, Loader, Message} from "semantic-ui-react";
 import axios from "axios";
 import {UserContext} from "../../context/UserContext";
 
-const Followers = ({username, isProfileOwner, setOwnerFollowing}) => {
+const Followers = ({username, followers, setFollowers, isProfileOwner, setOwnerFollowing}) => {
   const userContex = useContext(UserContext);
   const currentUser = userContex.currentUser;
 
   // Seguidores del usuario del perfil visitado
-  const [followers, setFollowers] = useState([]);
   const [loadingFollowers, setLoadingFollowers] = useState(true);
 
   // Usuarios seguidos por el usuario actualmente logueado
