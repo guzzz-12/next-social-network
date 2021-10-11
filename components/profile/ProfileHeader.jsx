@@ -4,7 +4,7 @@ import axios from "axios";
 import {UserContext} from "../../context/UserContext";
 import {SocketContext} from "../../context/SocketProvider";
 
-const ProfileHeader = ({profile, isAccountOwner, followers, following, setFollowers}) => {
+const ProfileHeader = ({profile, isAccountOwner, followers, setFollowers}) => {
   const userContext = useContext(UserContext);
   const {socket} = useContext(SocketContext);
 
@@ -19,7 +19,10 @@ const ProfileHeader = ({profile, isAccountOwner, followers, following, setFollow
   /*-----------------------------------------------------------------------------*/
   useEffect(() => {
     if(userContext.currentUser) {
-      const isFollowing = followers.some(el => el.user.toString() === userContext.currentUser._id.toString());
+      const isFollowing = followers.some(el => {
+        const user = el.user._id || el.user;
+        return user.toString() === userContext.currentUser._id.toString()
+      });
       setIsFollowing(isFollowing);
     }
   }, [userContext.currentUser, followers]);

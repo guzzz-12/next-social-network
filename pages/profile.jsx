@@ -209,6 +209,7 @@ const ProfilePage = (props) => {
                   profile={profile}
                   followers={followers}
                   following={following}
+                  setFollowers={setFollowers}
                 />
 
                 {/* Mostrar skeletons mientras los posts cargan */}
@@ -238,6 +239,8 @@ const ProfilePage = (props) => {
               <Followers
                 isProfileOwner
                 username={currentUser.username}
+                followers={followers}
+                setFollowers={setFollowers}
                 setOwnerFollowing={setFollowing}
               />
             }
@@ -246,6 +249,8 @@ const ProfilePage = (props) => {
               <Following
                 isProfileOwner
                 username={currentUser.username}
+                following={following}
+                setFollowing={setFollowing}
                 setOwnerFollowing={setFollowing}
               />
             }

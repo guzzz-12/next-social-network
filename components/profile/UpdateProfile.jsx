@@ -44,7 +44,6 @@ const UpdateProfile = ({setActiveTab}) => {
       url: "/api/profile/me"
     })
     .then(res => {
-      console.log({profileData: res.data.data});
       const {bio, social} = res.data.data.profile;
       setProfile({
         bio,
