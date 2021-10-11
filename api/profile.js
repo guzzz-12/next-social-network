@@ -14,6 +14,7 @@ const Like = require("../models/LikeModel");
 const Comment = require("../models/CommentModel");
 const Notification = require("../models/NotificationModel.js");
 const Message = require("../models/MessageModel");
+const Chat = require("../models/ChatModel");
 const authMiddleware = require("../middleware/authMiddleware");
 const {newFollowerNotification, removeNotification} = require("../utilsServer/notificationActions");
 const changeEmailTemplate = require("../emailTemplates/changeEmailTemplate");
@@ -26,7 +27,7 @@ router.get("/me", authMiddleware, async (req, res) => {
     const userId = req.userId;
 
     // Chequear si el usuario existe en la base de datos
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).lean()
     if(!user) {
       return res.status(404).json({
         status: "failed",
@@ -36,28 +37,36 @@ router.get("/me", authMiddleware, async (req, res) => {
     
     // Consultar el perfil del usuario
     const profile = await Profile.findOne({user: user._id})
-    .lean()
     .populate({
       path: "user",
-      select: "-password -__v"
-    });
+      select: "-password -blockedBy -usersBlocked -__v"
+    })
+    .lean()
 
-    // Chequear los followers y following
-    const followersAndFollowing = await Follower.findOne({user: req.userId});
+    // Consultar los followers y following
+    // const followersAndFollowing = await Follower.findOne({user: req.userId});
+    const blockedAndBlockedBy = [...user.blockedBy, ...user.usersBlocked];
+    const followersAndFollowing = await Follower
+    .findOne({
+      user: req.userId,
+      "followers.user": {$nin: blockedAndBlockedBy},
+      "following.user": {$nin: blockedAndBlockedBy}
+    })
+    .lean();
 
     return res.json({
       status: "success",
       data: {
         profile,
-        followers: followersAndFollowing.followers,
-        following: followersAndFollowing.following
+        followers: followersAndFollowing?.followers || [],
+        following: followersAndFollowing?.following || []
       }
     });
     
   } catch (error) {
     res.status(500).json({
       status: "failed",
-      message: `Internal server error: ${error.message}`
+      message: `Internal server error: ${error.message}. In path: "/me`
     })
   }
 });
@@ -506,14 +515,23 @@ router.get("/me/confirmation-email", authMiddleware, async (req, res) => {
 
 
 /*-----------------------------------*/
-// Consultar el perfil del un usuario
+// Consultar el perfil de un usuario
 /*-----------------------------------*/
 router.get("/user/:username", authMiddleware, async (req, res) => {
   try {
     const {username} = req.params;
 
     // Chequear si el usuario existe en la base de datos
-    const user = await User.findOne({username, isVerified: true});
+    // Filtrar al usuario si está bloqueado por o si el usuario lo tiene bloqueado
+    const user = await User
+    .findOne({
+      username,
+      blockedBy: {$nin: [req.userId]},
+      usersBlocked: {$nin: [req.userId]},
+      isVerified: true
+    })
+    .lean();
+    
     if(!user) {
       return res.status(404).json({
         status: "failed",
@@ -522,28 +540,60 @@ router.get("/user/:username", authMiddleware, async (req, res) => {
     }
     
     // Consultar el perfil del usuario
-    const profile = await Profile.findOne({user: user._id})
+    const profile = await Profile
+    .findOne({user: user._id})
     .populate({
       path: "user",
       select: "_id name username email avatar role"
+    })
+    .lean();
+    
+    // Consultar los bloqueos del usuario que hace la consulta
+    // y filtrarlos de los seguidos y seguidores del usuario consultado
+    const currentUser = await User.findById(req.userId).select("blockedBy usersBlocked").lean();
+    const blockedAndBlockedBy = [];
+
+    // Extraer las ids de los bloqueos del usuario que hace la consulta
+    // y convertirlas a string
+    currentUser.blockedBy.forEach(el => blockedAndBlockedBy.push(el.toString()));
+    currentUser.usersBlocked.forEach(el => blockedAndBlockedBy.push(el.toString()));
+
+    // consultar los seguidos y seguidores del usuario consultado
+    const followersAndFollowing = await Follower
+    .findOne({user: user._id})
+    .lean();
+
+    // Filtrar los bloqueos de los seguidos y seguidores
+    const followers = followersAndFollowing ? followersAndFollowing.followers : [];
+    const following = followersAndFollowing ? followersAndFollowing.following : [];
+    const filteredFollowers = [];
+    const filteredFollowing = [];
+    
+    followers.forEach(el => {
+      if(!blockedAndBlockedBy.includes(el.user.toString())) {
+        filteredFollowers.push(el)
+      }
     });
 
-    // Chequear los followers y following
-    const followersAndFollowing = await Follower.findOne({user: user._id});
+    following.forEach(el => {
+      if(!blockedAndBlockedBy.includes(el.user.toString())) {
+        filteredFollowing.push(el)
+      }
+    });
 
     return res.json({
       status: "success",
       data: {
         profile,
-        followers: followersAndFollowing.followers,
-        following: followersAndFollowing.following
+        followers: filteredFollowers,
+        following: filteredFollowing
       }
     });
     
   } catch (error) {
     res.status(500).json({
       status: "failed",
-      message: `Internal server error: ${error.message}`
+      message: `Internal server error: ${error.message}. In path: /user/:username`
     })
   }
 });
@@ -558,8 +608,15 @@ router.get("/:username/posts", authMiddleware, async (req, res) => {
     const amount = 2;
     const {username} = req.params;
 
-    // Chequear si el usuario existe
-    const user = await User.findOne({username});
+    // Chequear si el usuario existe y si no está bloqueado o bloqueó al usuario
+    const user = await User
+    .findOne({
+      username,
+      blockedBy: {$nin: [req.userId]},
+      usersBlocked: {$nin: [req.userId]}
+    })
+    .lean();
+
     if(!user) {
       return res.status(404).json({
         status: "failed",
@@ -568,7 +625,8 @@ router.get("/:username/posts", authMiddleware, async (req, res) => {
     }
 
     // Buscar los posts del usuario
-    const userPosts = await Post.find({user: user._id})
+    const userPosts = await Post
+    .find({user: user._id})
     .lean()
     .limit(amount)
     .skip(amount * (page - 1))
@@ -637,8 +695,14 @@ router.get("/followers/:username", authMiddleware, async (req, res) => {
   try {
     const {username} = req.params;
 
-    // Chequear si el usuario existe
-    const user = await User.findOne({username});
+    // Chequear si el usuario existe y si está bloqueado por o bloqueó al usuario
+    const user = await User
+    .findOne({
+      username,
+      blockedBy: {$nin: [req.userId]},
+      usersBlocked: {$nin: [req.userId]}
+    });
+
     if(!user) {
       return res.status(404).json({
         status: "failed",
@@ -646,18 +710,45 @@ router.get("/followers/:username", authMiddleware, async (req, res) => {
       })
     }
 
-    // Extraer la data de los followers y following del usuario
-    const userFollowers = await Follower.findOne({user: user._id})
+    // Consultar los bloqueos del usuario que hace la consulta
+    // y filtrarlos de los seguidos y seguidores del usuario consultado
+    const currentUser = await User.findById(req.userId).select("blockedBy usersBlocked").lean();
+    const blockedAndBlockedBy = [];
+
+    
+    // Extraer las ids de los bloqueos del usuario que hace la consulta
+    // y convertirlas a string
+    currentUser.blockedBy.forEach(el => blockedAndBlockedBy.push(el.toString()));
+    currentUser.usersBlocked.forEach(el => blockedAndBlockedBy.push(el.toString()));
+
+    // Consultar los seguidores del usuario
+    const userFollowers = await Follower
+    .findOne({user: user._id})
     .populate({
       path: "followers.user",
       select: "_id name username email avatar role status"
+    })
+    .lean();
+
+    // Filtrar los bloqueos de los seguidores
+    const followers = userFollowers ? userFollowers.followers : [];
+    const filteredFollowers = [];
+    
+    followers.forEach(el => {
+      if(!blockedAndBlockedBy.includes(el.user._id.toString())) {
+        filteredFollowers.push(el)
+      }
     });
 
-    userFollowers.following = undefined;
+    if(userFollowers) {
+      userFollowers.following = undefined;
+    }
 
     res.json({
       status: "success",
-      data: userFollowers
+      data: {
+        followers: filteredFollowers
+      }
     });
     
   } catch (error) {
@@ -676,8 +767,14 @@ router.get("/following/:username", authMiddleware, async (req, res) => {
   try {
     const {username} = req.params;
 
-    // Chequear si el usuario existe
-    const user = await User.findOne({username});
+    // Chequear si el usuario existe y si está bloqueado por o bloqueó al usuario
+    const user = await User
+    .findOne({
+      username,
+      blockedBy: {$nin: [req.userId]},
+      usersBlocked: {$nin: [req.userId]}
+    });
+
     if(!user) {
       return res.status(404).json({
         status: "failed",
@@ -685,18 +782,45 @@ router.get("/following/:username", authMiddleware, async (req, res) => {
       })
     }
 
-    // Extraer la data de los followers y following del usuario
-    const userFollowing = await Follower.findOne({user: user._id})
+    // Consultar los bloqueos del usuario que hace la consulta
+    // y filtrarlos de los seguidos y seguidores del usuario consultado
+    const currentUser = await User.findById(req.userId).select("blockedBy usersBlocked").lean();
+    const blockedAndBlockedBy = [];
+
+    // Extraer las ids de los bloqueos del usuario que hace la consulta
+    // y convertirlas a string
+    currentUser.blockedBy.forEach(el => blockedAndBlockedBy.push(el.toString()));
+    currentUser.usersBlocked.forEach(el => blockedAndBlockedBy.push(el.toString()));
+
+    // Consultar los seguidos del usuario consultado
+    const userFollowing = await Follower
+    .findOne({user: user._id})
     .populate({
       path: "following.user",
       select: "_id name username email avatar role status"
+    })
+    .lean();
+
+    // Filtrar los bloqueos de los seguidos
+    const following = userFollowing ? userFollowing.following : [];
+    const filteredFollowing = [];
+    
+    following.forEach(el => {
+      if(!blockedAndBlockedBy.includes(el.user._id.toString())) {
+        filteredFollowing.push(el)
+      }
     });
 
-    userFollowing.followers = undefined;
+    if(userFollowing) {
+      userFollowing.followers = undefined;
+    }
+
 
     res.json({
       status: "success",
-      data: userFollowing
+      data: {
+        following: filteredFollowing
+      }
     });
     
   } catch (error) {
@@ -812,6 +936,96 @@ router.get("/follow/:username", authMiddleware, async (req, res) => {
     res.status(500).json({
       status: "failed",
       message: `Internal server error: ${error.message}`
+    })
+  }
+});
+
+
+/*--------------------*/
+// Bloquear un usuario
+/*--------------------*/
+router.get("/block-user/:username", authMiddleware, async (req, res) => {
+  try {
+    const blockedUser = await User.findOneAndUpdate(
+      {username: req.params.username},
+      {blockedBy: {$push: req.userId}},
+      {new: true}
+    );
+
+    const user = await User.findOneAndUpdate(
+      {_id: req.userId},
+      {usersBlocked: {$push: req.userId}},
+      {new: true}
+    );
+
+    // Deshabilitar el chat con el usuario bloqueado (si lo tiene)
+    const chat = await Chat.findOneAndUpdate(
+      {$or: [
+        {$and: [{user: req.userId}, {messagesWith: blockedUser._id}]},
+        {$and: [{user: blockedUser._id}, {messagesWith: req.userId}]}
+      ]},
+      {status: "inactive", disabledBy: req.userId},
+      {new: true}
+    );
+
+    res.json({
+      status: "success",
+      data: {
+        blockedUser: {_id: blockedUser._id, username: blockedUser.username},
+        usersBlocked: {usersBlocked: user.usersBlocked},
+        chatBlocked: chat
+      }
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Error blocking user ${error.message}`
+    })
+  }
+});
+
+
+/*-----------------------*/
+// Desbloquear un usuario
+/*-----------------------*/
+router.get("/unblock-user/:username", authMiddleware, async (req, res) => {
+  try {
+    const unblockedUser = await User.findOneAndUpdate(
+      {username: req.params.username},
+      {blockedBy: {$pull: req.userId}},
+      {new: true}
+    );
+
+    const user = await User.findOneAndUpdate(
+      {_id: req.userId},
+      {usersBlocked: {$pull: req.userId}},
+      {new: true}
+    );
+
+    // Habilitar el chat con el usuario bloqueado (si lo tiene)
+    const chat = await Chat.findOneAndUpdate(
+      {$or: [
+        {$and: [{user: req.userId}, {messagesWith: blockedUser._id}]},
+        {$and: [{user: blockedUser._id}, {messagesWith: req.userId}]}
+      ]},
+      {status: "active", disabledBy: null},
+      {new: true}
+    );
+
+    res.json({
+      status: "success",
+      data: {
+        blockedUser: {_id: unblockedUser._id, username: unblockedUser.username},
+        usersBlocked: {usersBlocked: user.usersBlocked},
+        unblockedChat: chat
+      }
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: "failed",
+      message: `Error unblocking user ${error.message}`
     })
   }
 });

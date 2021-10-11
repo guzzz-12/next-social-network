@@ -57,6 +57,18 @@ const userSchema = new mongoose.Schema({
   expiredToken: {
     type: Date
   },
+  blockedBy: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }
+  ],
+  usersBlocked: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }
+  ],
   postsSubscribed: [String],
   status: {
     type: String,

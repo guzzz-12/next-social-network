@@ -80,6 +80,17 @@ router.post("/:postId", authMiddleware, async (req, res) => {
       })
     }
 
+    // Verificar si el usuario que comenta está bloqueado por el autor del post
+    const commentAuthor = await User.findById(req.userId).select("blockedBy").lean();
+    const commentAuthorBlockedBy = commentAuthor.blockedBy.map(el => el.toString());
+
+    if(commentAuthorBlockedBy.includes(post.user.toString())) {
+      return res.status(401).json({
+        status: "failed",
+        data: "You're not allowed to comment on this post"
+      })
+    }
+
     // Verificar si ya el usuario está suscrito al post
     const currentUsersSubscribed = post.followedBy.map(user => user.toString());
     const isSubscribed = currentUsersSubscribed.includes(req.userId.toString());
@@ -154,7 +165,12 @@ router.delete("/:commentId", authMiddleware, async (req, res) => {
   try {
     // Buscar el comentario a eliminar y verificar si existe
     const {commentId} = req.params;
-    const comment = await Comment.findById(commentId);
+    const comment = await Comment
+    .findById(commentId)
+    .populate({
+      path: "commentedPost",
+      select: "user"
+    });
 
     if(!comment) {
       return res.status(404).json({
@@ -163,8 +179,9 @@ router.delete("/:commentId", authMiddleware, async (req, res) => {
       })
     }
 
-    // Verificar si el comentario pertenece al usuario que lo intenta eliminar o si el usuario es admin
-    if(req.userRole !== "admin" && (comment.author.toString() !== req.userId.toString())) {
+    // Verificar si el comentario pertenece al usuario que lo intenta eliminar
+    // o si es el autor del post o si el usuario es admin
+    if(req.userRole !== "admin" && comment.author.toString() !== req.userId.toString() && comment.commentedPost.user.toString() !== req.userId.toString()) {
       return res.status(403).json({
         status: "failed",
         message: "You're not allowed to perform this task"

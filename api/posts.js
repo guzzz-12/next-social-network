@@ -150,20 +150,30 @@ router.patch("/:postId", authMiddleware, async (req, res) => {
 });
 
 
-/*-----------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------*/
 // Consultar todos los posts del usuario y de sus usuarios seguidos
-/*-----------------------------------------------------------------*/
+// filtrando los posts de los usuarios bloqueados por y que bloquearon al usuario
+/*-------------------------------------------------------------------------------*/
 router.get("/", authMiddleware, async (req, res) => {
   const page = +req.query.page;
   const amount = 3;
 
   try {
+    // Cosultar los bloqueos del usuario
+    const user = await User.findById(req.userId).select("blockedBy usersBlocked");
+    const blockedAndBlockedBy = [...user.blockedBy, ...user.usersBlocked];
+
     // Buscar los usuarios seguidos por el usuario
     const followingData = await Follower.findOne({user: req.userId});
     const followingUsers = followingData.following.map(el => el.user);
 
-    // Consultar los posts
-    const posts = await Post.find({user: {$in: [req.userId, ...followingUsers]}})
+    // Consultar los posts y filtrar los posts de los
+    // usuarios bloqueados y de los usuarios que bloquearon al usuario
+    const posts = await Post
+    .find({$and: [
+      {user: {$in: [req.userId, ...followingUsers]}},
+      {user: {$nin: blockedAndBlockedBy}}
+    ]})
     .lean()
     .limit(amount)
     .skip(amount * (page - 1))
@@ -217,8 +227,16 @@ router.get("/", authMiddleware, async (req, res) => {
 /*------------------*/
 router.get("/:postId", authMiddleware, async (req, res) => {
   try {
+    // Verificar si el autor del post bloqueó o está bloqueado
+    const user = await User.findById(req.userId).select("blockedBy usersBlocked");
+    const blockedAndBlockedBy = [...user.blockedBy, ...user.usersBlocked];
+
     // Buscar el post
-    const post = await Post.findById(req.params.postId)
+    const post = await Post
+    .findOne({
+      _id: req.params.postId,
+      user: {$nin: blockedAndBlockedBy}
+    })
     .lean()
     .populate({
       path: "user",

@@ -33,7 +33,7 @@ router.post("/", [
     const {email, password} = req.body;
 
     // Chequear si el usuario existe
-    const user = await User.findOne({email});
+    const user = await User.findOne({email}).lean()
     if(!user) {
       return res.status(404).json({
         status: "failed",
@@ -42,7 +42,10 @@ router.post("/", [
     }
 
     // Consultar el profile del usuario
-    const userProfile = await Profile.findOne({user: user._id}).populate("user", "-password");
+    const userProfile = await Profile
+    .findOne({user: user._id})
+    .populate("user", "-password -blockedBy -usersBlocked")
+    .lean();
 
     // Chequear la contraseña del usuario
     const isCorrectPassword = await bcrypt.compare(password, user.password);
