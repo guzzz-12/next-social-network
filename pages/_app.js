@@ -12,6 +12,7 @@ import "semantic-ui-css/semantic.min.css";
 import "../styles/styles.css";
 
 axios.defaults.baseURL = process.env.BASE_URL;
+axios.defaults.withCredentials = true;
 
 const MyApp = ({Component, pageProps}) => {
   return (
