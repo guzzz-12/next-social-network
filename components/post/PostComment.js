@@ -7,6 +7,7 @@ import CommentHistory from "./CommentHistory";
 import styles from "./postComment.module.css";
 
 const PostComment = ({comment, user, post, setComments, setCommentsCount, socket}) => {
+  const [isAuthor, setIsAuthor] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [text, setText] = useState("");
   const [editing, setEditing] = useState(false);
@@ -15,6 +16,17 @@ const PostComment = ({comment, user, post, setComments, setCommentsCount, socket
 
   const [deleting, setDeleting] = useState(null);
   const [error, setError] = useState(null);
+
+
+  /*-----------------------------------------*/
+  // Verificar si es el autor del comentario
+  /*-----------------------------------------*/
+  useEffect(() => {
+    if(user?._id === comment.author._id) {
+      setIsAuthor(true)
+    }
+  }, [comment, user]);
+
 
   /*-----------------------------------------------------*/
   // Cancelar la edición del comentario al presionar ESC
@@ -182,7 +194,7 @@ const PostComment = ({comment, user, post, setComments, setCommentsCount, socket
 
               <Comment.Actions style={{position: "absolute", top: 0, right: 0}}>
                 <Comment.Action>
-                  {user.role === "admin" || comment.author._id.toString() === user._id.toString() || post.user._id.toString() === user._id.toString() ?
+                  {user.role === "admin" || isAuthor || post.user._id === user._id ?
                     <Popup
                       on="click"
                       position="top right"
