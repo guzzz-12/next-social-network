@@ -32,7 +32,6 @@ const ProfilePage = (props) => {
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [postsError, setPostsError] = useState(null);
-  const [isAccountOwner, setIsAccountOwner] = useState(false);
 
   // State de la paginación
   const [loadMore, setLoadMore] = useState(false);
@@ -44,16 +43,6 @@ const ProfilePage = (props) => {
   const [activeTab, setActiveTab] = useState("profile");
   const [followers, setFollowers] = useState(props.followers);
   const [following, setFollowing] = useState(props.following);
-
-
-  /*-----------------------------------------------------*/
-  // Verificar si el perfil pertenece al usuario logueado
-  /*-----------------------------------------------------*/
-  useEffect(() => {
-    if(userContext.currentUser && profile) {
-      setIsAccountOwner(userContext.currentUser._id.toString() === profile.user._id.toString())
-    }
-  }, [userContext.currentUser, profile]);
 
 
   /*---------------------------*/
@@ -155,7 +144,6 @@ const ProfilePage = (props) => {
               tabClickHandler={tabClickHandler}
               followers={followers}
               following={following}
-              isAccountOwner={isAccountOwner}
             />
           </Grid.Column>
         </Grid.Row>
@@ -166,7 +154,6 @@ const ProfilePage = (props) => {
               <>
                 <ProfileHeader
                   profile={profile}
-                  isAccountOwner={isAccountOwner}
                   followers={followers}
                   following={following}
                   setFollowers={setFollowers}
@@ -241,7 +228,7 @@ export async function getServerSideProps(context) {
   
   try {
     // Verificar el token
-    jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Chequear si el email del usuario está verificado
     const isVerified = await checkVerification(token);
@@ -251,6 +238,16 @@ export async function getServerSideProps(context) {
       return {
         redirect: {
           destination: "/account-verification",
+          permanent: false
+        }
+      }
+    }
+
+    // Redirigir a profile si es el pefil del usuario autenticado
+    if(decoded.username === username) {
+      return {
+        redirect: {
+          destination: "/profile",
           permanent: false
         }
       }
