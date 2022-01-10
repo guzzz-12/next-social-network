@@ -57,7 +57,12 @@ router.post("/", [
     }
 
     // Generar el token de autenticación y setear el cookie
-    const token = jwt.sign({userId: user._id, userRole: user.role}, process.env.JWT_SECRET, {expiresIn: "1d"});
+    const token = jwt.sign(
+      {userId: user._id, userRole: user.role, username: user.username},
+      process.env.JWT_SECRET,
+      {expiresIn: "1d"}
+    );
+
     res.cookie("token", token, {maxAge: 24*3600*1000});
 
     res.json({

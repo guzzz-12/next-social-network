@@ -156,9 +156,12 @@ router.post("/", [
     await Follower.create({user: newUser._id});
 
     // Generar el token de autenticación y setear el cookie
-    const token = jwt.sign({userId: newUser._id, userRole: newUser.role}, process.env.JWT_SECRET, {
-      expiresIn: "1d"
-    });
+    const token = jwt.sign(
+      {userId: newUser._id, userRole: newUser.role, username: user.username},
+      process.env.JWT_SECRET,
+      {expiresIn: "1d"}
+    );
+
     res.cookie("token", token, {maxAge: 24*3600*1000});
     
     newUser.password = undefined;
