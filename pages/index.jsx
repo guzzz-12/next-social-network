@@ -117,52 +117,52 @@ const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
       <Head>
         <title>{title}</title>
       </Head>
-        <Visibility onUpdate={updateHandler}>
-          <Segment>
-            {/* Input para crear post */}
-            {userContext.currentUser &&
-              <CreatePost user={userContext.currentUser} setPosts={setPostsData} />
-            }
-            
-            {/* Lista de todos los posts disponibles */}
-            {postsData.length > 0 && postsData.map(post => {
-              return (
-                <CardPost
-                  key={post._id}
-                  post={post}
-                  user={userContext.currentUser}
-                  setPosts={setPostsData}
-                  setShowToastr={setShowToastr}
-                  socket={socket}
-                />
-              )
-            })}
+      <Visibility onUpdate={updateHandler}>
+        <Segment>
+          {/* Input para crear post */}
+          {userContext.currentUser &&
+            <CreatePost user={userContext.currentUser} setPosts={setPostsData} />
+          }
+          
+          {/* Lista de todos los posts disponibles */}
+          {postsData.length > 0 && postsData.map(post => {
+            return (
+              <CardPost
+                key={post._id}
+                post={post}
+                user={userContext.currentUser}
+                setPosts={setPostsData}
+                setShowToastr={setShowToastr}
+                socket={socket}
+              />
+            )
+          })}
 
-            {/* Mostrar mensaje si no hay posts para mostrar */}
-            {postsData.length === 0 &&
-              <NoPosts />
-            }
+          {/* Mostrar mensaje si no hay posts para mostrar */}
+          {postsData.length === 0 &&
+            <NoPosts />
+          }
 
+        </Segment>
+
+        {/* Loader para indicar la carga de los siguientes posts */}
+        {loadingMore ?
+          <div style={{width: "100%", minHeight: "50px", marginBottom: "1rem"}}>
+            <Loader active inline="centered">Loading...</Loader>
+          </div>
+          :
+          null
+        }
+
+        {/* Mensaje de no más posts disponibles */}
+        {isLastPage ?
+          <Segment textAlign="center" vertical>
+            No more posts available
           </Segment>
-
-          {/* Loader para indicar la carga de los siguientes posts */}
-          {loadingMore ?
-            <div style={{width: "100%", minHeight: "50px", marginBottom: "1rem"}}>
-              <Loader active inline="centered">Loading...</Loader>
-            </div>
-            :
-            null
-          }
-
-          {/* Mensaje de no más posts disponibles */}
-          {isLastPage ?
-            <Segment textAlign="center" vertical>
-              No more posts available
-            </Segment>
-            :
-            null
-          }
-        </Visibility>
+          :
+          null
+        }
+      </Visibility>
     </>
   );
 }
