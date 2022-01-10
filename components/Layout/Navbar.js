@@ -13,7 +13,7 @@ const Navbar = () => {
   }, [router.pathname]);
 
   return (
-    <Menu fluid borderless>
+    <Menu className="main-navbar" fluid borderless>
       <Container text>
         <Link href="/login">
           <Menu.Item
