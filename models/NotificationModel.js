@@ -32,4 +32,6 @@ const notificationSchema = new mongoose.Schema({
   }
 }, {timestamps: true});
 
+notificationSchema.index({userToNotify: 1});
+
 module.exports = mongoose.models.Notification || mongoose.model("Notification", notificationSchema);

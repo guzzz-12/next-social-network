@@ -17,4 +17,6 @@ const profileSchema = new mongoose.Schema({
   }
 }, {timestamps: true});
 
+profileSchema.index({user: 1});
+
 module.exports = mongoose.models.Profile || mongoose.model("Profile", profileSchema);

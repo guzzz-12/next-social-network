@@ -51,7 +51,7 @@ router.patch("/:postId", authMiddleware, async (req, res) => {
 
     // Verificar si el like ya existe
     const like = await Like
-    .findOne({author: authorId, post: postId})
+    .findOne({post: postId, author: authorId})
     .populate({
       path: "author",
       select: "author._id"

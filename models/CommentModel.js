@@ -30,4 +30,6 @@ const commentSchema = new mongoose.Schema({
   }
 }, {timestamps: true});
 
+commentSchema.index({commentedPost: 1});
+
 module.exports = mongoose.models.Comment || mongoose.model("Comment", commentSchema);

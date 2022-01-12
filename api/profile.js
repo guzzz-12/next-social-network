@@ -419,8 +419,6 @@ router.patch("/me/update-email", authMiddleware, [
   try {
     const {newEmail, password} = req.body;
 
-    console.log({newEmail})
-
     // Verificar si el email está disponible
     const userExists = await User.exists({email: newEmail});
     if(userExists) {

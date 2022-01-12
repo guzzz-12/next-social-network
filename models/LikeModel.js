@@ -18,4 +18,6 @@ const likeSchema = new mongoose.Schema({
   }
 }, {timestamps: true});
 
+likeSchema.index({post: 1, author: 1});
+
 module.exports = mongoose.models.Like || mongoose.model("Like", likeSchema);

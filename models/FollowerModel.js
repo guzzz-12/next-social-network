@@ -20,4 +20,6 @@ const followerSchema = new mongoose.Schema({
   }]
 });
 
+followerSchema.index({user: 1});
+
 module.exports = mongoose.models.Follower || mongoose.model("Follower", followerSchema);

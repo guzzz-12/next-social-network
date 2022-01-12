@@ -77,4 +77,6 @@ const userSchema = new mongoose.Schema({
   }
 }, {timestamps: true});
 
+userSchema.index({username: 1, blockedBy: 1, usersBlocked: 1});
+
 module.exports = mongoose.models.User || mongoose.model("User", userSchema);

@@ -39,4 +39,6 @@ const chatSchema = new mongoose.Schema({
   disabledBy: {}
 }, {timestamps: true});
 
+chatSchema.index({user: 1, messagesWith: 1});
+
 module.exports = mongoose.models.Chat || mongoose.model("Chat", chatSchema);
