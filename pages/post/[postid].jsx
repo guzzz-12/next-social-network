@@ -243,6 +243,10 @@ const PostPage = (props) => {
         }
       });
 
+      if (operationType === "unsubscribe") {
+        socket.emit("unsubscribeUserFromPost", {postId, userId: user._id});
+      };
+
       const successMsg = operationType === "subscribe" ? "Subscribed successfully to this post" : "You won't receive future notifications from this post"
 
       toast.dark(successMsg);
