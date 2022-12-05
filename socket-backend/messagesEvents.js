@@ -1,8 +1,11 @@
+const {connectedUsersState} = require("./connectedUsersState");
 
 // Enviar el mensaje recibido al usuario recipiente
 const onNewMessage = (io, data) => {
+  const currentUsers = connectedUsersState.getUsers();
   const {newMsg, chatId} = data;
-  const recipient = global.users.find(el => el.userId.toString() === newMsg.recipient._id.toString());
+
+  const recipient = currentUsers.find(el => el.userId.toString() === newMsg.recipient._id.toString());
   if(recipient) {
     io.to(recipient.socketId).emit("newMessageReceived", {newMsg, chatId});
   }
@@ -10,9 +13,10 @@ const onNewMessage = (io, data) => {
 
 // Actualizar el contador de mensajes no leídos
 const onUpdateNewMessagesCounter = (io, data) => {
+  const currentUsers = connectedUsersState.getUsers();
   const {chatId, recipientId, msg} = data;
-  console.log({onUpdateNewMessagesCounter: {chatId, recipientId}})
-  const recipient = global.users.find(el => el.userId.toString() === recipientId.toString());
+  
+  const recipient = currentUsers.find(el => el.userId.toString() === recipientId.toString());
   if(recipient) {
     io.to(recipient.socketId).emit("newMessagesCounterUpdated", {chatId, msg});
   }
@@ -20,7 +24,9 @@ const onUpdateNewMessagesCounter = (io, data) => {
 
 // Enviar el mensaje eliminado al usuario recipiente
 const onDeletedMessage = (io, msg) => {
-  const recipient = global.users.find(el => el.userId.toString() === msg.recipient._id.toString());
+  const currentUsers = connectedUsersState.getUsers();
+
+  const recipient = currentUsers.find(el => el.userId.toString() === msg.recipient._id.toString());
   if(recipient) {
     io.to(recipient.socketId).emit("messageDeleted", msg);
   }
@@ -28,9 +34,10 @@ const onDeletedMessage = (io, msg) => {
 
 // Notificar al remitente que sus mensajes fueron leídos por el recipiente
 const onMessagesRead = (io, data) => {
+  const currentUsers = connectedUsersState.getUsers();
   const {senderId, seenById, updatedMessages} = data;
 
-  const recipient = global.users.find(el => el.userId.toString() === senderId.toString());
+  const recipient = currentUsers.find(el => el.userId.toString() === senderId.toString());
   
   if(recipient && recipient !== seenById.toString()) {
     io.to(recipient.socketId).emit("readMessages", updatedMessages);
