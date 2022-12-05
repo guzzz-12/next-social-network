@@ -1,3 +1,4 @@
+const {connectedUsersState} = require("./connectedUsersState");
 const {subscribeUserToPost, unsubscribeUserFromPost} = require("../utilsServer/socketActions");
 
 
@@ -46,10 +47,11 @@ const commentAdded = (io, data, socketId) => {
 const commentEdited = (io, data) => {
   const {comment} = data;
   const postId = comment.commentedPost.toString();
-  const commentAuthor = comment.author.toString();
+  const commentAuthor = comment.author._id.toString();
   
   // Buscar los usuarios suscritos al post y filtrar al autor del comentario
-  const posts = global.postsAndSubscribedUsers.filter(item => item.postId === postId && item.user.userId !== commentAuthor);
+  const postsAndSubscribedUsers = connectedUsersState.getPostsAndSubscribedUsers();
+  const posts = postsAndSubscribedUsers.filter(item => item.postId === postId && item.user.userId !== commentAuthor);
 
   // Extraer los socket id de los usuarios suscritos al post y emitirles el evento de comentario editado
   const usersSockets = posts.map(el => el.user.socketId);
@@ -65,16 +67,17 @@ const commentEdited = (io, data) => {
 const commentDeleted = (io, data) => {  
   const {comment} = data;
   const commentId = comment._id.toString();
-  const postId = comment.commentedPost.toString();
+  const postId = comment.commentedPost._id.toString();
   const commentAuthor = comment.author.toString();
   
   // Buscar los usuarios suscritos al post y filtrar al autor del comentario
-  const posts = global.postsAndSubscribedUsers.filter(item => item.postId === postId && item.user.userId !== commentAuthor);
+  const postsAndSubscribedUsers = connectedUsersState.getPostsAndSubscribedUsers();
+  const posts = postsAndSubscribedUsers.filter(item => item.postId === postId && item.user.userId !== commentAuthor);
 
   // Extraer los socket id de los usuarios suscritos al post y emitirles el evento de comentario eliminado
   const usersSockets = posts.map(el => el.user.socketId);
-  usersSockets.forEach(item => {
-    io.to(item).emit("deletedComment", commentId);
+  usersSockets.forEach(socketId => {
+    io.to(socketId).emit("deletedComment", commentId);
   })
 }
 
