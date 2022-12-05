@@ -198,9 +198,12 @@ const CardPost = ({user, post, setPosts, noPadding, socket}) => {
         }
       });
 
+      if (operationType === "unsubscribe") {
+        socket.emit("unsubscribeUserFromPost", {postId, userId: user._id});
+      };
+
       if(!isSubscribed) {
         updatePostsSubscribed(postId);
-
       } else {
         removePostSubscribed(postId);
       }
