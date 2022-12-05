@@ -23,7 +23,7 @@ const commentsRoutes = require("./api/comments");
 const likesRoutes = require("./api/likes");
 const resetPassword = require("./api/reset-password");
 const errorsHandler = require("./middleware/errorsHandler");
-const {addUser, removeUser, updateUserSocket} = require("./utilsServer/socketActions");
+const {removeUser, updateUserSocket} = require("./utilsServer/socketActions");
 const {onNewMessage, onUpdateNewMessagesCounter, onDeletedMessage, onMessagesRead} = require("./socket-backend/messagesEvents");
 const {chatCreated, enabledChat, disabledChat} = require("./socket-backend/chatEvents");
 const {notificationReceived} = require("./socket-backend/notificationsEvents");
@@ -45,34 +45,12 @@ cloudinary.config({
 /*---------------------*/
 sendgrid.setApiKey(process.env.SENDGRID_SECRET);
 
-
-/*------------------------------------------------------------*/
-// Variables globales para almacenar los usuarios de Socket.io
-/*------------------------------------------------------------*/
-global.users = [];
-global.postsAndSubscribedUsers = [
-  {
-    postId: null,
-    user: {
-      userId: null,
-      socketId: null
-    }
-  }
-];
-
 /*-----------------------*/
 // Inicializar socket.io
 /*-----------------------*/
 io.on("connection", (socket) => {
-  // Emitir los usuarios actualmente conectados a la app
-  socket.on("join", (data) => {
-    const users = addUser(data.userId, socket.id);
-    io.emit("onlineUsers", users);
-  });
-
   // Actualizar el usuario
   socket.on("updateUser", (data) => {
-    console.log({UserUpdated: {userId: data.userId, socketId: socket.id}});
     const users = updateUserSocket(data.userId, socket.id);
     io.emit("updatedOnlineUsers", users);
   });  

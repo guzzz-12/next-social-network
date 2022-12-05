@@ -20,49 +20,6 @@ const connectedUsersState = (function () {
    */
   const getPostsAndSubscribedUsers = () => {
     return postsAndSubscribedUsers;
-  }
-
-  /**
-   * Agrega un usuario al array de usuarios conectados
-   * y devuelve el array actualizado.
-   * @param {string} userId ID del usuario.
-   * @param {string} socketId ID del socket del usuario.
-   * @returns {{userId: string, socketId: string}[]} Array con la data de los usuarios conectados.
-   */
-  const addUser = (userId, socketId) => {
-    // Data del usuario conectado
-    const userData = {userId, socketId};
-
-    console.log({userData});
-
-    // Verificar si ya el usuario está agregado con el mismo socket especificado
-    const isSocketAlreadyAdded = !!users.find(user => {
-      (user.userId === userId) && (user.socketId === socketId);
-    });
-
-    // Verificar si ya el usuario está agregado pero con otro socket
-    const userIndex = users.findIndex(user => user.userId === userId);
-
-    // Si ya el usuario está agregado con el mismo socket,
-    // retornar el array sin modificar
-    if(isSocketAlreadyAdded) {
-      return users;
-    }
-
-    // Si ya el usuario está agregado pero con otro socket, actualizar la data
-    // del usuario con el nuevo socket y retornar el array actualizado
-    if(userIndex !== -1) {
-      users.splice(userIndex, 1, userData);
-      return users;
-    }
-
-    // Agregar el usuario al array de usuarios
-    users.push(userData);
-
-    console.log({addedUser: userData});
-
-    // Retornar el array de usuarios actualizado
-    return users;
   };
 
   /**
@@ -157,7 +114,6 @@ const connectedUsersState = (function () {
   return {
     getUsers,
     getPostsAndSubscribedUsers,
-    addUser,
     removeUserById,
     removeUserBySocketId,
     updateUserSocket,
