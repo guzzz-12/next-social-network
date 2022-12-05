@@ -10,6 +10,9 @@
   },
   "author": "Jesús Eduardo",
   "license": "ISC",
+  "engines": {
+    "node": "^16.14.2"
+  },
   "dependencies": {
     "@artsy/fresnel": "^1.4.0",
     "@sendgrid/mail": "^7.4.4",
