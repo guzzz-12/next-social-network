@@ -1,9 +1,11 @@
 const Notification = require("../models/NotificationModel");
 const Post = require("../models/PostModel");
+const {connectedUsersState} = require("./connectedUsersState");
 
 // Notificar a todos los seguidores de un post al agregar un nuevo comentario
 const notifyToPostFollowers = async (io, data) => {
   const {userNotifierId, postId, commentId, commentText} = data;
+  const currentUsers = connectedUsersState.getUsers();
 
   // Buscar los usuarios seguidores del post comentado
   const {followedBy} = await Post.findById(postId).select("followedBy");
@@ -13,7 +15,7 @@ const notifyToPostFollowers = async (io, data) => {
   
   // Buscar los socketIds de los usuarios suscritos al post
   const usersSocketsIds = [];
-  global.users.forEach(item => {
+  currentUsers.forEach(item => {
     if(usersToNotifyIds.includes(item.userId.toString())) {
       usersSocketsIds.push(item.socketId)
     }
