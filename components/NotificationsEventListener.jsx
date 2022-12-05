@@ -1,4 +1,4 @@
-import {useEffect, useContext, useRef, useState} from "react";
+import {useEffect, useContext, useState} from "react";
 import {useRouter} from "next/router";
 import {toast} from "react-toastify";
 import {SocketContext} from "../context/SocketProvider";
@@ -53,50 +53,31 @@ const NotificationsEventListener = () => {
       )
     }
   }, [showNewMessagePopup, newIncomingMsg]);
-
   
-  /*---------------------------------------------------------------------------*/
-  // Actualizar el contador de notificaciones al recibir una nueva notificación
-  /*---------------------------------------------------------------------------*/
-  const unreadNotificationsRef = useRef(() => {
-    return socket.on("receivedNotification", () => {
-      console.log("receivedNotification")
-      updateUnreadNotifications()
-    });
-  });
-
-  /*--------------------------------------------*/
-  // Actualizar el contador de mensajes sin leer
-  /*--------------------------------------------*/
-  const unreadMsgsRef = useRef(() => {
-    return socket.on("newMessagesCounterUpdated", ({msg}) => {
-      // Incrementar el contador de mensajes en el sidebar
-      updateUnreadMessages();
-      setNewIncomingMsg(msg);
-    })
-  });
-
-
-  // Actualizar el contador de notificaciones al recibir
-  // notificaciones de comentarios en posts suscritos
-  const commentNotificationOnSubscribedPost = useRef(() => {
-    return socket.on("commentNotificationToPostFollowers", () => {
-      console.log("commentNotificationToPostFollowers");
-      updateUnreadNotifications();
-    })
-  });
-
 
   /*------------------------------------------------*/
   // Inicializar los listeners al entrar a la página
   /*------------------------------------------------*/
   useEffect(() => {
-    unreadMsgsRef.current();
-    unreadNotificationsRef.current();
-    commentNotificationOnSubscribedPost.current()
+    // Actualizar el contador de mensajes sin leer
+    socket.on("newMessagesCounterUpdated", ({msg}) => {
+      updateUnreadMessages();
+      setNewIncomingMsg(msg);
+    });
+    
+    // Actualizar el contador de notificaciones al recibir una nueva notificación
+    socket.on("receivedNotification", () => {
+      updateUnreadNotifications();
+    });
+    
+    // Actualizar el contador de notificaciones al recibir
+    // notificaciones de comentarios en posts suscritos
+    socket.on("commentNotificationToPostFollowers", () => {
+      updateUnreadNotifications();
+    });
   }, []);
 
   return null;
 }
 
-export default NotificationsEventListener
+export default NotificationsEventListener;
