@@ -1,5 +1,5 @@
-import {useContext, useEffect} from "react";
-import {List, Image, Popup, Header, Button, Icon} from "semantic-ui-react";
+import {useContext} from "react";
+import {List, Image, Popup, Header, Button} from "semantic-ui-react";
 import moment from "moment";
 import OnlineIndicator from "./OnlineIndicator";
 import {SocketContext} from "../../context/SocketProvider";
@@ -18,8 +18,6 @@ const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disabl
 
   // Verificar si el otro participante del chat seleccionado está online
   const isOnline = onlineUsers.find(el => el.userId.toString() === item.user._id.toString() || el.userId.toString() === item.messagesWith._id.toString());
-
-  // console.log({onlineUsers, isOnline});
 
   return (
     <List.Item
@@ -40,18 +38,20 @@ const ChatItem = ({item, selectedChat, currentUser, chatItemClickHandler, disabl
           on="click"
           position="top right"
           trigger={
-            <Icon
+            <Button
               style={{
                 position: "absolute",
                 top: "5px",
-                right: 0,
+                right: "5px",
+                padding: "3px",
                 cursor: disablingChat ? "default" : "pointer"
               }}
+              icon="chevron down"
               disabled={disablingChat}
-              name="chevron down"
               size="small"
-              color="grey"
               floated="right"
+              color="transparent"
+              onClick={(e) => e.stopPropagation()}
             />
           }
         >
