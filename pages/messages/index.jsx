@@ -16,6 +16,7 @@ import {useWindowWidth} from "../../utils/customHooks";
 
 import useMessagesCounter from "../../hooks/useMessagesCounter";
 import useSeenMessages from "../../hooks/useSeenMessages";
+import useMessageDeleted from "../../hooks/useMessageDeleted";
 
 
 const MessagesPage = (props) => {
@@ -84,19 +85,10 @@ const MessagesPage = (props) => {
   useSeenMessages(setSelectedChatMessages, socket);
 
 
-  /*------------------------------*/
-  // Listener de mensaje eliminado
-  /*------------------------------*/
-  const messageDeletedRef = useRef(() => {
-    return socket.on("messageDeleted", (data) => {
-      setSelectedChatMessages(prev => {
-        const updatedMsgs = [...prev];
-        const msgIndex = updatedMsgs.findIndex(el => el._id.toString() === data._id.toString());
-        updatedMsgs.splice(msgIndex, 1, data);
-        return updatedMsgs;
-      })
-    });
-  });
+  /*------------------------------------*/
+  // Listener de los mensajes eliminados
+  /*------------------------------------*/
+  useMessageDeleted(setSelectedChatMessages, socket);
 
 
   /*--------------------------------*/
@@ -187,8 +179,6 @@ const MessagesPage = (props) => {
           }
         }
       });
-      
-      messageDeletedRef.current();
     }
 
     // Reiniciar el listener de nuevo mensaje recibido al seleccionar otro chat
