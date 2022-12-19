@@ -1,4 +1,4 @@
-import {useState, useContext, useEffect, useRef} from "react";
+import {useState, useContext, useEffect, useRef, useCallback} from "react";
 import {useRouter} from "next/router";
 import {Segment, Header, Sidebar, Button, Icon, Form, TextArea, Comment, Ref} from "semantic-ui-react";
 import axios from "axios";
@@ -17,6 +17,7 @@ import {useWindowWidth} from "../../utils/customHooks";
 import useMessagesCounter from "../../hooks/useMessagesCounter";
 import useSeenMessages from "../../hooks/useSeenMessages";
 import useMessageDeleted from "../../hooks/useMessageDeleted";
+import useChatDisabled from "../../hooks/useChatDisabled";
 
 
 const MessagesPage = (props) => {
@@ -56,12 +57,35 @@ const MessagesPage = (props) => {
 
   const windowWidth = useWindowWidth();
 
+
+  /*--------------------------------------------------------------------------*/
+  // Seleccionar el chat y reinicializar el state al clickear un item del chat
+  /*--------------------------------------------------------------------------*/
+  const chatItemClickHandler = useCallback((item) => {
+    setCurrentPage(1);
+    setSelectedChatMessages([]);
+    setLoadMore(true);
+    setLoadingMore(true);
+    setEndResults(false);
+    setInitialMessagesLoad(true);
+    setLastLoadedMsg(null);
+
+    setSelectedChat(item);
+    setChats(prev => {
+      const index = prev.findIndex(el => el._id.toString() === item._id.toString());
+      const updated = [...prev];
+      updated.splice(index, 1, {...prev[index], unreadMessages: 0});
+      return updated;
+    });
+  }, []);
+  
+
   /*-------------------------------------------------------------*/
   // Seleccionar el primer chat al entrar a la página de mensajes
   /*-------------------------------------------------------------*/
   useEffect(() => {
     if(props.chats.length > 0) {
-      chatItemClickHandler.current(props.chats[0])
+      chatItemClickHandler(props.chats[0])
     }
   }, [props.chats]);
 
@@ -94,25 +118,7 @@ const MessagesPage = (props) => {
   /*--------------------------------*/
   // Listener de chat deshabilitado
   /*--------------------------------*/
-  const chatDisabledRef = useRef(() => {
-    return socket.on("chatDisabled", (data) => {
-      const chatId = data._id.toString();
-      const selectedChatId = selectedChat._id;
-
-      // Si el chat seleccionado fue deshabilitado, actualizarlo
-      if(chatId === selectedChatId?.toString()) {
-        chatItemClickHandler.current(data);
-      }
-
-      // Actualizar el status del chat en la lista de chats
-      setChats(prev => {
-        const updatedChats = [...prev];
-        const chatIndex = updatedChats.findIndex(el => el._id.toString() === chatId);
-        updatedChats.splice(chatIndex, 1, data);
-        return updatedChats;
-      })
-    });
-  });
+  useChatDisabled(setChats, socket, chatItemClickHandler, selectedChat);
 
 
   /*----------------------------*/
@@ -188,7 +194,6 @@ const MessagesPage = (props) => {
   }, [selectedChat]);
 
   useEffect(() => {
-    chatDisabledRef.current();
     chatEnabledRef.current();
     newChatCreatedRef.current();
   }, []);
@@ -359,26 +364,6 @@ const MessagesPage = (props) => {
 
   }, [selectedChat, loadMore]);
 
-  /*--------------------------------------------------------------------------*/
-  // Seleccionar el chat y reinicializar el state al clickear un item del chat
-  /*--------------------------------------------------------------------------*/
-  const chatItemClickHandler = useRef((item) => {
-    setCurrentPage(1);
-    setSelectedChatMessages([]);
-    setLoadMore(true);
-    setLoadingMore(true);
-    setEndResults(false);
-    setInitialMessagesLoad(true);
-    setLastLoadedMsg(null);
-
-    setSelectedChat(item);
-    setChats(prev => {
-      const index = prev.findIndex(el => el._id.toString() === item._id.toString());
-      const updated = [...prev];
-      updated.splice(index, 1, {...prev[index], unreadMessages: 0});
-      return updated;
-    });
-  });
 
   /*--------------------*/
   // Crear el nuevo chat
@@ -525,7 +510,7 @@ const MessagesPage = (props) => {
             selectedChat={selectedChat}
             disablingChat={disablingChat}
             disableChatHandler={disableChatHandler}
-            chatItemClickHandler={(item) => chatItemClickHandler.current(item)}
+            chatItemClickHandler={(item) => chatItemClickHandler(item)}
           />
         }
 
@@ -550,7 +535,7 @@ const MessagesPage = (props) => {
                 selectedChat={selectedChat}
                 disablingChat={disablingChat}
                 disableChatHandler={disableChatHandler}
-                chatItemClickHandler={(item) => chatItemClickHandler.current(item)}
+                chatItemClickHandler={(item) => chatItemClickHandler(item)}
                 setOpenChatsSidebar={setOpenChatsSidebar}
               />
             </Sidebar>
