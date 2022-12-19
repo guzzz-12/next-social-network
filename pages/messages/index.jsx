@@ -13,7 +13,9 @@ import styles from "./messages.module.css";
 import ChatsList from "../../components/messages/ChatsList";
 import {checkVerification} from "../../utilsServer/verificationStatus";
 import {useWindowWidth} from "../../utils/customHooks";
+
 import useMessagesCounter from "../../hooks/useMessagesCounter";
+import useSeenMessages from "../../hooks/useSeenMessages";
 
 
 const MessagesPage = (props) => {
@@ -76,23 +78,10 @@ const MessagesPage = (props) => {
   useMessagesCounter(setChats)
 
 
-  /*--------------------------------*/
-  // Listener de los mensajes leídos
-  /*--------------------------------*/
-  const messagesReadRef = useRef(() => {
-    return socket.on("readMessages", (update) => {
-      setSelectedChatMessages(prev => {
-        const currentMessages = [...prev];
-
-        update.forEach(updatedItem => {
-          const index = currentMessages.findIndex(el => el._id.toString() === updatedItem._id.toString());
-          currentMessages.splice(index, 1, updatedItem);
-        });
-
-        return currentMessages;
-      })
-    });
-  });
+  /*-----------------------------------------------------------*/
+  // Listener de los mensajes leídos (Cambiar el status a visto)
+  /*-----------------------------------------------------------*/
+  useSeenMessages(setSelectedChatMessages, socket);
 
 
   /*------------------------------*/
@@ -199,7 +188,6 @@ const MessagesPage = (props) => {
         }
       });
       
-      messagesReadRef.current();
       messageDeletedRef.current();
     }
 
