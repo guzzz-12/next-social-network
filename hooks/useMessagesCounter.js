@@ -1,14 +1,11 @@
-import {useEffect, useContext} from "react";
-import {SocketContext} from "../context/SocketProvider";
+import {useEffect} from "react";
 
 /**
   * Custom hook para actualizar el contador de mensajes sin leer
   * en el item del chat al que pertenece el mensaje recibido
   * y poner el item de primero en la lista.
   */
-const UseMessagesCounter = (setChats) => {
-  const {socket} = useContext(SocketContext);
-  
+const UseMessagesCounter = (setChats, socket) => {  
   useEffect(() => {
     socket.on("newMessagesCounterUpdated", ({chatId}) => {
       setChats(prev => {

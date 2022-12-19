@@ -75,7 +75,7 @@ const MessagesPage = (props) => {
   /*-----------------------------------------------------------*/
   // Listener del contador de mensajes nuevos del item del chat
   /*-----------------------------------------------------------*/
-  useMessagesCounter(setChats)
+  useMessagesCounter(setChats, socket);
 
 
   /*-----------------------------------------------------------*/
