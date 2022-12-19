@@ -13,6 +13,7 @@ import styles from "./messages.module.css";
 import ChatsList from "../../components/messages/ChatsList";
 import {checkVerification} from "../../utilsServer/verificationStatus";
 import {useWindowWidth} from "../../utils/customHooks";
+import useMessagesCounter from "../../hooks/useMessagesCounter";
 
 
 const MessagesPage = (props) => {
@@ -72,20 +73,7 @@ const MessagesPage = (props) => {
   /*-----------------------------------------------------------*/
   // Listener del contador de mensajes nuevos del item del chat
   /*-----------------------------------------------------------*/
-  const newMessagesCounterRef = useRef(() => {
-    return socket.on("newMessagesCounterUpdated", ({chatId}) => {
-      // Actualizar el contador de mensajes sin leer del chat al que pertenece el mensaje recibido
-      // y poner el item del chat de primero en la lista
-      setChats(prev => {
-        const current = [...prev];
-        const index = current.findIndex(el => el._id.toString() === chatId.toString());
-        const unreadMessages = current[index].unreadMessages || 0;
-        const updatedChat = {...current[index], unreadMessages: unreadMessages + 1};
-        current.splice(index, 1);
-        return [updatedChat, ...current];
-      });
-    })
-  });
+  useMessagesCounter(setChats)
 
 
   /*--------------------------------*/
@@ -222,7 +210,6 @@ const MessagesPage = (props) => {
   }, [selectedChat]);
 
   useEffect(() => {
-    newMessagesCounterRef.current();
     chatDisabledRef.current();
     chatEnabledRef.current();
     newChatCreatedRef.current();
