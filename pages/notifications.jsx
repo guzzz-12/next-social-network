@@ -1,4 +1,5 @@
 import {Fragment, useState, useEffect, useContext, useRef} from "react";
+import Head from "next/head";
 import {Container, Feed, Segment, Visibility, Header, Icon, Message, Divider, Loader} from "semantic-ui-react";
 import axios from "axios";
 import jwt from "jsonwebtoken";
@@ -10,6 +11,8 @@ import FollowerNotification from "../components/notifications/FollowerNotificati
 import LikeNotification from "../components/notifications/LikeNotification";
 import {NotificationsContext} from "../context/NotificationsContext";
 import {UserContext} from "../context/UserContext";
+import useUpdateTitleNotifications from "../hooks/useUpdateTitleNotifications";
+import useInitializeNotificationCounters from "../hooks/useInitializeNotificationCounters";
 import {checkVerification} from "../utilsServer/verificationStatus";
 
 // Token de cancelación de requests de axios
@@ -29,10 +32,17 @@ const NotificationsPage = (props) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [isLastPage, setIsLastPage] = useState(false);
 
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState(props.error);
+  const [_loading, setLoading] = useState(true);
+  const [_errorMsg, setErrorMsg] = useState(props.error);
 
   const [deletingNotif, setDeletingNotif] = useState("");
+
+  // Actualizar el title
+  const updatedTitle = useUpdateTitleNotifications("Next Social Network | Notifications");
+
+  // Mostrar el número de mensajes sin leer y de notificaciones
+  // al entrar a la app o al actualizar las páginas.
+  useInitializeNotificationCounters(props.unreadMessages, 0);
 
 
   /*-----------------------------------------------------------------------*/
@@ -183,6 +193,10 @@ const NotificationsPage = (props) => {
 
   return (
     <Container style={{marginTop: "1rem"}}>
+      <Head>
+        <title>{updatedTitle}</title>
+      </Head>
+
       <Segment style={{minHeight: "85vh"}}>
         <Header style={{marginTop: "10px"}} as="h3" textAlign="center">
           <Icon
@@ -303,9 +317,19 @@ export async function getServerSideProps(context) {
       },
     });
 
+    // Consultar si hay mensajes sin leer
+    const res2 = await axios({
+      method: "GET",
+      url: `${process.env.BASE_URL}/api/chats/unread-messages`,
+      headers: {
+        Cookie: `token=${token}`
+      }
+    });
+
     return {
       props: {
-        notifications: res.data.data
+        notifications: res.data.data,
+        unreadMessages: res2.data.data
       }
     }
     

@@ -9,30 +9,36 @@ import {NoPosts} from "../components/Layout/NoData";
 import CreatePost from "../components/post/CreatePost";
 import CardPost from "../components/post/CardPost";
 import {UserContext} from "../context/UserContext";
-import {UnreadMessagesContext} from "../context/UnreadMessagesContext";
-import {NotificationsContext} from "../context/NotificationsContext";
 import {SocketContext} from "../context/SocketProvider";
 import {checkVerification} from "../utilsServer/verificationStatus";
+import useUpdateTitleNotifications from "../hooks/useUpdateTitleNotifications";
+import useInitializeNotificationCounters from "../hooks/useInitializeNotificationCounters";
 
 // Token de cancelación de requests de axios
 const CancelToken = axios.CancelToken;
 
 const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
   const userContext = useContext(UserContext);
-  const {initializeUnreadMessages} = useContext(UnreadMessagesContext);
-  const {initializeUnreadNotifications} = useContext(NotificationsContext);
   const {socket} = useContext(SocketContext);
   const cancellerRef = useRef();
 
   const [title, setTitle] = useState("");
   const [postsData, setPostsData] = useState(posts || []);
-  const [showToastr, setShowToastr] = useState(false);
+  const [_showToastr, setShowToastr] = useState(false);
   
   const [loadMore, setLoadMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(2);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState(null);
+  const [_error, setError] = useState(null);
   const [isLastPage, setIsLastPage] = useState(false);
+
+  // Actualizar el title
+  const updatedTitle = useUpdateTitleNotifications(title);
+
+  // Mostrar el número de mensajes sin leer y de notificaciones
+  // al entrar a la app o al actualizar las páginas.
+  useInitializeNotificationCounters(unreadMessages, unreadNotifications);
+
 
   /*--------------------------------------------------------*/
   // Chequear si el scroll pasó de 60% para cargar más posts
@@ -41,25 +47,7 @@ const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
     if(calculations.percentagePassed >= 0.50 || calculations.bottomVisible) {
       setLoadMore(true);
     }
-  }
-
-  /*----------------------------------------------------------*/
-  // Mostrar el número de mensajes sin leer al entrar a la app
-  /*----------------------------------------------------------*/
-  useEffect(() => {
-    if(unreadMessages > 0) {
-      initializeUnreadMessages(unreadMessages);
-    }
-  }, [unreadMessages]);
-
-  /*-----------------------------------------------------------------*/
-  // Mostrar el número de notificaciones sin leer al entrar a la app
-  /*-----------------------------------------------------------------*/
-  useEffect(() => {
-    if(unreadNotifications?.length > 0) {
-      initializeUnreadNotifications(unreadNotifications.length)
-    }
-  }, [unreadNotifications]);
+  };
 
   /*----------------------------------------------------------------------*/
   // Cargar la siguiente página de posts al llegar al fondo del contenedor
@@ -115,7 +103,7 @@ const HomePage = ({posts, unreadMessages, unreadNotifications}) => {
   return (
     <>
       <Head>
-        <title>{title}</title>
+        <title>{updatedTitle}</title>
       </Head>
       <Visibility onUpdate={updateHandler}>
         <Segment>

@@ -1,5 +1,6 @@
 import {useState, useContext, useEffect, useRef, useCallback} from "react";
 import {useRouter} from "next/router";
+import Head from "next/head";
 import {Segment, Header, Sidebar, Button, Icon, Form, TextArea, Comment, Ref} from "semantic-ui-react";
 import axios from "axios";
 import jwt from "jsonwebtoken";
@@ -22,6 +23,8 @@ import useMessageDeleted from "../../hooks/useMessageDeleted";
 import useChatDisabled from "../../hooks/useChatDisabled";
 import useChatEnabled from "../../hooks/useChatEnabled";
 import useMessageReceived from "../../hooks/useMessageReceived";
+import useUpdateTitleNotifications from "../../hooks/useUpdateTitleNotifications";
+import useInitializeNotificationCounters from "../../hooks/useInitializeNotificationCounters";
 
 
 const MessagesPage = (props) => {
@@ -35,7 +38,8 @@ const MessagesPage = (props) => {
   // Retornar null mientras no haya usuario o chats
   if(!currentUser || !props.chats) {
     return null;
-  }
+  };
+
 
   const [chats, setChats] = useState(props.chats);
   const [selectedChat, setSelectedChat] = useState(props.chats[0] || {});
@@ -47,7 +51,7 @@ const MessagesPage = (props) => {
   const [loadMore, setLoadMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(true);
   const [lastLoadedMsg, setLastLoadedMsg] = useState(null);
-  const [moreRecentMsg, setMoreRecentMsg] = useState(null);
+  const [_moreRecentMsg, setMoreRecentMsg] = useState(null);
 
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -56,10 +60,17 @@ const MessagesPage = (props) => {
 
   const [openChatsSidebar, setOpenChatsSidebar] = useState(false);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [_loading, setLoading] = useState(false);
+  const [_error, setError] = useState(null);
 
   const windowWidth = useWindowWidth();
+
+  // Actualizar el title
+  const updatedTitle = useUpdateTitleNotifications("Next Social Network | Messages");
+
+  // Mostrar el número de mensajes sin leer y de notificaciones
+  // al entrar a la app o al actualizar las páginas.
+  useInitializeNotificationCounters(0, props.unreadNotifications);
 
 
   /*--------------------------------------------------------------------------*/
@@ -328,6 +339,10 @@ const MessagesPage = (props) => {
 
   return (
     <section className={styles["messages__container"]}>
+      <Head>
+        <title>{updatedTitle}</title>
+      </Head>
+
       <Button
         floated="left"
         labelPosition="left"
@@ -513,9 +528,19 @@ export async function getServerSideProps(context) {
       }
     });
 
+    // Consultar las notificaciones no leídas
+    const res2 = await axios({
+      method: "GET",
+      url: `${process.env.BASE_URL}/api/notifications/unread`,
+      headers: {
+        Cookie: `token=${token}`
+      }
+    });
+
     return {
       props: {
-        chats: res.data.data.userChats
+        chats: res.data.data.userChats,
+        unreadNotifications: res2.data.data
       }
     }
     

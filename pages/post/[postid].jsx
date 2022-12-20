@@ -15,6 +15,8 @@ import LikesList from "../../components/post/LikesList";
 import {UserContext} from "../../context/UserContext";
 import {SocketContext} from "../../context/SocketProvider";
 import {PostsSubscribedContext} from "../../context/PostsSubscribedContext";
+import useUpdateTitleNotifications from "../../hooks/useUpdateTitleNotifications";
+import useInitializeNotificationCounters from "../../hooks/useInitializeNotificationCounters";
 import {checkVerification} from "../../utilsServer/verificationStatus";
 import styles from "./post.module.css";
 
@@ -31,17 +33,24 @@ const PostPage = (props) => {
   const [comments, setComments] = useState([]);
   const [commentsCount, setCommentsCount] = useState(0);
   const [loadingComments, setLoadingComments] = useState(true);
-  const [commentError, setCommentError] = useState(null);
+  const [_commentError, setCommentError] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [endOfComments, setEndOfComments] = useState(false);
 
   const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [_error, setError] = useState(null);
 
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
+
+  // Actualizar el title
+  const updatedTitle = useUpdateTitleNotifications(`Next Social Network | ${post.user.name.split(" ")[0]}'s post`);
+
+  // Mostrar el número de mensajes sin leer y de notificaciones
+  // al entrar a la app o al actualizar las páginas.
+  useInitializeNotificationCounters(props.unreadMessages, props.unreadNotifications);
 
   /*----------------------------------------------------*/
   // Verificar si el usuario está suscrito al post
@@ -289,10 +298,7 @@ const PostPage = (props) => {
   return (
     <Container text>
       <Head>
-        <meta property="og:url" content={`${process.env.BASE_URL}/post/${post._id}`} key="ogurl" />
-        <meta property="og:title" content={`${post.user.name.split(" ")[0]}'s post on Next Social Network`} key="ogtitle" />
-        <meta property="og:description" content={post.content} key="ogdesc" />
-        <meta property="og:image" content={post.picUrl} key="ogimage" />
+        <title>{updatedTitle}</title>
       </Head>
 
       <Segment basic>
@@ -539,9 +545,29 @@ export async function getServerSideProps(context) {
       }
     });
 
+    // Consultar si hay mensajes sin leer
+    const res2 = await axios({
+      method: "GET",
+      url: `${process.env.BASE_URL}/api/chats/unread-messages`,
+      headers: {
+        Cookie: `token=${token}`
+      }
+    });
+
+    // Consultar las notificaciones no leídas
+    const res3 = await axios({
+      method: "GET",
+      url: `${process.env.BASE_URL}/api/notifications/unread`,
+      headers: {
+        Cookie: `token=${token}`
+      }
+    });
+
     return {
       props: {
-        post: res.data.data
+        post: res.data.data,
+        unreadMessages: res2.data.data,
+        unreadNotifications: res3.data.data
       }
     }
     

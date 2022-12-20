@@ -1,5 +1,6 @@
 import {useState, useEffect, useRef, useContext} from "react";
 import {useRouter} from "next/router";
+import Head from "next/head";
 import {Grid, Visibility, Segment, Message, Loader} from "semantic-ui-react";
 import axios from "axios";
 import jwt from "jsonwebtoken";
@@ -15,6 +16,8 @@ import Settings from "../components/profile/Settings";
 import {NoProfile, NoProfilePosts} from "../components/Layout/NoData";
 import {PlaceHolderPosts} from "../components/Layout/PlaceHolderGroup";
 import {UserContext} from "../context/UserContext";
+import useUpdateTitleNotifications from "../hooks/useUpdateTitleNotifications";
+import useInitializeNotificationCounters from "../hooks/useInitializeNotificationCounters";
 import {checkVerification} from "../utilsServer/verificationStatus";
 
 // Token de cancelación de requests de axios
@@ -28,11 +31,11 @@ const ProfilePage = (props) => {
   const cancellerRef = useRef();
   const router = useRouter();
   const {updatedEmail, errorUpdatingEmail} = router.query;
-  const {profile, user: currentUser, error} = props;
+  const {profile, user: currentUser, unreadMessages, unreadNotifications, error} = props;
 
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
-  const [postsError, setPostsError] = useState(null);
+  const [_postsError, setPostsError] = useState(null);
 
   // State de la paginación
   const [loadMore, setLoadMore] = useState(false);
@@ -45,8 +48,15 @@ const ProfilePage = (props) => {
   const [followers, setFollowers] = useState(props.followers);
   const [following, setFollowing] = useState(props.following);
 
-  const [isEmailUpdatedSuccess, setIsEmailUpdatedSuccess] = useState(null);
-  const [isEmailUpdateError, setIsEmailUpdateError] = useState(null);
+  const [_isEmailUpdatedSuccess, setIsEmailUpdatedSuccess] = useState(null);
+  const [_isEmailUpdateError, setIsEmailUpdateError] = useState(null);
+
+  // Actualizar el title
+  const updatedTitle = useUpdateTitleNotifications("Next Social Network | Profile");
+
+  // Mostrar el número de mensajes sin leer y de notificaciones
+  // al entrar a la app o al actualizar las páginas.
+  useInitializeNotificationCounters(unreadMessages, unreadNotifications);
 
 
   /*---------------------------*/
@@ -157,6 +167,10 @@ const ProfilePage = (props) => {
 
   return (
     <Visibility onUpdate={scrollUpdateHandler}>
+      <Head>
+        <title>{updatedTitle}</title>
+      </Head>
+
       <Grid stackable>
         <Grid.Row>
           <Grid.Column>
@@ -290,6 +304,8 @@ const ProfilePage = (props) => {
 
 export async function getServerSideProps(context) {
   const {token} = parseCookies(context);
+
+  console.log("REFETCHING DATA FROM BACKEND");
   
   try {
     // Verificar el token
@@ -315,7 +331,25 @@ export async function getServerSideProps(context) {
       headers: {
         Cookie: `token=${token}`
       }
-    })
+    });
+
+    // Consultar si hay mensajes sin leer
+    const res2 = await axios({
+      method: "GET",
+      url: `${process.env.BASE_URL}/api/chats/unread-messages`,
+      headers: {
+        Cookie: `token=${token}`
+      }
+    });
+
+    // Consultar las notificaciones no leídas
+    const res3 = await axios({
+      method: "GET",
+      url: `${process.env.BASE_URL}/api/notifications/unread`,
+      headers: {
+        Cookie: `token=${token}`
+      }
+    });
   
     return {
       props: {
@@ -323,6 +357,8 @@ export async function getServerSideProps(context) {
         profile: res.data.data.profile,
         following: res.data.data.following,
         followers: res.data.data.followers,
+        unreadMessages: res2.data.data,
+        unreadNotifications: res3.data.data,
         error: null
       }
     }
