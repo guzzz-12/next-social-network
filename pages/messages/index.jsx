@@ -13,7 +13,7 @@ import styles from "./messages.module.css";
 import ChatsList from "../../components/messages/ChatsList";
 import {checkVerification} from "../../utilsServer/verificationStatus";
 import {useWindowWidth} from "../../utils/customHooks";
-import {disableChat} from "../../utils/chatHandlers";
+import {createChat, disableChat} from "../../utils/chatHandlers";
 
 import useMessagesCounter from "../../hooks/useMessagesCounter";
 import useSeenMessages from "../../hooks/useSeenMessages";
@@ -274,65 +274,26 @@ const MessagesPage = (props) => {
 
 
   /*--------------------*/
-  // Crear el nuevo chat
+  // Crear un nuevo chat
   /*--------------------*/
-  const createChateHandler = async (messagesWith) => {
-    try {
-      setError(null);
-      setLoading(true);
-      setLoadingMore(true);
-      setCurrentPage(1);
-      setSelectedChat({});
-      setInitialMessagesLoad(false);
-      setEndResults(false);
-      setLastLoadedMsg(null);
-      
-      const res = await axios({
-        method: "POST",
-        url: `/api/chats/${messagesWith}`
-      });
+  const createChateHandler = (messagesWith) => {
+    const config = [
+      messagesWith,
+      chats,
+      setChats,
+      socket,
+      setError,
+      setLoading,
+      setLoadMore,
+      setLoadingMore,
+      setCurrentPage,
+      setSelectedChat,
+      setInitialMessagesLoad,
+      setEndResults,
+      setLastLoadedMsg
+    ];
 
-      const newChat = res.data.data;
-      
-      // Verificar si el chat ya existe en la lista (en caso de buscar un chat existente)
-      const index = chats.findIndex(chat => chat._id.toString() === newChat._id.toString());
-
-      // Si el chat ya existe y ya hay chats en la lista,
-      // borrar el item anterior y poner el nuevo de primero en la lista
-      if(index !== -1 && chats.length > 0) {
-        setChats(prev => {
-          const current = [...prev];
-          current.splice(index, 1);  
-          return [newChat, ...current];
-        });
-
-      // Si el chat no existe y ya hay chats en lalista
-      // agregar el nuevo chat creado a los chats actuales de primero en la lista
-      // y emitir el evento de nuevo chat creado
-      } else if(index === -1 && chats.length > 0) {
-        setChats(prev => [newChat, ...prev]);
-        socket.emit("chatCreated", newChat);
-      
-      // Si no hay chats en la lista, inicializar la lista con el nuevo chat creado
-      // y emitir el evento de nuevo chat creado
-      } else if(chats.length === 0) {
-        setChats([newChat]);
-        socket.emit("chatCreated", newChat);
-      }
-      
-      setLoadMore(true);
-      setSelectedChatMessages([]);
-      setSelectedChat(newChat);
-      setLoading(false);
-      
-    } catch (error) {
-      let message = error.mesage;
-      if(error.response) {
-        message = error.response.data.message
-      }
-      setLoading(false);
-      setError(message);
-    }
+    return createChat(...config);
   }
 
   /*-------------------------------------*/
