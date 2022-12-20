@@ -1,3 +1,5 @@
+const Follower = require("../models/FollowerModel");
+
 /**
  * State global de los usuarios conectados a la app
  * y de las suscripciones de los usuarios a los posts.
@@ -8,11 +10,31 @@ const connectedUsersState = (function () {
   let postsAndSubscribedUsers = [];
 
   /**
-   * Consultar todos los usuarios conectados a la app.
-   * @returns {{userId: string, socketId: string}[]} Array con la data de los usuarios conectados.
+   * Consultar todos los usuarios conectados a la app
+   * que sean seguidos por el usuario actual.
    */
-  const getUsers = () => {
-    return users;
+  const getOnlineFollowees = async (userId) => {
+    try {
+      const followeesData = await Follower
+      .findOne({user: userId})
+      .select("following")
+      .lean();
+      
+      const followeesIdsArr = followeesData.following.map(el => el.user.toString());
+      const followees = [];
+
+      for(let user of users) {
+        if(followeesIdsArr.includes(user.userId)) {
+          followees.push(user)
+        }
+      };
+
+      return followees;
+      
+    } catch (error) {
+      console.log(`Error consultando los usuarios online: ${error.message}`);
+      console.log("Error stack:", error);
+    };
   }
 
   /**
@@ -112,7 +134,8 @@ const connectedUsersState = (function () {
   };
 
   return {
-    getUsers,
+    users,
+    getOnlineFollowees,
     getPostsAndSubscribedUsers,
     removeUserById,
     removeUserBySocketId,

@@ -23,7 +23,7 @@ const commentsRoutes = require("./api/comments");
 const likesRoutes = require("./api/likes");
 const resetPassword = require("./api/reset-password");
 const errorsHandler = require("./middleware/errorsHandler");
-const {removeUser, removeUserBySocketId, updateUserSocket} = require("./utilsServer/socketActions");
+const {getOnlineFollowees, removeUser, removeUserBySocketId, updateUserSocket} = require("./utilsServer/socketActions");
 const {onNewMessage, onUpdateNewMessagesCounter, onDeletedMessage, onMessagesRead} = require("./socket-backend/messagesEvents");
 const {chatCreated, enabledChat, disabledChat} = require("./socket-backend/chatEvents");
 const {notificationReceived} = require("./socket-backend/notificationsEvents");
@@ -48,11 +48,17 @@ sendgrid.setApiKey(process.env.SENDGRID_SECRET);
 /*-----------------------*/
 // Inicializar socket.io
 /*-----------------------*/
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   // Remover un usuario de los usuarios online al cerrar el navegador
   socket.on("disconnect", () => {
     const users = removeUserBySocketId(socket.id);
     io.emit("updatedOnlineUsers", users);
+  });
+  
+  // Emitir los usuarios online seguidos por el usuario al iniciar sesión
+  socket.on("getOnlineUsers", async ({userId}) => {
+    const userFollowees = await getOnlineFollowees(userId, socket.id);
+    io.to(socket.id).emit("setOnlineUsers", userFollowees);
   });
 
   // Actualizar el usuario

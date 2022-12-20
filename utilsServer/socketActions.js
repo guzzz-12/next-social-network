@@ -1,6 +1,11 @@
 const {connectedUsersState} = require("../socket-backend/connectedUsersState");
 
 
+const getOnlineFollowees = (userId) => {
+  return connectedUsersState.getOnlineFollowees(userId);
+};
+
+
 /*------------------------------------------------*/
 // agregar un usuario al state de usuarios online.
 // Actualizar el socket de un usuario.
@@ -44,6 +49,7 @@ const unsubscribeUserFromPost = (postId, userId) => {
 
 
 module.exports = {
+  getOnlineFollowees,
   updateUserSocket,
   removeUser,
   removeUserBySocketId,
