@@ -13,6 +13,7 @@ import styles from "./messages.module.css";
 import ChatsList from "../../components/messages/ChatsList";
 import {checkVerification} from "../../utilsServer/verificationStatus";
 import {useWindowWidth} from "../../utils/customHooks";
+import {disableChat} from "../../utils/chatHandlers";
 
 import useMessagesCounter from "../../hooks/useMessagesCounter";
 import useSeenMessages from "../../hooks/useSeenMessages";
@@ -90,12 +91,16 @@ const MessagesPage = (props) => {
       chatItemClickHandler(props.chats[0])
     }
   }, [props.chats]);
+  
 
-  /*---------------------------------------------------*/
-  // Resetear el contador de mensajes al entrar al chat
-  /*---------------------------------------------------*/
   useEffect(() => {
+    // Resetear el contador de mensajes al entrar al chat
     resetUnreadMessages();
+
+    // Listener del evento de nuevo chat creado
+    socket.on("newChatCreated", (newChat) => {
+      setChats(prev => [newChat, ...prev]);
+    });
   }, []);
 
 
@@ -129,24 +134,10 @@ const MessagesPage = (props) => {
   useChatEnabled(setChats, socket, selectedChat, setSelectedChat);
 
 
-  /*------------------------------*/
-  // Listener de nuevo chat creado
-  /*------------------------------*/
-  const newChatCreatedRef = useRef(() => {
-    return socket.on("newChatCreated", (newChat) => {
-      setChats(prev => [newChat, ...prev]);
-    })
-  });
-
-
   /*---------------------------------------------------------------------------*/
   // Recibir los mensajes y actualizarla bandeja del recipiente en tiempo real.
   /*---------------------------------------------------------------------------*/
   useMessageReceived({setSelectedChatMessages, socket, selectedChat, router, inboxRef});
-
-  useEffect(() => {
-    newChatCreatedRef.current();
-  }, []);
 
 
   /*---------------------------------------------------------------*/
@@ -161,9 +152,10 @@ const MessagesPage = (props) => {
   }, [lastLoadedMsg]);
 
 
-  /*------------------------------------------*/
-  // Cambiar el estado de los mensajes a leído
-  /*------------------------------------------*/
+  /*-----------------------------------------------------------*/
+  // Enviar consulta para cambiar el status de los mensajes
+  // a leído en la db y en la bandeja de entrada del recipiente
+  /*-----------------------------------------------------------*/
   useEffect(() => {
     if(currentUser && selectedChat && !loadingMore) {
       // Extraer las ids de los mensajes a actualizar donde el remitente
@@ -206,59 +198,6 @@ const MessagesPage = (props) => {
       })
     }
   }, [selectedChat, loadingMore]);
-
-
-  /*----------------------------*/
-  // Deshabilitar/habilitar chat
-  /*----------------------------*/
-  const disableChatHandler = async (chatId) => {
-    try {
-      setError(null);
-      setDisablingChat(true);
-      
-      const res = await axios({
-        method: "PATCH",
-        url: `/api/chats/disable-chat/${chatId}`
-      });
-
-      console.log({response: res.data.data});
-      const updatedChat = res.data.data;
-
-      // Buscar el índice del chat en el state
-      const chatIndex = [...chats].findIndex(el => el._id.toString() === chatId.toString());
-
-      // Actualizar el status del chat en el state
-      setChats(prev => {
-        const updated = [...prev];
-        updated.splice(chatIndex, 1, updatedChat);
-        return updated;
-      });
-
-      // Emitir el chat deshabilitado
-      if(updatedChat.status === "inactive") {
-        socket.emit("disabledChat", updatedChat);
-      }
-
-      // Emitir el chat habilitado
-      if(updatedChat.status === "active") {
-        socket.emit("enabledChat", {updatedChat, enabledBy: currentUser._id})
-      }
-
-      setSelectedChat(updatedChat);
-      setDisablingChat(false);
-      
-    } catch (error) {
-      let message = error.message;
-      if(error.response) {
-        message = error.response.data.message
-      }
-
-      console.log(`Error disabling/enabling chat: ${message}`)
-
-      setDisablingChat(false);
-      setError(message);
-    }
-  }
   
 
   /*------------------------------------------*/
@@ -313,6 +252,25 @@ const MessagesPage = (props) => {
     }
 
   }, [selectedChat, loadMore]);
+
+
+  /*----------------------------*/
+  // Deshabilitar/habilitar chat
+  /*----------------------------*/
+  const disableChatHandler = (chatId) => {
+    const config = [
+      chatId,
+      chats,
+      currentUser,
+      setSelectedChat,
+      setError,
+      setChats,
+      socket,
+      setDisablingChat
+    ];
+
+    return disableChat(...config);
+  };
 
 
   /*--------------------*/
