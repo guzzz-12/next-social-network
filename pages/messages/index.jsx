@@ -19,6 +19,7 @@ import useSeenMessages from "../../hooks/useSeenMessages";
 import useMessageDeleted from "../../hooks/useMessageDeleted";
 import useChatDisabled from "../../hooks/useChatDisabled";
 import useChatEnabled from "../../hooks/useChatEnabled";
+import useMessageReceived from "../../hooks/useMessageReceived";
 
 
 const MessagesPage = (props) => {
@@ -138,43 +139,10 @@ const MessagesPage = (props) => {
   });
 
 
-  /*------------------------------------------------------------------------------*/
-  // Incializar cliente de Socket.io y procesar las actualizaciones en tiempo real
-  /*------------------------------------------------------------------------------*/
-  useEffect(() => {
-    if(selectedChat._id) {
-      socket.on("newMessageReceived", async ({newMsg, chatId}) => {
-        const selectedChatId = selectedChat._id;
-  
-        // Actualizar el state de los mensajes con el nuevo mensaje entrante
-        if(selectedChatId && chatId.toString() === selectedChatId.toString()) {
-          setSelectedChatMessages(prev => {
-            // Filtrar los mensajes duplicados
-            const filteredDuplicates = [...prev, newMsg].reduce((acc, item) => {
-              const x = acc.find(el => el._id === item._id);
-              if(!x) {
-                return acc.concat(item)
-              } else {
-                return acc
-              }
-            },[]);
-  
-            return filteredDuplicates
-          });
-          
-          // Scrollear al fondo de la bandeja al recibir el nuevo mensaje
-          if(router.pathname === "/messages" && inboxRef.current) {
-            inboxRef.current.scrollTop = inboxRef.current.scrollHeight;
-          }
-        }
-      });
-    }
-
-    // Reiniciar el listener de nuevo mensaje recibido al seleccionar otro chat
-    // para inicializarlo con la id del chat seleccionado
-    // y evitar que los mensajes entrantes se agreguen a la bandeja equivocada
-    return () => socket.off("newMessageReceived");
-  }, [selectedChat]);
+  /*---------------------------------------------------------------------------*/
+  // Recibir los mensajes y actualizarla bandeja del recipiente en tiempo real.
+  /*---------------------------------------------------------------------------*/
+  useMessageReceived({setSelectedChatMessages, socket, selectedChat, router, inboxRef});
 
   useEffect(() => {
     newChatCreatedRef.current();
