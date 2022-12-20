@@ -91,6 +91,7 @@ const PostPage = (props) => {
 
     // Eliminar en tiempo real el comentario eliminado por otro usuario
     socket.on("deletedComment", (commentId) => {
+      console.log({DELETED_COMMENT: commentId});
       setComments(prev => {
         const filtered = prev.filter(el => el._id.toString() !== commentId);
         return filtered
