@@ -2,8 +2,8 @@ import {useState, useEffect, useContext} from "react";
 import Link from "next/link";
 import {Comment, Popup, Button, Icon, Header} from "semantic-ui-react";
 import moment from "moment";
-import axios from "axios";
 import {SocketContext} from "../../context/SocketProvider";
+import {deleteMessage} from "../../utils/messageHandlers";
 import styles from "./singleMessage.module.css";
 
 const SingleMessage = ({message, setMessages, currentUser}) => {
@@ -14,7 +14,7 @@ const SingleMessage = ({message, setMessages, currentUser}) => {
   const [user, setUser] = useState({});
 
   const [deleting, setDeleting] = useState(false);
-  const [errorDeleting, setErrorDeleting] = useState(null);
+  const [_errorDeleting, setErrorDeleting] = useState(null);
 
   useEffect(() => {
     setIsCurrentUserSender(currentUser === message.sender.username);
@@ -25,44 +25,10 @@ const SingleMessage = ({message, setMessages, currentUser}) => {
   // Borrar el mensaje (Cambiar su status a inactive)
   /*------------------------------------------------*/
   const deleteMessageHandler = async (msgId) => {
-    try {
-      setDeleting(true);
-      setErrorDeleting(null);
+    const config = [msgId, socket, setDeleting, setErrorDeleting, setMessages];
 
-      const res = await axios({
-        method: "PATCH",
-        url: `/api/chats/message/${msgId}`
-      });
-
-      const updatedMessage = {
-        ...res.data.data,
-        text: "Deleted message"
-      }
-
-      // Actualizar el mensaje en la bandeja
-      setMessages(prev => {
-        const allMessages = [...prev];
-        const msgIndex = allMessages.findIndex(el => el._id.toString() === updatedMessage._id.toString());
-        allMessages.splice(msgIndex, 1, updatedMessage);
-        return allMessages;
-      });
-
-      // Emitir el mensaje eliminado al recipiente
-      socket.emit("deletedMessage", updatedMessage);
-
-      setDeleting(false);
-      
-    } catch (error) {
-      let message = error.message;
-
-      if(error.response) {
-        message = error.response.data.message
-      }
-
-      setErrorDeleting(message);
-      setDeleting(false);
-    }
-  }
+    return deleteMessage(...config);
+  };
 
   return (
     <Comment

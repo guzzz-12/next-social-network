@@ -63,4 +63,53 @@ export const sendMessage = async (
   } finally {
     setSending(false);
   }
-}
+};
+
+
+/**
+ * Eliminar un mensaje.
+ * @param {*} msgId ID del mensaje a eliminar.
+ * @param {*} socket Instancia de socket.io.
+ * @param {*} setDeleting Callback para actualizat el state de loader.
+ * @param {*} setErrorDeleting Callback para actualizar el state de los mensajes de error.
+ * @param {*} setMessages Callback para actualizar el state de los mensajes.
+ */
+export const deleteMessage = async (msgId, socket, setDeleting, setErrorDeleting, setMessages) => {
+  try {
+    setDeleting(true);
+    setErrorDeleting(null);
+
+    const res = await axios({
+      method: "PATCH",
+      url: `/api/chats/message/${msgId}`
+    });
+
+    const updatedMessage = {
+      ...res.data.data,
+      text: "Deleted message"
+    }
+
+    // Actualizar el mensaje en la bandeja
+    setMessages(prev => {
+      const allMessages = [...prev];
+      const msgIndex = allMessages.findIndex(el => el._id.toString() === updatedMessage._id.toString());
+      allMessages.splice(msgIndex, 1, updatedMessage);
+      return allMessages;
+    });
+
+    // Emitir el mensaje eliminado al recipiente
+    socket.emit("deletedMessage", updatedMessage);
+    
+  } catch (error) {
+    let message = error.message;
+
+    if(error.response) {
+      message = error.response.data.message
+    }
+
+    setErrorDeleting(message);
+    
+  } finally {
+    setDeleting(false);
+  }
+};
