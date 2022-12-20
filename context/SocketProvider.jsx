@@ -64,6 +64,10 @@ const SocketContextProvider = ({children}) => {
         setConnectionLost(true);
       });
 
+      io.on("setOnlineUsers", (users) => {
+        setOnlineUsers(users);
+      });
+
       // Actualizar el socket del usuario actual en el server al actualizar la página
       io.emit("updateUser", {userId: currentUser._id});
 

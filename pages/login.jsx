@@ -2,12 +2,13 @@ import {useState, useContext} from "react";
 import {useRouter} from "next/router";
 import {Form, Button, Message, Segment} from "semantic-ui-react";
 import axios from "axios";
-import {parseCookies, destroyCookie} from "nookies";
+import {parseCookies} from "nookies";
 import jsCookie from "js-cookie";
 import {FooterMessage, HeaderMessage} from "../components/common/WelcomeMessage";
 import {SessionTimerContext} from "../context/SessionTimerContext";
 import {UserContext} from "../context/UserContext";
 import {PostsSubscribedContext} from "../context/PostsSubscribedContext";
+import {SocketContext} from "../context/SocketProvider";
 import ValidationErrorMessage from "../components/common/ValidationErrorMessage";
 import {isEmail} from "../utils/emailValidator";
 import {sessionRemainingSecs} from "../utils/sessionRemainingSecs";
@@ -17,6 +18,7 @@ const Login = () => {
   const timerContext = useContext(SessionTimerContext);
   const {setCurrentProfile, setCurrentUser, isAuth} = useContext(UserContext);
   const {initPostsSubscribed} = useContext(PostsSubscribedContext);
+  const {socket} = useContext(SocketContext);
 
   const [values, setValues] = useState({
     email: "",
@@ -63,6 +65,8 @@ const Login = () => {
       });
 
       setIsFormLoading(false);
+
+      socket.emit("getOnlineUsers", ({userId: res.data.data.profile.user._id}));
 
       const {profile} = res.data.data;
       setCurrentUser(profile.user);
