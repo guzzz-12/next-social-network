@@ -18,6 +18,7 @@ import useMessagesCounter from "../../hooks/useMessagesCounter";
 import useSeenMessages from "../../hooks/useSeenMessages";
 import useMessageDeleted from "../../hooks/useMessageDeleted";
 import useChatDisabled from "../../hooks/useChatDisabled";
+import useChatEnabled from "../../hooks/useChatEnabled";
 
 
 const MessagesPage = (props) => {
@@ -78,7 +79,7 @@ const MessagesPage = (props) => {
       return updated;
     });
   }, []);
-  
+
 
   /*-------------------------------------------------------------*/
   // Seleccionar el primer chat al entrar a la página de mensajes
@@ -124,25 +125,7 @@ const MessagesPage = (props) => {
   /*----------------------------*/
   // Listener de chat habilitado
   /*----------------------------*/
-  const chatEnabledRef = useRef(() => {
-    return socket.on("chatEnabled", (data) => {
-      const chatId = data._id.toString();
-      const selectedChatId = selectedChat._id;
-
-      // Si el chat seleccionado fue habilitado, actualizarlo
-      if(chatId === selectedChatId?.toString()) {
-        setSelectedChat(data);
-      }
-
-      // Actualizar el status del chat en la lista de chats
-      setChats(prev => {
-        const updatedChats = [...prev];
-        const chatIndex = updatedChats.findIndex(el => el._id.toString() === chatId);
-        updatedChats.splice(chatIndex, 1, data);
-        return updatedChats;
-      })
-    });
-  });
+  useChatEnabled(setChats, socket, selectedChat, setSelectedChat);
 
 
   /*------------------------------*/
@@ -194,7 +177,6 @@ const MessagesPage = (props) => {
   }, [selectedChat]);
 
   useEffect(() => {
-    chatEnabledRef.current();
     newChatCreatedRef.current();
   }, []);
 
