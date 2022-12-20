@@ -10,6 +10,14 @@ const connectedUsersState = (function () {
   let postsAndSubscribedUsers = [];
 
   /**
+   * Consultar todos los usuarios conectados a la app.
+   * @returns {{userId: string, socketId: string}[]} Array con la data de los usuarios conectados.
+   */
+  const getUsers = () => {
+    return users;
+  }
+
+  /**
    * Consultar todos los usuarios conectados a la app
    * que sean seguidos por el usuario actual.
    */
@@ -134,7 +142,7 @@ const connectedUsersState = (function () {
   };
 
   return {
-    users,
+    getUsers,
     getOnlineFollowees,
     getPostsAndSubscribedUsers,
     removeUserById,
