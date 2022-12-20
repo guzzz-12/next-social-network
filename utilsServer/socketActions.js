@@ -19,6 +19,14 @@ const removeUser = (userId) => {
 }
 
 
+/*--------------------------------------------*/
+// Remover un usuario filtrando por socket id
+/*--------------------------------------------*/
+const removeUserBySocketId = (socketId) => {
+  return connectedUsersState.removeUserBySocketId(socketId);
+};
+
+
 /*-------------------------------*/
 // Suscribir un usuario a un post
 /*-------------------------------*/
@@ -38,6 +46,7 @@ const unsubscribeUserFromPost = (postId, userId) => {
 module.exports = {
   updateUserSocket,
   removeUser,
+  removeUserBySocketId,
   subscribeUserToPost,
   unsubscribeUserFromPost
 }

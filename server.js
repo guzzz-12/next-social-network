@@ -23,7 +23,7 @@ const commentsRoutes = require("./api/comments");
 const likesRoutes = require("./api/likes");
 const resetPassword = require("./api/reset-password");
 const errorsHandler = require("./middleware/errorsHandler");
-const {removeUser, updateUserSocket} = require("./utilsServer/socketActions");
+const {removeUser, removeUserBySocketId, updateUserSocket} = require("./utilsServer/socketActions");
 const {onNewMessage, onUpdateNewMessagesCounter, onDeletedMessage, onMessagesRead} = require("./socket-backend/messagesEvents");
 const {chatCreated, enabledChat, disabledChat} = require("./socket-backend/chatEvents");
 const {notificationReceived} = require("./socket-backend/notificationsEvents");
@@ -49,6 +49,12 @@ sendgrid.setApiKey(process.env.SENDGRID_SECRET);
 // Inicializar socket.io
 /*-----------------------*/
 io.on("connection", (socket) => {
+  // Remover un usuario de los usuarios online al cerrar el navegador
+  socket.on("disconnect", () => {
+    const users = removeUserBySocketId(socket.id);
+    io.emit("updatedOnlineUsers", users);
+  });
+
   // Actualizar el usuario
   socket.on("updateUser", (data) => {
     const users = updateUserSocket(data.userId, socket.id);
@@ -57,7 +63,6 @@ io.on("connection", (socket) => {
 
   // Remover el usuario de los conectados al salir del chat
   socket.on("offline", (data) => {
-    console.log({UserWentOffline: data});
     const users = removeUser(data.userId);
     io.emit("updatedOnlineUsers", users);
   });
