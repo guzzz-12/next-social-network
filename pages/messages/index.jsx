@@ -14,6 +14,7 @@ import ChatsList from "../../components/messages/ChatsList";
 import {checkVerification} from "../../utilsServer/verificationStatus";
 import {useWindowWidth} from "../../utils/customHooks";
 import {createChat, disableChat} from "../../utils/chatHandlers";
+import {sendMessage} from "../../utils/messageHandlers";
 
 import useMessagesCounter from "../../hooks/useMessagesCounter";
 import useSeenMessages from "../../hooks/useSeenMessages";
@@ -299,44 +300,20 @@ const MessagesPage = (props) => {
   /*-------------------------------------*/
   // Enviar mensajes al chat seleccionado
   /*-------------------------------------*/
-  const sendMessageHandler = async (chat) => {
-    try {
-      setSending(true);
+  const sendMessageHandler = (chat) => {
+    const config = [
+      currentUser,
+      chat,
+      socket,
+      inboxRef,
+      text,
+      setSending,
+      setSelectedChatMessages,
+      setText,
+      setError
+    ];
 
-      const recipient = currentUser._id === chat.user._id ? chat.messagesWith._id : chat.user._id;
-
-      const res = await axios({
-        method: "POST",
-        url: `/api/chats/${chat._id}/message/${recipient}`,
-        data: {messageText: text}
-      });
-
-      // console.log({msgResponse: res.data.data});
-      const newMessage = res.data.data;
-      
-      // Emitir el nuevo mensaje enviado al recipiente
-      socket.emit("newMessage", {newMsg: newMessage, chatId: chat._id});
-      socket.emit("updateNewMessagesCounter", {
-        chatId: chat._id,
-        recipientId: newMessage.recipient._id,
-        msg: newMessage
-      });
-
-      setSelectedChatMessages(prev => [...prev, newMessage]);
-      setSending(false);
-      setText("");
-
-      // Scrollear al fondo de la bandeja al enviar un mensaje
-      inboxRef.current.scrollTop = inboxRef.current.scrollHeight;
-      
-    } catch (error) {
-      let message = error.mesage;
-      if(error.response) {
-        message = error.response.data.message
-      }
-      setSending(false);
-      setError(message);
-    }
+    return sendMessage(...config);
   }
 
   /*----------------------------------------------------------------------------*/
