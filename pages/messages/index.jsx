@@ -24,7 +24,7 @@ import useChatDisabled from "../../hooks/useChatDisabled";
 import useChatEnabled from "../../hooks/useChatEnabled";
 import useMessageReceived from "../../hooks/useMessageReceived";
 import useUpdateTitleNotifications from "../../hooks/useUpdateTitleNotifications";
-import useInitializeNotificationCounters from "../../hooks/useInitializeNotificationCounters";
+import useReinitializeNotifications from "../../hooks/useReinitializeNotifications";
 
 
 const MessagesPage = (props) => {
@@ -67,10 +67,10 @@ const MessagesPage = (props) => {
 
   // Actualizar el title
   const updatedTitle = useUpdateTitleNotifications("Next Social Network | Messages");
-
-  // Mostrar el número de mensajes sin leer y de notificaciones
-  // al entrar a la app o al actualizar las páginas.
-  useInitializeNotificationCounters(0, props.unreadNotifications);
+  
+  // Reinicializar los contadores de notificaciones y mensajes sin leer
+  // al hacer hard refresh de la página.
+  useReinitializeNotifications();
 
 
   /*--------------------------------------------------------------------------*/

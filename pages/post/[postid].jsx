@@ -16,7 +16,7 @@ import {UserContext} from "../../context/UserContext";
 import {SocketContext} from "../../context/SocketProvider";
 import {PostsSubscribedContext} from "../../context/PostsSubscribedContext";
 import useUpdateTitleNotifications from "../../hooks/useUpdateTitleNotifications";
-import useInitializeNotificationCounters from "../../hooks/useInitializeNotificationCounters";
+import useReinitializeNotifications from "../../hooks/useReinitializeNotifications";
 import {checkVerification} from "../../utilsServer/verificationStatus";
 import styles from "./post.module.css";
 
@@ -47,10 +47,10 @@ const PostPage = (props) => {
 
   // Actualizar el title
   const updatedTitle = useUpdateTitleNotifications(`Next Social Network | ${post.user.name.split(" ")[0]}'s post`);
-
-  // Mostrar el número de mensajes sin leer y de notificaciones
-  // al entrar a la app o al actualizar las páginas.
-  useInitializeNotificationCounters(props.unreadMessages, props.unreadNotifications);
+  
+  // Reinicializar los contadores de notificaciones y mensajes sin leer
+  // al hacer hard refresh de la página.
+  useReinitializeNotifications();
 
   /*----------------------------------------------------*/
   // Verificar si el usuario está suscrito al post
@@ -545,29 +545,9 @@ export async function getServerSideProps(context) {
       }
     });
 
-    // Consultar si hay mensajes sin leer
-    const res2 = await axios({
-      method: "GET",
-      url: `${process.env.BASE_URL}/api/chats/unread-messages`,
-      headers: {
-        Cookie: `token=${token}`
-      }
-    });
-
-    // Consultar las notificaciones no leídas
-    const res3 = await axios({
-      method: "GET",
-      url: `${process.env.BASE_URL}/api/notifications/unread`,
-      headers: {
-        Cookie: `token=${token}`
-      }
-    });
-
     return {
       props: {
-        post: res.data.data,
-        unreadMessages: res2.data.data,
-        unreadNotifications: res3.data.data
+        post: res.data.data
       }
     }
     

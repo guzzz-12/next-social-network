@@ -12,7 +12,7 @@ import LikeNotification from "../components/notifications/LikeNotification";
 import {NotificationsContext} from "../context/NotificationsContext";
 import {UserContext} from "../context/UserContext";
 import useUpdateTitleNotifications from "../hooks/useUpdateTitleNotifications";
-import useInitializeNotificationCounters from "../hooks/useInitializeNotificationCounters";
+import useReinitializeNotifications from "../hooks/useReinitializeNotifications";
 import {checkVerification} from "../utilsServer/verificationStatus";
 
 // Token de cancelación de requests de axios
@@ -39,10 +39,10 @@ const NotificationsPage = (props) => {
 
   // Actualizar el title
   const updatedTitle = useUpdateTitleNotifications("Next Social Network | Notifications");
-
-  // Mostrar el número de mensajes sin leer y de notificaciones
-  // al entrar a la app o al actualizar las páginas.
-  useInitializeNotificationCounters(props.unreadMessages, 0);
+  
+  // Reinicializar los contadores de notificaciones y mensajes sin leer
+  // al hacer hard refresh de la página.
+  useReinitializeNotifications();
 
 
   /*-----------------------------------------------------------------------*/
@@ -317,19 +317,9 @@ export async function getServerSideProps(context) {
       },
     });
 
-    // Consultar si hay mensajes sin leer
-    const res2 = await axios({
-      method: "GET",
-      url: `${process.env.BASE_URL}/api/chats/unread-messages`,
-      headers: {
-        Cookie: `token=${token}`
-      }
-    });
-
     return {
       props: {
-        notifications: res.data.data,
-        unreadMessages: res2.data.data
+        notifications: res.data.data
       }
     }
     

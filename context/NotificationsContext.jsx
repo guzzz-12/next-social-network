@@ -2,6 +2,7 @@ import {createContext, useState} from "react";
 
 export const NotificationsContext = createContext({
   unreadNotifications: 0,
+  notificationsInitialized: false,
   initializeUnreadNotifications: () => {},
   updateUnreadNotifications: () => {},
   resetNotifications: () => {}
@@ -9,11 +10,13 @@ export const NotificationsContext = createContext({
 
 const NotificationsContextProvider = ({children}) => {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [notificationsInitialized, setNotificationsInitialized] = useState(false);
 
   // Inicializar las notificaciones sin leer en la primera carga de la página
   // y al actualizar la página con F5
   const initializeUnreadNotifications = (num) => {
-    setUnreadNotifications(num)
+    setUnreadNotifications(num);
+    setNotificationsInitialized(true);
   }
 
   // Actualizar las notificaciones entrantes en tiempo real
@@ -30,6 +33,7 @@ const NotificationsContextProvider = ({children}) => {
     <NotificationsContext.Provider
       value={{
         unreadNotifications,
+        notificationsInitialized,
         initializeUnreadNotifications,
         updateUnreadNotifications,
         resetNotifications

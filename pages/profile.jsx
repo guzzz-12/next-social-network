@@ -17,7 +17,7 @@ import {NoProfile, NoProfilePosts} from "../components/Layout/NoData";
 import {PlaceHolderPosts} from "../components/Layout/PlaceHolderGroup";
 import {UserContext} from "../context/UserContext";
 import useUpdateTitleNotifications from "../hooks/useUpdateTitleNotifications";
-import useInitializeNotificationCounters from "../hooks/useInitializeNotificationCounters";
+import useReinitializeNotifications from "../hooks/useReinitializeNotifications";
 import {checkVerification} from "../utilsServer/verificationStatus";
 
 // Token de cancelación de requests de axios
@@ -31,7 +31,7 @@ const ProfilePage = (props) => {
   const cancellerRef = useRef();
   const router = useRouter();
   const {updatedEmail, errorUpdatingEmail} = router.query;
-  const {profile, user: currentUser, unreadMessages, unreadNotifications, error} = props;
+  const {profile, user: currentUser, error} = props;
 
   const [posts, setPosts] = useState([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
@@ -54,9 +54,9 @@ const ProfilePage = (props) => {
   // Actualizar el title
   const updatedTitle = useUpdateTitleNotifications("Next Social Network | Profile");
 
-  // Mostrar el número de mensajes sin leer y de notificaciones
-  // al entrar a la app o al actualizar las páginas.
-  useInitializeNotificationCounters(unreadMessages, unreadNotifications);
+  // Reinicializar los contadores de notificaciones y mensajes sin leer
+  // al hacer hard refresh de la página.
+  useReinitializeNotifications();
 
 
   /*---------------------------*/
@@ -332,24 +332,6 @@ export async function getServerSideProps(context) {
         Cookie: `token=${token}`
       }
     });
-
-    // Consultar si hay mensajes sin leer
-    const res2 = await axios({
-      method: "GET",
-      url: `${process.env.BASE_URL}/api/chats/unread-messages`,
-      headers: {
-        Cookie: `token=${token}`
-      }
-    });
-
-    // Consultar las notificaciones no leídas
-    const res3 = await axios({
-      method: "GET",
-      url: `${process.env.BASE_URL}/api/notifications/unread`,
-      headers: {
-        Cookie: `token=${token}`
-      }
-    });
   
     return {
       props: {
@@ -357,8 +339,6 @@ export async function getServerSideProps(context) {
         profile: res.data.data.profile,
         following: res.data.data.following,
         followers: res.data.data.followers,
-        unreadMessages: res2.data.data,
-        unreadNotifications: res3.data.data,
         error: null
       }
     }
